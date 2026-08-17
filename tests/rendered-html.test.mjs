@@ -66,9 +66,15 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /landscape:\s*\{\s*cornerTopX:\s*0\.21/s);
   assert.match(page, /widescreen:\s*\{[^}]*bottomCornerStartX:\s*0\.834375[^}]*bottomCornerRightY:\s*0\.621778/s);
   assert.match(page, /function renderMatchdayGraphic\(/);
+  assert.match(page, /type DateDisplay = "date-time" \| "day-date"/);
+  assert.match(page, /dateDisplay: "date-time"/);
+  assert.match(page, /Datum \+ Uhrzeit/);
+  assert.match(page, /Tag \+ Datum/);
+  assert.match(page, /form\.dateDisplay === "day-date"/);
   assert.match(page, /venue: "Mößmann Sportanlage"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /Liga \/ Überschrift/);
+  assert.match(page, /formatKey === "widescreen" \? 0\.5 : 0\.72/);
   assert.match(page, /Spieltag \/ Obere Zeile/);
   assert.match(page, /value=\{form\.round\} maxLength=\{29\}/);
   assert.match(page, /Region \/ Untere Zeile/);

@@ -7,6 +7,7 @@ type PostType = "matchday" | "result";
 type FormatKey = "post" | "story" | "landscape" | "widescreen";
 type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
+type DateDisplay = "date-time" | "day-date";
 
 type FormState = {
   clubName: string;
@@ -16,6 +17,7 @@ type FormState = {
   round: string;
   date: string;
   time: string;
+  dateDisplay: DateDisplay;
   venue: string;
   venueAddress: string;
   headline: string;
@@ -64,6 +66,7 @@ const INITIAL_FORM: FormState = {
   round: "1. Spieltag",
   date: "2026-08-23",
   time: "15:00",
+  dateDisplay: "date-time",
   venue: "Mößmann Sportanlage",
   venueAddress: "Am Langen Berg 5, 86199 Augsburg",
   headline: "MATCHDAY",
@@ -213,10 +216,20 @@ function formatDate(value: string) {
 }
 
 function formatMatchdayDate(value: string) {
+  const { weekday, dayMonth } = formatMatchdayDateParts(value);
+  return `${weekday}, ${dayMonth}`;
+}
+
+function formatMatchdayDateParts(value: string) {
   const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return value.toUpperCase() || "DATUM";
+  if (!year || !month || !day) {
+    return { weekday: "TAG", dayMonth: value.toUpperCase() || "DATUM" };
+  }
   const date = new Date(year, month - 1, day, 12);
-  return `${WEEKDAYS[date.getDay()]}, ${day}. ${FULL_MONTHS[month - 1]}`;
+  return {
+    weekday: WEEKDAYS[date.getDay()],
+    dayMonth: `${day}. ${FULL_MONTHS[month - 1]}`,
+  };
 }
 
 function formatRound(value: string) {
@@ -404,6 +417,13 @@ function renderMatchdayGraphic(
   const textColor = isFirstTeam ? "#ffffff" : blue;
   const largeTextSize = layout.largeTextSize ?? 100;
   const smallTextSize = layout.smallTextSize ?? 40;
+  const { weekday, dayMonth } = formatMatchdayDateParts(form.date);
+  const smallDateLine = form.dateDisplay === "day-date"
+    ? weekday
+    : formatMatchdayDate(form.date);
+  const largeDateLine = form.dateDisplay === "day-date"
+    ? dayMonth
+    : `${form.time || "--:--"} UHR`;
 
   const gradient = createAngledGradient(context, width, height, MATCHDAY_ANGLE_DEGREES);
   gradient.addColorStop(0, "#003076");
@@ -453,7 +473,7 @@ function renderMatchdayGraphic(
     textColor,
     700,
     largeTextSize,
-    width * (formatKey === "widescreen" ? 0.34 : 0.72),
+    width * (formatKey === "widescreen" ? 0.5 : 0.72),
   );
   drawMatchdayText(
     context,
@@ -499,7 +519,7 @@ function renderMatchdayGraphic(
 
   drawMatchdayText(
     context,
-    formatMatchdayDate(form.date),
+    smallDateLine,
     width / 2,
     height * layout.dateY,
     textColor,
@@ -509,7 +529,7 @@ function renderMatchdayGraphic(
   );
   drawMatchdayText(
     context,
-    `${form.time || "--:--"} UHR`,
+    largeDateLine,
     width / 2,
     height * layout.timeY,
     textColor,
@@ -1075,6 +1095,15 @@ export default function Home() {
                 <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
               </label>
             </div>
+            {postType === "matchday" && (
+              <div className="field-block">
+                <span className="field-label">Darstellung Datum / Uhrzeit</span>
+                <div className="segmented-control compact">
+                  <button type="button" className={form.dateDisplay === "date-time" ? "active" : ""} onClick={() => updateForm("dateDisplay", "date-time")}>Datum + Uhrzeit</button>
+                  <button type="button" className={form.dateDisplay === "day-date" ? "active" : ""} onClick={() => updateForm("dateDisplay", "day-date")}>Tag + Datum</button>
+                </div>
+              </div>
+            )}
             <div className="field-grid field-block">
               <label>
                 <span className="field-label">Spielstätte</span>
