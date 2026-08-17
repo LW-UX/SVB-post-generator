@@ -351,6 +351,7 @@ function UploadField({
 }
 
 export default function Home() {
+  const appShellRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [postType, setPostType] = useState<PostType>("matchday");
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
@@ -361,6 +362,36 @@ export default function Home() {
   useEffect(() => {
     if (canvasRef.current) renderGraphic(canvasRef.current, formatKey, postType, form, assets);
   }, [formatKey, postType, form, assets]);
+
+  useEffect(() => {
+    const appShell = appShellRef.current;
+    if (!appShell || window.parent === window) return;
+
+    let animationFrame = 0;
+
+    function reportHeight() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const height = Math.ceil(appShell.getBoundingClientRect().bottom);
+        window.parent.postMessage(
+          { type: "svb-generator-height", height },
+          "https://fussball.sportverein-bergheim.de",
+        );
+      });
+    }
+
+    const resizeObserver = new ResizeObserver(reportHeight);
+    resizeObserver.observe(appShell);
+    window.addEventListener("resize", reportHeight);
+    void document.fonts?.ready.then(reportHeight);
+    reportHeight();
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", reportHeight);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, []);
 
   const selectedFormat = FORMATS[formatKey];
   const textWarning = useMemo(
@@ -446,7 +477,7 @@ export default function Home() {
   }
 
   return (
-    <main className="app-shell">
+    <main ref={appShellRef} className="app-shell">
       <section className="selector-card" aria-label="Grafik auswählen">
         <div className="selector-group">
           <span className="selector-label">Beitrag</span>

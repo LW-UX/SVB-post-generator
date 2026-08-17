@@ -54,6 +54,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type="file"/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
+  assert.match(page, /new ResizeObserver\(reportHeight\)/);
+  assert.match(page, /svb-generator-height/);
+  assert.match(page, /https:\/\/fussball\.sportverein-bergheim\.de/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(/);
   assert.match(packageJson, /"build:pages"/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
