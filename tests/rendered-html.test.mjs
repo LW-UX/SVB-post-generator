@@ -47,11 +47,10 @@ test("keeps uploads local and supports every requested format", async () => {
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /post:\s*\{[^}]*1080[^}]*1350/s);
-  assert.match(page, /story:\s*\{[^}]*1080[^}]*1920/s);
-  assert.match(page, /landscape:\s*\{[^}]*1200[^}]*800/s);
-  assert.match(page, /widescreen:\s*\{[^}]*1920[^}]*1080/s);
-  assert.match(page, /const EXPORT_SCALE = 2/);
+  assert.match(page, /post:\s*\{[^}]*1080[^}]*1350[^}]*exportScale:\s*2/s);
+  assert.match(page, /story:\s*\{[^}]*1080[^}]*1920[^}]*exportScale:\s*2/s);
+  assert.match(page, /landscape:\s*\{[^}]*1500[^}]*1000[^}]*exportScale:\s*1/s);
+  assert.match(page, /widescreen:\s*\{[^}]*1920[^}]*1080[^}]*exportScale:\s*1/s);
   assert.match(page, /type="file"/);
   assert.match(page, /SV Bergheim II/);
   assert.match(page, /chooseTeamDesign/);
@@ -63,7 +62,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /function renderMatchdayGraphic\(/);
   assert.match(page, /competitionRegion/);
   assert.match(page, /venueAddress/);
-  assert.match(page, /letterSpacing = "0\.02em"/);
+  assert.match(page, /letterSpacing = "0\.04em"/);
+  assert.match(page, /layout\.largeTextSize \?\? 100/);
+  assert.match(page, /layout\.smallTextSize \?\? 40/);
   assert.match(page, /700 100px/);
   assert.match(page, /300 40px/);
   assert.match(page, /function drawImageContained\(/);

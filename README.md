@@ -7,15 +7,15 @@ Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken d
 - Spieltagsankündigung und Ergebnismeldung
 - Instagram Post, 4:5 (1080 × 1350; Export 2160 × 2700)
 - Instagram Story, 9:16 (1080 × 1920; Export 2160 × 3840)
-- Querformat, 3:2 (1200 × 800; Export 2400 × 1600)
-- 16:9-Querformat (1920 × 1080; Export 3840 × 2160)
+- Querformat, 3:2 (1500 × 1000; Export 1500 × 1000)
+- 16:9-Querformat (1920 × 1080; Export 1920 × 1080)
 - Live-Vorschau für Desktop und Mobilgeräte
 - fest integrierte weiße und blaue SVB-Vereinslogos
 - referenzgetreue Spieltagslayouts mit eigenen Positionen für alle vier Formate
 - automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
 - lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
 - lokaler Upload für das Gegnerlogo
-- PNG-Download in 2× Auflösung des gewählten Formats oder aller vier Formate
+- PNG-Download der Hochformate in 2× und der Querformate in 1× Auflösung
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads
 
 ## Lokale Entwicklung

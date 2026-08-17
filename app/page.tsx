@@ -33,15 +33,13 @@ type Assets = {
 
 const FORMATS: Record<
   FormatKey,
-  { label: string; short: string; width: number; height: number }
+  { label: string; short: string; width: number; height: number; exportScale: 1 | 2 }
 > = {
-  post: { label: "Instagram Post", short: "4:5", width: 1080, height: 1350 },
-  story: { label: "Instagram Story", short: "9:16", width: 1080, height: 1920 },
-  landscape: { label: "Querformat", short: "3:2", width: 1200, height: 800 },
-  widescreen: { label: "16:9 Querformat", short: "16:9", width: 1920, height: 1080 },
+  post: { label: "Instagram Post", short: "4:5", width: 1080, height: 1350, exportScale: 2 },
+  story: { label: "Instagram Story", short: "9:16", width: 1080, height: 1920, exportScale: 2 },
+  landscape: { label: "Querformat", short: "3:2", width: 1500, height: 1000, exportScale: 1 },
+  widescreen: { label: "16:9 Querformat", short: "16:9", width: 1920, height: 1080, exportScale: 1 },
 };
-
-const EXPORT_SCALE = 2;
 
 const EMBED_ORIGINS = [
   "https://fussball.sportverein-bergheim.de",
@@ -88,6 +86,8 @@ type MatchdayLayout = {
   logoY: number;
   logoMaxWidth: number;
   logoMaxHeight: number;
+  largeTextSize?: number;
+  smallTextSize?: number;
   versusY?: number;
   dateY: number;
   timeY: number;
@@ -102,7 +102,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     headerX: 0.5,
     roundY: 0.214,
     competitionY: 0.274,
-    regionY: 0.31,
+    regionY: 0.325,
     leftLogoX: 0.26,
     rightLogoX: 0.74,
     logoY: 0.51,
@@ -110,7 +110,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     logoMaxHeight: 0.245,
     versusY: 0.52,
     dateY: 0.725,
-    timeY: 0.785,
+    timeY: 0.775,
     venueY: 0.86,
     addressY: 0.887,
   },
@@ -128,7 +128,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     logoMaxHeight: 0.28,
     versusY: 0.505,
     dateY: 0.69,
-    timeY: 0.785,
+    timeY: 0.77,
     venueY: 0.895,
     addressY: 0.93,
   },
@@ -136,17 +136,17 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     cornerTopX: 0.13,
     cornerLeftY: 0.255,
     headerX: 0.5,
-    roundY: 0.105,
-    competitionY: 0.19,
-    regionY: 0.285,
+    roundY: 0.12,
+    competitionY: 0.205,
+    regionY: 0.3,
     leftLogoX: 0.31,
     rightLogoX: 0.69,
-    logoY: 0.48,
+    logoY: 0.55,
     logoMaxWidth: 0.24,
     logoMaxHeight: 0.36,
-    versusY: 0.49,
-    dateY: 0.69,
-    timeY: 0.81,
+    versusY: 0.55,
+    dateY: 0.77,
+    timeY: 0.86,
   },
   widescreen: {
     cornerTopX: 0.17,
@@ -163,7 +163,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     logoMaxWidth: 0.2,
     logoMaxHeight: 0.46,
     dateY: 0.61,
-    timeY: 0.72,
+    timeY: 0.71,
     venueY: 0.855,
     addressY: 0.905,
   },
@@ -304,7 +304,7 @@ function setMatchdayFont(
 ) {
   context.font = `${weight} ${size}px Inter, Arial, Helvetica, sans-serif`;
   context.fontKerning = "normal";
-  context.letterSpacing = "0.02em";
+  context.letterSpacing = "0.04em";
 }
 
 function fitMatchdayFont(
@@ -354,9 +354,10 @@ function drawMatchdayLogo(
   maxHeight: number,
   fallback: string,
   color: string,
+  fallbackSize: number,
 ) {
   if (image && drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight)) return;
-  drawMatchdayText(context, fallback.slice(0, 3), centerX, centerY, color, 700, 40);
+  drawMatchdayText(context, fallback.slice(0, 3), centerX, centerY, color, 700, fallbackSize);
 }
 
 function renderMatchdayGraphic(
@@ -371,6 +372,8 @@ function renderMatchdayGraphic(
   const isFirstTeam = teamDesign === "first";
   const blue = "#00448a";
   const textColor = isFirstTeam ? "#ffffff" : blue;
+  const largeTextSize = layout.largeTextSize ?? 100;
+  const smallTextSize = layout.smallTextSize ?? 40;
 
   const gradient = createAngledGradient(context, width, height, 52);
   gradient.addColorStop(0, "#003076");
@@ -408,7 +411,7 @@ function renderMatchdayGraphic(
     height * layout.roundY,
     textColor,
     300,
-    40,
+    smallTextSize,
     width * 0.62,
   );
   drawMatchdayText(
@@ -418,7 +421,7 @@ function renderMatchdayGraphic(
     height * layout.competitionY,
     textColor,
     700,
-    100,
+    largeTextSize,
     width * (formatKey === "widescreen" ? 0.34 : 0.72),
   );
   drawMatchdayText(
@@ -428,7 +431,7 @@ function renderMatchdayGraphic(
     height * layout.regionY,
     textColor,
     300,
-    40,
+    smallTextSize,
     width * 0.62,
   );
 
@@ -441,6 +444,7 @@ function renderMatchdayGraphic(
     height * layout.logoMaxHeight,
     leftName,
     textColor,
+    smallTextSize,
   );
   drawMatchdayLogo(
     context,
@@ -451,6 +455,7 @@ function renderMatchdayGraphic(
     height * layout.logoMaxHeight,
     rightName,
     textColor,
+    smallTextSize,
   );
 
   if (layout.versusY !== undefined) {
@@ -461,7 +466,7 @@ function renderMatchdayGraphic(
       height * layout.versusY,
       textColor,
       300,
-      40,
+      smallTextSize,
     );
   }
 
@@ -472,7 +477,7 @@ function renderMatchdayGraphic(
     height * layout.dateY,
     textColor,
     300,
-    40,
+    smallTextSize,
     width * 0.8,
   );
   drawMatchdayText(
@@ -482,7 +487,7 @@ function renderMatchdayGraphic(
     height * layout.timeY,
     textColor,
     700,
-    100,
+    largeTextSize,
     width * 0.78,
   );
 
@@ -494,7 +499,7 @@ function renderMatchdayGraphic(
       height * layout.venueY,
       textColor,
       700,
-      40,
+      smallTextSize,
       width * 0.88,
     );
   }
@@ -506,7 +511,7 @@ function renderMatchdayGraphic(
       height * layout.addressY,
       textColor,
       300,
-      40,
+      smallTextSize,
       width * 0.9,
     );
   }
@@ -894,18 +899,19 @@ export default function Home() {
   }
 
   async function downloadSelected() {
-    setDownloadStatus("PNG in 2× wird erstellt …");
+    const exportScale = selectedFormat.exportScale;
+    setDownloadStatus(`PNG in ${exportScale}× wird erstellt …`);
     const canvas = document.createElement("canvas");
-    renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, EXPORT_SCALE);
+    renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
     await downloadCanvas(canvas, formatKey);
-    setDownloadStatus("PNG in 2× wurde erstellt.");
+    setDownloadStatus(`PNG in ${exportScale}× wurde erstellt.`);
   }
 
   async function downloadAll() {
     setDownloadStatus("Vier Formate werden erstellt …");
     for (const key of Object.keys(FORMATS) as FormatKey[]) {
       const canvas = document.createElement("canvas");
-      renderGraphic(canvas, key, postType, form, assets, teamDesign, EXPORT_SCALE);
+      renderGraphic(canvas, key, postType, form, assets, teamDesign, FORMATS[key].exportScale);
       await downloadCanvas(canvas, key);
     }
     setDownloadStatus("Alle vier Formate wurden erstellt.");
@@ -969,7 +975,7 @@ export default function Home() {
               <h2 id="preview-title">{selectedFormat.label}</h2>
             </div>
             <span>
-              Export {selectedFormat.width * EXPORT_SCALE} × {selectedFormat.height * EXPORT_SCALE} px
+              Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
             </span>
           </div>
           <div className={`canvas-stage canvas-${formatKey}`}>
