@@ -432,7 +432,7 @@ input:not([type="file"]):not([type="range"]):focus {
 }
 
 .upload-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 320px);
 }
 
 .upload-box {

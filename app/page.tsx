@@ -22,14 +22,11 @@ type FormState = {
   halfTime: string;
   footer: string;
   homeAway: HomeAway;
-  imageZoom: number;
-  imageFocusY: number;
 };
 
 type Assets = {
   clubLogo: HTMLImageElement | null;
   opponentLogo: HTMLImageElement | null;
-  background: HTMLImageElement | null;
 };
 
 const FORMATS: Record<
@@ -63,8 +60,6 @@ const INITIAL_FORM: FormState = {
   halfTime: "1:0",
   footer: "Gemeinsam für den SVB",
   homeAway: "home",
-  imageZoom: 1,
-  imageFocusY: 0,
 };
 
 const MONTHS = [
@@ -115,24 +110,25 @@ function fitFont(
   return minSize;
 }
 
-function drawCover(
+function createAngledGradient(
   context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  x: number,
-  y: number,
   width: number,
   height: number,
-  zoom: number,
-  focusY: number,
+  degrees: number,
 ) {
-  const coverScale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const scale = coverScale * zoom;
-  const drawnWidth = image.naturalWidth * scale;
-  const drawnHeight = image.naturalHeight * scale;
-  const sourceX = x + (width - drawnWidth) / 2;
-  const travel = Math.max(0, drawnHeight - height);
-  const sourceY = y - travel / 2 - (focusY / 100) * (travel / 2);
-  context.drawImage(image, sourceX, sourceY, drawnWidth, drawnHeight);
+  const angle = ((degrees - 90) * Math.PI) / 180;
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  const length = Math.abs(width * directionX) + Math.abs(height * directionY);
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  return context.createLinearGradient(
+    centerX - (directionX * length) / 2,
+    centerY - (directionY * length) / 2,
+    centerX + (directionX * length) / 2,
+    centerY + (directionY * length) / 2,
+  );
 }
 
 function drawBadge(
@@ -142,19 +138,27 @@ function drawBadge(
   centerY: number,
   size: number,
   fallback: string,
+  isBrand: boolean,
+  inkColor: string,
 ) {
   context.save();
-  context.beginPath();
-  context.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
-  context.fillStyle = "rgba(255,255,255,.96)";
-  context.shadowColor = "rgba(0, 0, 0, .24)";
-  context.shadowBlur = size * 0.12;
-  context.fill();
-  context.shadowBlur = 0;
-  context.clip();
+
+  if (!isBrand) {
+    context.beginPath();
+    context.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
+    context.fillStyle = "rgba(255,255,255,.96)";
+    context.shadowColor = "rgba(0, 0, 0, .18)";
+    context.shadowBlur = size * 0.1;
+    context.fill();
+    context.shadowBlur = 0;
+    context.strokeStyle = "rgba(0, 68, 138, .16)";
+    context.lineWidth = Math.max(2, size * 0.012);
+    context.stroke();
+    context.clip();
+  }
 
   if (image) {
-    const padding = size * 0.14;
+    const padding = size * (isBrand ? 0.02 : 0.14);
     const maxWidth = size - padding * 2;
     const maxHeight = size - padding * 2;
     const scale = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
@@ -162,7 +166,7 @@ function drawBadge(
     const height = image.naturalHeight * scale;
     context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
   } else {
-    context.fillStyle = "#173c8f";
+    context.fillStyle = isBrand ? inkColor : "#00448a";
     context.font = `900 ${size * 0.25}px Arial, Helvetica, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -177,6 +181,7 @@ function renderGraphic(
   type: PostType,
   form: FormState,
   assets: Assets,
+  teamDesign: TeamDesign,
   scale = 1,
 ) {
   const format = FORMATS[formatKey];
@@ -184,47 +189,24 @@ function renderGraphic(
   canvas.height = format.height * scale;
   const context = canvas.getContext("2d");
   if (!context) return;
+  context.scale(scale, scale);
 
   const width = format.width;
   const height = format.height;
   const isStory = formatKey === "story";
   const isLandscape = height / width < 0.7;
   const safe = width * (isLandscape ? 0.055 : 0.065);
+  const isFirstTeam = teamDesign === "first";
+  const inkColor = isFirstTeam ? "#ffffff" : "#00448a";
+  const mutedInkColor = isFirstTeam ? "rgba(255,255,255,.72)" : "rgba(0,68,138,.68)";
+  const strongMutedInkColor = isFirstTeam ? "rgba(255,255,255,.8)" : "rgba(0,68,138,.8)";
+  const infoSurface = isFirstTeam ? "rgba(255,255,255,.1)" : "#edf4fa";
 
-  const gradient = context.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, "#173f98");
-  gradient.addColorStop(0.55, "#081b42");
-  gradient.addColorStop(1, "#040b19");
-  context.fillStyle = gradient;
+  const gradient = createAngledGradient(context, width, height, 52);
+  gradient.addColorStop(0, "#003076");
+  gradient.addColorStop(1, "#14589e");
+  context.fillStyle = isFirstTeam ? gradient : "#ffffff";
   context.fillRect(0, 0, width, height);
-
-  if (assets.background) {
-    drawCover(
-      context,
-      assets.background,
-      0,
-      0,
-      width,
-      height,
-      form.imageZoom,
-      form.imageFocusY,
-    );
-    const overlay = context.createLinearGradient(0, 0, 0, height);
-    overlay.addColorStop(0, "rgba(3, 14, 35, .34)");
-    overlay.addColorStop(0.55, "rgba(4, 19, 50, .68)");
-    overlay.addColorStop(1, "rgba(2, 8, 20, .94)");
-    context.fillStyle = overlay;
-    context.fillRect(0, 0, width, height);
-  }
-
-  context.save();
-  context.translate(width * 0.58, height * 0.14);
-  context.rotate(-0.16);
-  context.fillStyle = "rgba(53, 103, 220, .42)";
-  context.fillRect(-width * 0.7, 0, width * 1.45, Math.max(24, height * 0.035));
-  context.fillStyle = "rgba(255, 255, 255, .08)";
-  context.fillRect(-width * 0.7, height * 0.06, width * 1.35, Math.max(9, height * 0.009));
-  context.restore();
 
   const leftName = form.homeAway === "home" ? form.clubName : form.opponentName;
   const rightName = form.homeAway === "home" ? form.opponentName : form.clubName;
@@ -232,14 +214,16 @@ function renderGraphic(
   const rightLogo = form.homeAway === "home" ? assets.opponentLogo : assets.clubLogo;
   const leftScore = form.homeAway === "home" ? form.clubScore : form.opponentScore;
   const rightScore = form.homeAway === "home" ? form.opponentScore : form.clubScore;
+  const leftIsBrand = form.homeAway === "home";
+  const rightIsBrand = form.homeAway === "away";
 
   context.textBaseline = "alphabetic";
   context.textAlign = "left";
-  context.fillStyle = "rgba(255,255,255,.72)";
+  context.fillStyle = mutedInkColor;
   context.font = `700 ${Math.round(width * (isLandscape ? 0.013 : 0.026))}px Arial, Helvetica, sans-serif`;
   context.fillText(`${form.competition}  ·  ${form.round}`.toUpperCase(), safe, safe * 1.12);
 
-  context.fillStyle = "#ffffff";
+  context.fillStyle = inkColor;
   const headlineSize = isLandscape ? width * 0.062 : width * (isStory ? 0.11 : 0.095);
   context.font = `900 ${headlineSize}px Arial, Helvetica, sans-serif`;
   context.fillText((form.headline || (type === "matchday" ? "MATCHDAY" : "FULL TIME")).toUpperCase(), safe, safe * 2.45);
@@ -247,24 +231,24 @@ function renderGraphic(
   if (isLandscape) {
     const badgeSize = height * 0.28;
     const badgeY = height * 0.49;
-    drawBadge(context, leftLogo, width * 0.54, badgeY, badgeSize, leftName);
-    drawBadge(context, rightLogo, width * 0.78, badgeY, badgeSize, rightName);
+    drawBadge(context, leftLogo, width * 0.54, badgeY, badgeSize, leftName, leftIsBrand, inkColor);
+    drawBadge(context, rightLogo, width * 0.78, badgeY, badgeSize, rightName, rightIsBrand, inkColor);
 
     context.textAlign = "center";
-    context.fillStyle = "#ffffff";
+    context.fillStyle = inkColor;
     if (type === "result") {
       context.font = `900 ${height * 0.19}px Arial, Helvetica, sans-serif`;
       context.fillText(`${leftScore}:${rightScore}`, width * 0.66, height * 0.56);
     } else {
       context.font = `900 ${height * 0.075}px Arial, Helvetica, sans-serif`;
       context.fillText(form.time || "--:--", width * 0.66, height * 0.5);
-      context.fillStyle = "rgba(255,255,255,.72)";
+      context.fillStyle = mutedInkColor;
       context.font = `700 ${height * 0.029}px Arial, Helvetica, sans-serif`;
       context.fillText(formatDate(form.date), width * 0.66, height * 0.57);
     }
 
     const nameWidth = width * 0.19;
-    context.fillStyle = "#ffffff";
+    context.fillStyle = inkColor;
     const leftSize = fitFont(context, leftName.toUpperCase(), nameWidth, height * 0.046, height * 0.027);
     context.font = `800 ${leftSize}px Arial, Helvetica, sans-serif`;
     context.fillText(leftName.toUpperCase(), width * 0.54, height * 0.75);
@@ -273,7 +257,7 @@ function renderGraphic(
     context.fillText(rightName.toUpperCase(), width * 0.78, height * 0.75);
 
     context.textAlign = "left";
-    context.fillStyle = "rgba(255,255,255,.8)";
+    context.fillStyle = strongMutedInkColor;
     context.font = `700 ${height * 0.034}px Arial, Helvetica, sans-serif`;
     context.fillText(type === "result" ? `HALBZEIT ${form.halfTime || "–"}` : form.venue, safe, height - safe * 0.85);
   } else {
@@ -281,25 +265,25 @@ function renderGraphic(
     const badgeY = height * (isStory ? 0.405 : 0.43);
     const leftX = width * 0.27;
     const rightX = width * 0.73;
-    drawBadge(context, leftLogo, leftX, badgeY, badgeSize, leftName);
-    drawBadge(context, rightLogo, rightX, badgeY, badgeSize, rightName);
+    drawBadge(context, leftLogo, leftX, badgeY, badgeSize, leftName, leftIsBrand, inkColor);
+    drawBadge(context, rightLogo, rightX, badgeY, badgeSize, rightName, rightIsBrand, inkColor);
 
     context.textAlign = "center";
-    context.fillStyle = "#ffffff";
+    context.fillStyle = inkColor;
     if (type === "result") {
       context.font = `900 ${width * 0.16}px Arial, Helvetica, sans-serif`;
       context.fillText(`${leftScore}:${rightScore}`, width / 2, badgeY + width * 0.035);
     } else {
       context.font = `900 ${width * 0.064}px Arial, Helvetica, sans-serif`;
       context.fillText(form.time || "--:--", width / 2, badgeY + width * 0.012);
-      context.fillStyle = "rgba(255,255,255,.72)";
+      context.fillStyle = mutedInkColor;
       context.font = `700 ${width * 0.025}px Arial, Helvetica, sans-serif`;
       context.fillText(formatDate(form.date), width / 2, badgeY + width * 0.065);
     }
 
     const nameY = badgeY + badgeSize * 0.78;
     const nameWidth = width * 0.38;
-    context.fillStyle = "#ffffff";
+    context.fillStyle = inkColor;
     const leftSize = fitFont(context, leftName.toUpperCase(), nameWidth, width * 0.042, width * 0.024);
     context.font = `800 ${leftSize}px Arial, Helvetica, sans-serif`;
     context.fillText(leftName.toUpperCase(), leftX, nameY);
@@ -308,23 +292,23 @@ function renderGraphic(
     context.fillText(rightName.toUpperCase(), rightX, nameY);
 
     const infoY = height * (isStory ? 0.69 : 0.72);
-    context.fillStyle = "rgba(255,255,255,.1)";
+    context.fillStyle = infoSurface;
     const boxHeight = height * (isStory ? 0.095 : 0.11);
     context.fillRect(safe, infoY - boxHeight * 0.55, width - safe * 2, boxHeight);
-    context.fillStyle = "#ffffff";
+    context.fillStyle = inkColor;
     context.font = `800 ${width * 0.035}px Arial, Helvetica, sans-serif`;
     context.fillText(
       type === "result" ? `HALBZEIT ${form.halfTime || "–"}` : formatDate(form.date),
       width / 2,
       infoY,
     );
-    context.fillStyle = "rgba(255,255,255,.72)";
+    context.fillStyle = mutedInkColor;
     context.font = `700 ${width * 0.024}px Arial, Helvetica, sans-serif`;
     context.fillText(type === "result" ? form.round : form.venue, width / 2, infoY + width * 0.047);
   }
 
   context.textAlign = "center";
-  context.fillStyle = "rgba(255,255,255,.72)";
+  context.fillStyle = mutedInkColor;
   context.font = `700 ${Math.max(18, width * (isLandscape ? 0.014 : 0.024))}px Arial, Helvetica, sans-serif`;
   context.fillText((form.footer || "GEMEINSAM FÜR DEN SVB").toUpperCase(), width / 2, height - safe * 0.7);
 }
@@ -366,12 +350,34 @@ export default function Home() {
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [assets, setAssets] = useState<Assets>({ clubLogo: null, opponentLogo: null, background: null });
+  const [assets, setAssets] = useState<Assets>({ clubLogo: null, opponentLogo: null });
   const [downloadStatus, setDownloadStatus] = useState("");
 
   useEffect(() => {
-    if (canvasRef.current) renderGraphic(canvasRef.current, formatKey, postType, form, assets);
-  }, [formatKey, postType, form, assets]);
+    if (canvasRef.current) {
+      renderGraphic(canvasRef.current, formatKey, postType, form, assets, teamDesign);
+    }
+  }, [formatKey, postType, form, assets, teamDesign]);
+
+  useEffect(() => {
+    const image = new Image();
+    const fileName = teamDesign === "first"
+      ? "svb-logo-weiss-1906.svg"
+      : "svb-logo-blau-1906.svg";
+
+    image.onload = () => {
+      setAssets((current) => ({ ...current, clubLogo: image }));
+    };
+    image.onerror = () => {
+      setDownloadStatus("Das SVB-Vereinslogo konnte nicht geladen werden.");
+    };
+    image.src = new URL(`./assets/${fileName}`, window.location.href).href;
+
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [teamDesign]);
 
   useEffect(() => {
     const appShell = appShellRef.current;
@@ -474,7 +480,7 @@ export default function Home() {
   async function downloadSelected() {
     setDownloadStatus("PNG in 2× wird erstellt …");
     const canvas = document.createElement("canvas");
-    renderGraphic(canvas, formatKey, postType, form, assets, EXPORT_SCALE);
+    renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, EXPORT_SCALE);
     await downloadCanvas(canvas, formatKey);
     setDownloadStatus("PNG in 2× wurde erstellt.");
   }
@@ -483,7 +489,7 @@ export default function Home() {
     setDownloadStatus("Vier Formate werden erstellt …");
     for (const key of Object.keys(FORMATS) as FormatKey[]) {
       const canvas = document.createElement("canvas");
-      renderGraphic(canvas, key, postType, form, assets, EXPORT_SCALE);
+      renderGraphic(canvas, key, postType, form, assets, teamDesign, EXPORT_SCALE);
       await downloadCanvas(canvas, key);
     }
     setDownloadStatus("Alle vier Formate wurden erstellt.");
@@ -495,7 +501,7 @@ export default function Home() {
       clubName: TEAM_DESIGNS[teamDesign].clubName,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
-    setAssets({ clubLogo: null, opponentLogo: null, background: null });
+    setAssets((current) => ({ ...current, opponentLogo: null }));
     setDownloadStatus("Eingaben wurden zurückgesetzt.");
   }
 
@@ -654,23 +660,9 @@ export default function Home() {
           <div className="form-section">
             <h3>Bilder</h3>
             <div className="upload-grid">
-              <UploadField id="club-logo" label="Vereinslogo" image={assets.clubLogo} onChange={loadAsset("clubLogo")} onRemove={() => setAssets((current) => ({ ...current, clubLogo: null }))} />
               <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
-              <UploadField id="background" label="Hintergrundfoto (optional)" image={assets.background} onChange={loadAsset("background")} onRemove={() => setAssets((current) => ({ ...current, background: null }))} />
             </div>
-            {assets.background && (
-              <div className="range-grid">
-                <label>
-                  <span className="field-label">Foto-Zoom</span>
-                  <input type="range" min="1" max="2.5" step="0.05" value={form.imageZoom} onChange={(event) => updateForm("imageZoom", Number(event.target.value))} />
-                </label>
-                <label>
-                  <span className="field-label">Bildausschnitt</span>
-                  <input type="range" min="-100" max="100" step="1" value={form.imageFocusY} onChange={(event) => updateForm("imageFocusY", Number(event.target.value))} />
-                </label>
-              </div>
-            )}
-            <p className="helper-text">PNG, JPG, WebP oder SVG. Die Dateien werden nur in dieser Browser-Sitzung verwendet.</p>
+            <p className="helper-text">Das SVB-Logo und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo bleibt nur in dieser Browser-Sitzung.</p>
           </div>
 
           <div className="mobile-download">

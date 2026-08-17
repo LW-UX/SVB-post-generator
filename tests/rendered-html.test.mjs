@@ -55,6 +55,11 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type="file"/);
   assert.match(page, /SV Bergheim II/);
   assert.match(page, /chooseTeamDesign/);
+  assert.match(page, /svb-logo-weiss-1906\.svg/);
+  assert.match(page, /svb-logo-blau-1906\.svg/);
+  assert.match(page, /#003076/);
+  assert.match(page, /#14589e/);
+  assert.match(page, /createAngledGradient\(context, width, height, 52\)/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);

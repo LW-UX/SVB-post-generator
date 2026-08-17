@@ -10,8 +10,9 @@ Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken d
 - Querformat, 3:2 (1200 × 800; Export 2400 × 1600)
 - 16:9-Querformat (1920 × 1080; Export 3840 × 2160)
 - Live-Vorschau für Desktop und Mobilgeräte
-- lokale Uploads für Vereinslogo, Gegnerlogo und Hintergrundfoto
-- Zoom und vertikaler Bildausschnitt für Hintergrundfotos
+- fest integrierte weiße und blaue SVB-Vereinslogos
+- automatisches Mannschaftsdesign: blau-weißer Verlauf für die Erste, Weiß für die Zweite
+- lokaler Upload für das Gegnerlogo
 - PNG-Download in 2× Auflösung des gewählten Formats oder aller vier Formate
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads
 
