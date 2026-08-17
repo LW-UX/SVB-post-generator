@@ -77,6 +77,7 @@ const INITIAL_FORM: FormState = {
 type MatchdayLayout = {
   cornerTopX: number;
   bottomCornerStartX?: number;
+  bottomCornerRightY?: number;
   headerX: number;
   roundY: number;
   competitionY: number;
@@ -147,7 +148,8 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
   },
   widescreen: {
     cornerTopX: 0.17,
-    bottomCornerStartX: 0.834,
+    bottomCornerStartX: 0.834375,
+    bottomCornerRightY: 0.621778,
     headerX: 0.5,
     roundY: 0.245,
     competitionY: 0.345,
@@ -421,12 +423,9 @@ function renderMatchdayGraphic(
   context.closePath();
   context.fill();
 
-  if (layout.bottomCornerStartX !== undefined) {
-    const bottomCornerHeight = width
-      * (1 - layout.bottomCornerStartX)
-      * Math.tan((MATCHDAY_ANGLE_DEGREES * Math.PI) / 180);
+  if (layout.bottomCornerStartX !== undefined && layout.bottomCornerRightY !== undefined) {
     context.beginPath();
-    context.moveTo(width, height - bottomCornerHeight);
+    context.moveTo(width, height * layout.bottomCornerRightY);
     context.lineTo(width, height);
     context.lineTo(width * layout.bottomCornerStartX, height);
     context.closePath();
