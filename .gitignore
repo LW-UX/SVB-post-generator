@@ -1,0 +1,35 @@
+# Installierte Abhängigkeiten
+node_modules/
+.pnpm-store/
+
+# Build-Ausgaben
+.next/
+dist/
+pages-dist/
+coverage/
+
+# Lokale Entwicklungs- und Deployment-Daten
+.wrangler/
+.vercel/
+.dev.vars
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Betriebssystem und Editoren
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
