@@ -12,10 +12,12 @@ type FormState = {
   clubName: string;
   opponentName: string;
   competition: string;
+  competitionRegion: string;
   round: string;
   date: string;
   time: string;
   venue: string;
+  venueAddress: string;
   headline: string;
   clubScore: string;
   opponentScore: string;
@@ -46,25 +48,125 @@ const EMBED_ORIGINS = [
   "https://www.sportverein-bergheim.de",
 ];
 
-const TEAM_DESIGNS: Record<TeamDesign, { label: string; clubName: string }> = {
-  first: { label: "1. Mannschaft", clubName: "SV Bergheim" },
-  second: { label: "2. Mannschaft", clubName: "SV Bergheim II" },
+const TEAM_DESIGNS: Record<
+  TeamDesign,
+  { label: string; clubName: string; competition: string }
+> = {
+  first: { label: "1. Mannschaft", clubName: "SV Bergheim", competition: "Kreisklasse" },
+  second: { label: "2. Mannschaft", clubName: "SV Bergheim II", competition: "A-Klasse" },
 };
 
 const INITIAL_FORM: FormState = {
   clubName: "SV Bergheim",
   opponentName: "TSV Königsbrunn II",
-  competition: "Kreisklasse Augsburg Süd",
-  round: "Spieltag 1",
+  competition: "Kreisklasse",
+  competitionRegion: "Augsburg Süd",
+  round: "1. Spieltag",
   date: "2026-08-23",
   time: "15:00",
   venue: "Sportanlage Bergheim",
+  venueAddress: "",
   headline: "MATCHDAY",
   clubScore: "3",
   opponentScore: "1",
   halfTime: "1:0",
   footer: "Gemeinsam für den SVB",
   homeAway: "home",
+};
+
+type MatchdayLayout = {
+  cornerTopX: number;
+  cornerLeftY: number;
+  bottomCornerStartX?: number;
+  bottomCornerRightY?: number;
+  headerX: number;
+  roundY: number;
+  competitionY: number;
+  regionY: number;
+  leftLogoX: number;
+  rightLogoX: number;
+  logoY: number;
+  logoMaxWidth: number;
+  logoMaxHeight: number;
+  versusY?: number;
+  dateY: number;
+  timeY: number;
+  venueY?: number;
+  addressY?: number;
+};
+
+const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
+  story: {
+    cornerTopX: 0.18,
+    cornerLeftY: 0.127,
+    headerX: 0.5,
+    roundY: 0.214,
+    competitionY: 0.274,
+    regionY: 0.31,
+    leftLogoX: 0.26,
+    rightLogoX: 0.74,
+    logoY: 0.51,
+    logoMaxWidth: 0.34,
+    logoMaxHeight: 0.245,
+    versusY: 0.52,
+    dateY: 0.725,
+    timeY: 0.785,
+    venueY: 0.86,
+    addressY: 0.887,
+  },
+  post: {
+    cornerTopX: 0.27,
+    cornerLeftY: 0.174,
+    headerX: 0.5,
+    roundY: 0.16,
+    competitionY: 0.235,
+    regionY: 0.295,
+    leftLogoX: 0.255,
+    rightLogoX: 0.745,
+    logoY: 0.49,
+    logoMaxWidth: 0.3,
+    logoMaxHeight: 0.28,
+    versusY: 0.505,
+    dateY: 0.69,
+    timeY: 0.785,
+    venueY: 0.895,
+    addressY: 0.93,
+  },
+  landscape: {
+    cornerTopX: 0.13,
+    cornerLeftY: 0.255,
+    headerX: 0.5,
+    roundY: 0.105,
+    competitionY: 0.19,
+    regionY: 0.285,
+    leftLogoX: 0.31,
+    rightLogoX: 0.69,
+    logoY: 0.48,
+    logoMaxWidth: 0.24,
+    logoMaxHeight: 0.36,
+    versusY: 0.49,
+    dateY: 0.69,
+    timeY: 0.81,
+  },
+  widescreen: {
+    cornerTopX: 0.17,
+    cornerLeftY: 0.39,
+    bottomCornerStartX: 0.815,
+    bottomCornerRightY: 0.38,
+    headerX: 0.5,
+    roundY: 0.245,
+    competitionY: 0.345,
+    regionY: 0.42,
+    leftLogoX: 0.195,
+    rightLogoX: 0.805,
+    logoY: 0.455,
+    logoMaxWidth: 0.2,
+    logoMaxHeight: 0.46,
+    dateY: 0.61,
+    timeY: 0.72,
+    venueY: 0.855,
+    addressY: 0.905,
+  },
 };
 
 const MONTHS = [
@@ -82,10 +184,50 @@ const MONTHS = [
   "DEZ",
 ];
 
+const FULL_MONTHS = [
+  "JANUAR",
+  "FEBRUAR",
+  "MÄRZ",
+  "APRIL",
+  "MAI",
+  "JUNI",
+  "JULI",
+  "AUGUST",
+  "SEPTEMBER",
+  "OKTOBER",
+  "NOVEMBER",
+  "DEZEMBER",
+];
+
+const WEEKDAYS = [
+  "SONNTAG",
+  "MONTAG",
+  "DIENSTAG",
+  "MITTWOCH",
+  "DONNERSTAG",
+  "FREITAG",
+  "SAMSTAG",
+];
+
 function formatDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return value || "DATUM";
   return `${String(day).padStart(2, "0")} ${MONTHS[month - 1]} ${year}`;
+}
+
+function formatMatchdayDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value.toUpperCase() || "DATUM";
+  const date = new Date(year, month - 1, day, 12);
+  return `${WEEKDAYS[date.getDay()]}, ${day}. ${FULL_MONTHS[month - 1]}`;
+}
+
+function formatRound(value: string) {
+  const trimmed = value.trim();
+  const conventional = trimmed.match(/^spieltag\s+(\d+)$/i);
+  if (conventional) return `${conventional[1]}. SPIELTAG`;
+  if (/^\d+$/.test(trimmed)) return `${trimmed}. SPIELTAG`;
+  return trimmed.toUpperCase() || "SPIELTAG";
 }
 
 function slugify(value: string) {
@@ -136,6 +278,242 @@ function createAngledGradient(
   );
 }
 
+function drawImageContained(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  centerX: number,
+  centerY: number,
+  maxWidth: number,
+  maxHeight: number,
+) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (sourceWidth <= 0 || sourceHeight <= 0) return false;
+
+  const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
+  return true;
+}
+
+function setMatchdayFont(
+  context: CanvasRenderingContext2D,
+  weight: 300 | 700,
+  size: number,
+) {
+  context.font = `${weight} ${size}px Inter, Arial, Helvetica, sans-serif`;
+  context.fontKerning = "normal";
+  context.letterSpacing = "0.02em";
+}
+
+function fitMatchdayFont(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxSize: number,
+  minSize: number,
+  weight: 300 | 700,
+) {
+  let size = maxSize;
+  while (size > minSize) {
+    setMatchdayFont(context, weight, size);
+    if (context.measureText(text).width <= maxWidth) return size;
+    size -= 2;
+  }
+  return minSize;
+}
+
+function drawMatchdayText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color: string,
+  weight: 300 | 700,
+  size: number,
+  maxWidth?: number,
+) {
+  const value = text.toUpperCase();
+  const fittedSize = maxWidth
+    ? fitMatchdayFont(context, value, maxWidth, size, Math.max(26, size * 0.58), weight)
+    : size;
+  setMatchdayFont(context, weight, fittedSize);
+  context.fillStyle = color;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(value, x, y);
+}
+
+function drawMatchdayLogo(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement | null,
+  centerX: number,
+  centerY: number,
+  maxWidth: number,
+  maxHeight: number,
+  fallback: string,
+  color: string,
+) {
+  if (image && drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight)) return;
+  drawMatchdayText(context, fallback.slice(0, 3), centerX, centerY, color, 700, 40);
+}
+
+function renderMatchdayGraphic(
+  context: CanvasRenderingContext2D,
+  formatKey: FormatKey,
+  form: FormState,
+  assets: Assets,
+  teamDesign: TeamDesign,
+) {
+  const { width, height } = FORMATS[formatKey];
+  const layout = MATCHDAY_LAYOUTS[formatKey];
+  const isFirstTeam = teamDesign === "first";
+  const blue = "#00448a";
+  const textColor = isFirstTeam ? "#ffffff" : blue;
+
+  const gradient = createAngledGradient(context, width, height, 52);
+  gradient.addColorStop(0, "#003076");
+  gradient.addColorStop(1, "#14589e");
+
+  context.fillStyle = isFirstTeam ? gradient : "#ffffff";
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = isFirstTeam ? "#ffffff" : gradient;
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(width * layout.cornerTopX, 0);
+  context.lineTo(0, height * layout.cornerLeftY);
+  context.closePath();
+  context.fill();
+
+  if (layout.bottomCornerStartX !== undefined && layout.bottomCornerRightY !== undefined) {
+    context.beginPath();
+    context.moveTo(width, height * layout.bottomCornerRightY);
+    context.lineTo(width, height);
+    context.lineTo(width * layout.bottomCornerStartX, height);
+    context.closePath();
+    context.fill();
+  }
+
+  const leftName = form.homeAway === "home" ? form.clubName : form.opponentName;
+  const rightName = form.homeAway === "home" ? form.opponentName : form.clubName;
+  const leftLogo = form.homeAway === "home" ? assets.clubLogo : assets.opponentLogo;
+  const rightLogo = form.homeAway === "home" ? assets.opponentLogo : assets.clubLogo;
+
+  drawMatchdayText(
+    context,
+    formatRound(form.round),
+    width * layout.headerX,
+    height * layout.roundY,
+    textColor,
+    300,
+    40,
+    width * 0.62,
+  );
+  drawMatchdayText(
+    context,
+    form.competition,
+    width * layout.headerX,
+    height * layout.competitionY,
+    textColor,
+    700,
+    100,
+    width * (formatKey === "widescreen" ? 0.34 : 0.72),
+  );
+  drawMatchdayText(
+    context,
+    form.competitionRegion,
+    width * layout.headerX,
+    height * layout.regionY,
+    textColor,
+    300,
+    40,
+    width * 0.62,
+  );
+
+  drawMatchdayLogo(
+    context,
+    leftLogo,
+    width * layout.leftLogoX,
+    height * layout.logoY,
+    width * layout.logoMaxWidth,
+    height * layout.logoMaxHeight,
+    leftName,
+    textColor,
+  );
+  drawMatchdayLogo(
+    context,
+    rightLogo,
+    width * layout.rightLogoX,
+    height * layout.logoY,
+    width * layout.logoMaxWidth,
+    height * layout.logoMaxHeight,
+    rightName,
+    textColor,
+  );
+
+  if (layout.versusY !== undefined) {
+    drawMatchdayText(
+      context,
+      "VS.",
+      width / 2,
+      height * layout.versusY,
+      textColor,
+      300,
+      40,
+    );
+  }
+
+  drawMatchdayText(
+    context,
+    formatMatchdayDate(form.date),
+    width / 2,
+    height * layout.dateY,
+    textColor,
+    300,
+    40,
+    width * 0.8,
+  );
+  drawMatchdayText(
+    context,
+    `${form.time || "--:--"} UHR`,
+    width / 2,
+    height * layout.timeY,
+    textColor,
+    700,
+    100,
+    width * 0.78,
+  );
+
+  if (layout.venueY !== undefined && form.venue) {
+    drawMatchdayText(
+      context,
+      form.venue,
+      width / 2,
+      height * layout.venueY,
+      textColor,
+      700,
+      40,
+      width * 0.88,
+    );
+  }
+  if (layout.addressY !== undefined && form.venueAddress) {
+    drawMatchdayText(
+      context,
+      form.venueAddress,
+      width / 2,
+      height * layout.addressY,
+      textColor,
+      300,
+      40,
+      width * 0.9,
+    );
+  }
+
+  context.letterSpacing = "0px";
+}
+
 function drawBadge(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement | null,
@@ -162,15 +540,18 @@ function drawBadge(
     context.clip();
   }
 
-  if (image) {
-    const padding = size * (isBrand ? 0.02 : 0.14);
-    const maxWidth = size - padding * 2;
-    const maxHeight = size - padding * 2;
-    const scale = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
-    const width = image.naturalWidth * scale;
-    const height = image.naturalHeight * scale;
-    context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
-  } else {
+  const imageWasDrawn = image
+    ? drawImageContained(
+        context,
+        image,
+        centerX,
+        centerY,
+        size * (isBrand ? 0.96 : 0.72),
+        size * (isBrand ? 0.96 : 0.72),
+      )
+    : false;
+
+  if (!imageWasDrawn) {
     context.fillStyle = isBrand ? inkColor : "#00448a";
     context.font = `900 ${size * 0.25}px Arial, Helvetica, sans-serif`;
     context.textAlign = "center";
@@ -198,6 +579,12 @@ function renderGraphic(
 
   const width = format.width;
   const height = format.height;
+
+  if (type === "matchday") {
+    renderMatchdayGraphic(context, formatKey, form, assets, teamDesign);
+    return;
+  }
+
   const isStory = formatKey === "story";
   const isLandscape = height / width < 0.7;
   const safe = width * (isLandscape ? 0.055 : 0.065);
@@ -226,12 +613,16 @@ function renderGraphic(
   context.textAlign = "left";
   context.fillStyle = mutedInkColor;
   context.font = `700 ${Math.round(width * (isLandscape ? 0.013 : 0.026))}px Arial, Helvetica, sans-serif`;
-  context.fillText(`${form.competition}  ·  ${form.round}`.toUpperCase(), safe, safe * 1.12);
+  context.fillText(
+    `${form.competition} ${form.competitionRegion}  ·  ${form.round}`.toUpperCase(),
+    safe,
+    safe * 1.12,
+  );
 
   context.fillStyle = inkColor;
   const headlineSize = isLandscape ? width * 0.062 : width * (isStory ? 0.11 : 0.095);
   context.font = `900 ${headlineSize}px Arial, Helvetica, sans-serif`;
-  context.fillText((form.headline || (type === "matchday" ? "MATCHDAY" : "FULL TIME")).toUpperCase(), safe, safe * 2.45);
+  context.fillText((form.headline || "FULL TIME").toUpperCase(), safe, safe * 2.45);
 
   if (isLandscape) {
     const badgeSize = height * 0.28;
@@ -357,12 +748,27 @@ export default function Home() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [assets, setAssets] = useState<Assets>({ clubLogo: null, opponentLogo: null });
   const [downloadStatus, setDownloadStatus] = useState("");
+  const [fontReady, setFontReady] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    Promise.all([
+      document.fonts.load('300 40px "Inter"'),
+      document.fonts.load('700 100px "Inter"'),
+    ]).finally(() => {
+      if (isActive) setFontReady(true);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (canvasRef.current) {
       renderGraphic(canvasRef.current, formatKey, postType, form, assets, teamDesign);
     }
-  }, [formatKey, postType, form, assets, teamDesign]);
+  }, [formatKey, postType, form, assets, teamDesign, fontReady]);
 
   useEffect(() => {
     const image = new Image();
@@ -387,13 +793,14 @@ export default function Home() {
   useEffect(() => {
     const appShell = appShellRef.current;
     if (!appShell || window.parent === window) return;
+    const observedAppShell = appShell;
 
     let animationFrame = 0;
 
     function reportHeight() {
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
-        const height = Math.ceil(appShell.getBoundingClientRect().bottom);
+        const height = Math.ceil(observedAppShell.getBoundingClientRect().bottom);
         for (const origin of EMBED_ORIGINS) {
           window.parent.postMessage(
             { type: "svb-generator-height", height },
@@ -404,7 +811,7 @@ export default function Home() {
     }
 
     const resizeObserver = new ResizeObserver(reportHeight);
-    resizeObserver.observe(appShell);
+    resizeObserver.observe(observedAppShell);
     window.addEventListener("resize", reportHeight);
     void document.fonts?.ready.then(reportHeight);
     reportHeight();
@@ -439,6 +846,7 @@ export default function Home() {
     setForm((current) => ({
       ...current,
       clubName: TEAM_DESIGNS[design].clubName,
+      competition: TEAM_DESIGNS[design].competition,
     }));
   }
 
@@ -462,7 +870,8 @@ export default function Home() {
   }
 
   function fileName(key: FormatKey) {
-    return `svb-${postType === "matchday" ? "spieltag" : "ergebnis"}-${slugify(form.opponentName) || "gegner"}-${key}.png`;
+    const team = teamDesign === "first" ? "erste" : "zweite";
+    return `svb-${team}-${postType === "matchday" ? "spieltag" : "ergebnis"}-${slugify(form.opponentName) || "gegner"}-${key}.png`;
   }
 
   function downloadCanvas(canvas: HTMLCanvasElement, key: FormatKey) {
@@ -506,6 +915,7 @@ export default function Home() {
     setForm({
       ...INITIAL_FORM,
       clubName: TEAM_DESIGNS[teamDesign].clubName,
+      competition: TEAM_DESIGNS[teamDesign].competition,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
     setAssets((current) => ({ ...current, opponentLogo: null }));
@@ -607,8 +1017,12 @@ export default function Home() {
             <h3>Spielinformationen</h3>
             <div className="field-grid">
               <label>
-                <span className="field-label">Wettbewerb</span>
+                <span className="field-label">Liga</span>
                 <input value={form.competition} maxLength={45} onChange={(event) => updateForm("competition", event.target.value)} />
+              </label>
+              <label>
+                <span className="field-label">Staffel / Region</span>
+                <input value={form.competitionRegion} maxLength={45} onChange={(event) => updateForm("competitionRegion", event.target.value)} />
               </label>
               <label>
                 <span className="field-label">Spieltag</span>
@@ -623,10 +1037,16 @@ export default function Home() {
                 <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
               </label>
             </div>
-            <label className="field-block">
-              <span className="field-label">Spielort</span>
-              <input value={form.venue} maxLength={45} onChange={(event) => updateForm("venue", event.target.value)} />
-            </label>
+            <div className="field-grid field-block">
+              <label>
+                <span className="field-label">Spielstätte</span>
+                <input value={form.venue} maxLength={55} onChange={(event) => updateForm("venue", event.target.value)} />
+              </label>
+              <label>
+                <span className="field-label">Adresse</span>
+                <input value={form.venueAddress} maxLength={65} onChange={(event) => updateForm("venueAddress", event.target.value)} />
+              </label>
+            </div>
           </div>
 
           {postType === "result" && (
@@ -650,26 +1070,28 @@ export default function Home() {
             </div>
           )}
 
-          <div className="form-section">
-            <h3>Texte</h3>
-            <div className="field-grid">
-              <label>
-                <span className="field-label">Headline</span>
-                <input value={form.headline} maxLength={24} onChange={(event) => updateForm("headline", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Untere Zeile</span>
-                <input value={form.footer} maxLength={40} onChange={(event) => updateForm("footer", event.target.value)} />
-              </label>
+          {postType === "result" && (
+            <div className="form-section">
+              <h3>Texte</h3>
+              <div className="field-grid">
+                <label>
+                  <span className="field-label">Headline</span>
+                  <input value={form.headline} maxLength={24} onChange={(event) => updateForm("headline", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Untere Zeile</span>
+                  <input value={form.footer} maxLength={40} onChange={(event) => updateForm("footer", event.target.value)} />
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-section">
             <h3>Bilder</h3>
             <div className="upload-grid">
               <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
             </div>
-            <p className="helper-text">Das SVB-Logo und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo bleibt nur in dieser Browser-Sitzung.</p>
+            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo bleibt nur in dieser Browser-Sitzung.</p>
           </div>
 
           <div className="mobile-download">

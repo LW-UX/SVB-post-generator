@@ -11,7 +11,9 @@ Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken d
 - 16:9-Querformat (1920 × 1080; Export 3840 × 2160)
 - Live-Vorschau für Desktop und Mobilgeräte
 - fest integrierte weiße und blaue SVB-Vereinslogos
-- automatisches Mannschaftsdesign: blau-weißer Verlauf für die Erste, Weiß für die Zweite
+- referenzgetreue Spieltagslayouts mit eigenen Positionen für alle vier Formate
+- automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
+- lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
 - lokaler Upload für das Gegnerlogo
 - PNG-Download in 2× Auflösung des gewählten Formats oder aller vier Formate
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads

@@ -60,6 +60,14 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /#003076/);
   assert.match(page, /#14589e/);
   assert.match(page, /createAngledGradient\(context, width, height, 52\)/);
+  assert.match(page, /function renderMatchdayGraphic\(/);
+  assert.match(page, /competitionRegion/);
+  assert.match(page, /venueAddress/);
+  assert.match(page, /letterSpacing = "0\.02em"/);
+  assert.match(page, /700 100px/);
+  assert.match(page, /300 40px/);
+  assert.match(page, /function drawImageContained\(/);
+  assert.match(page, /Math\.min\(maxWidth \/ sourceWidth, maxHeight \/ sourceHeight\)/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);
@@ -71,4 +79,5 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(workflow, /actions\/deploy-pages@v4/);
 
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
+  await access(new URL("../app/fonts/Inter-Variable.ttf", import.meta.url));
 });
