@@ -46,6 +46,8 @@ const EMBED_ORIGINS = [
   "https://www.sportverein-bergheim.de",
 ];
 
+const MATCHDAY_ANGLE_DEGREES = 52;
+
 const TEAM_DESIGNS: Record<
   TeamDesign,
   { label: string; clubName: string; competition: string }
@@ -74,7 +76,6 @@ const INITIAL_FORM: FormState = {
 
 type MatchdayLayout = {
   cornerTopX: number;
-  cornerLeftY: number;
   bottomCornerStartX?: number;
   bottomCornerRightY?: number;
   headerX: number;
@@ -98,7 +99,6 @@ type MatchdayLayout = {
 const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
   story: {
     cornerTopX: 0.18,
-    cornerLeftY: 0.127,
     headerX: 0.5,
     roundY: 0.214,
     competitionY: 0.274,
@@ -116,7 +116,6 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
   },
   post: {
     cornerTopX: 0.27,
-    cornerLeftY: 0.174,
     headerX: 0.5,
     roundY: 0.16,
     competitionY: 0.235,
@@ -133,8 +132,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
     addressY: 0.93,
   },
   landscape: {
-    cornerTopX: 0.13,
-    cornerLeftY: 0.255,
+    cornerTopX: 0.21,
     headerX: 0.5,
     roundY: 0.12,
     competitionY: 0.205,
@@ -150,9 +148,8 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
   },
   widescreen: {
     cornerTopX: 0.17,
-    cornerLeftY: 0.39,
-    bottomCornerStartX: 0.815,
-    bottomCornerRightY: 0.38,
+    bottomCornerStartX: 0.85,
+    bottomCornerRightY: 0.5,
     headerX: 0.5,
     roundY: 0.245,
     competitionY: 0.345,
@@ -411,7 +408,7 @@ function renderMatchdayGraphic(
   const largeTextSize = layout.largeTextSize ?? 100;
   const smallTextSize = layout.smallTextSize ?? 40;
 
-  const gradient = createAngledGradient(context, width, height, 52);
+  const gradient = createAngledGradient(context, width, height, MATCHDAY_ANGLE_DEGREES);
   gradient.addColorStop(0, "#003076");
   gradient.addColorStop(1, "#14589e");
 
@@ -422,7 +419,10 @@ function renderMatchdayGraphic(
   context.beginPath();
   context.moveTo(0, 0);
   context.lineTo(width * layout.cornerTopX, 0);
-  context.lineTo(0, height * layout.cornerLeftY);
+  context.lineTo(
+    0,
+    width * layout.cornerTopX * Math.tan((MATCHDAY_ANGLE_DEGREES * Math.PI) / 180),
+  );
   context.closePath();
   context.fill();
 
@@ -638,7 +638,7 @@ function renderGraphic(
   const strongMutedInkColor = isFirstTeam ? "rgba(255,255,255,.8)" : "rgba(0,68,138,.8)";
   const infoSurface = isFirstTeam ? "rgba(255,255,255,.1)" : "#edf4fa";
 
-  const gradient = createAngledGradient(context, width, height, 52);
+  const gradient = createAngledGradient(context, width, height, MATCHDAY_ANGLE_DEGREES);
   gradient.addColorStop(0, "#003076");
   gradient.addColorStop(1, "#14589e");
   context.fillStyle = isFirstTeam ? gradient : "#ffffff";

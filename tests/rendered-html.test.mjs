@@ -58,7 +58,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /svb-logo-blau-1906\.svg/);
   assert.match(page, /#003076/);
   assert.match(page, /#14589e/);
-  assert.match(page, /createAngledGradient\(context, width, height, 52\)/);
+  assert.match(page, /const MATCHDAY_ANGLE_DEGREES = 52/);
+  assert.match(page, /Math\.tan\(\(MATCHDAY_ANGLE_DEGREES \* Math\.PI\) \/ 180\)/);
+  assert.match(page, /landscape:\s*\{\s*cornerTopX:\s*0\.21/s);
+  assert.match(page, /widescreen:\s*\{[^}]*bottomCornerStartX:\s*0\.85[^}]*bottomCornerRightY:\s*0\.5/s);
   assert.match(page, /function renderMatchdayGraphic\(/);
   assert.match(page, /competitionRegion/);
   assert.match(page, /venueAddress/);
