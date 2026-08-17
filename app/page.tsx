@@ -447,23 +447,6 @@ export default function Home() {
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div className="brand-lockup">
-          <span className="brand-badge">SVB</span>
-          <div>
-            <p className="eyebrow">SV Bergheim</p>
-            <h1>Social Media Studio</h1>
-          </div>
-        </div>
-        <div className="privacy-note"><span aria-hidden="true">●</span> Alles bleibt auf diesem Gerät</div>
-      </header>
-
-      <section className="intro" aria-labelledby="intro-title">
-        <p className="section-kicker">Grafikgenerator</p>
-        <h2 id="intro-title">Ein Spiel. Vier Formate. Sofort bereit.</h2>
-        <p>Spieldaten eintragen, Bilder auswählen und die fertige Vereinsgrafik direkt herunterladen.</p>
-      </section>
-
       <section className="selector-card" aria-label="Grafik auswählen">
         <div className="selector-group">
           <span className="selector-label">Beitrag</span>

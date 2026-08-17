@@ -34,7 +34,8 @@ test("renders the SVB generator shell", async () => {
   assert.match(html, /Ergebnismeldung/);
   assert.match(html, /Instagram Story/);
   assert.match(html, /16:9 Querformat/);
-  assert.match(html, /Alles bleibt auf diesem Gerät/);
+  assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
+  assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
   assert.match(html, /PNG herunterladen/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
