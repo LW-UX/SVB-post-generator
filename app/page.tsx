@@ -64,8 +64,8 @@ const INITIAL_FORM: FormState = {
   round: "1. Spieltag",
   date: "2026-08-23",
   time: "15:00",
-  venue: "Sportanlage Bergheim",
-  venueAddress: "",
+  venue: "Mößmann Sportanlage",
+  venueAddress: "Am Langen Berg 5, 86199 Augsburg",
   headline: "MATCHDAY",
   clubScore: "3",
   opponentScore: "1",
@@ -384,13 +384,10 @@ function drawMatchdayLogo(
   centerY: number,
   maxWidth: number,
   maxHeight: number,
-  fallback: string,
-  color: string,
-  fallbackSize: number,
   tintColor?: string,
 ) {
-  if (image && drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight, tintColor)) return;
-  drawMatchdayText(context, fallback.slice(0, 3), centerX, centerY, color, 700, fallbackSize);
+  if (!image) return;
+  drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight, tintColor);
 }
 
 function renderMatchdayGraphic(
@@ -435,8 +432,6 @@ function renderMatchdayGraphic(
     context.fill();
   }
 
-  const leftName = form.homeAway === "home" ? form.clubName : form.opponentName;
-  const rightName = form.homeAway === "home" ? form.opponentName : form.clubName;
   const leftLogo = form.homeAway === "home" ? assets.clubLogo : assets.opponentLogo;
   const rightLogo = form.homeAway === "home" ? assets.opponentLogo : assets.clubLogo;
 
@@ -478,9 +473,6 @@ function renderMatchdayGraphic(
     height * layout.logoY,
     width * layout.logoMaxWidth,
     height * layout.logoMaxHeight,
-    leftName,
-    textColor,
-    smallTextSize,
     form.homeAway === "away" ? textColor : undefined,
   );
   drawMatchdayLogo(
@@ -490,9 +482,6 @@ function renderMatchdayGraphic(
     height * layout.logoY,
     width * layout.logoMaxWidth,
     height * layout.logoMaxHeight,
-    rightName,
-    textColor,
-    smallTextSize,
     form.homeAway === "home" ? textColor : undefined,
   );
 
@@ -1062,15 +1051,15 @@ export default function Home() {
             <h3>Spielinformationen</h3>
             <div className="field-grid">
               <label>
-                <span className="field-label">Liga</span>
+                <span className="field-label">Liga / Überschrift</span>
                 <input value={form.competition} maxLength={45} onChange={(event) => updateForm("competition", event.target.value)} />
               </label>
               <label>
-                <span className="field-label">Staffel / Region</span>
+                <span className="field-label">Region / Untere Zeile</span>
                 <input value={form.competitionRegion} maxLength={45} onChange={(event) => updateForm("competitionRegion", event.target.value)} />
               </label>
               <label>
-                <span className="field-label">Spieltag</span>
+                <span className="field-label">Spieltag / Obere Zeile</span>
                 <input value={form.round} maxLength={24} onChange={(event) => updateForm("round", event.target.value)} />
               </label>
               <label>
