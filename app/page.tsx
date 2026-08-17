@@ -1027,17 +1027,21 @@ export default function Home() {
 
           <div className="form-section">
             <h3>Mannschaften</h3>
-            <div className="field-grid">
-              <label>
-                <span className="field-label">Vereinsname</span>
-                <input value={form.clubName} maxLength={40} onChange={(event) => updateForm("clubName", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Gegner</span>
-                <input value={form.opponentName} maxLength={40} onChange={(event) => updateForm("opponentName", event.target.value)} />
-              </label>
-            </div>
-            {textWarning && <p className="input-warning">Sehr lange Vereinsnamen werden in der Grafik automatisch verkleinert.</p>}
+            {postType === "result" && (
+              <>
+                <div className="field-grid">
+                  <label>
+                    <span className="field-label">Vereinsname</span>
+                    <input value={form.clubName} maxLength={40} onChange={(event) => updateForm("clubName", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className="field-label">Gegner</span>
+                    <input value={form.opponentName} maxLength={40} onChange={(event) => updateForm("opponentName", event.target.value)} />
+                  </label>
+                </div>
+                {textWarning && <p className="input-warning">Sehr lange Vereinsnamen werden in der Grafik automatisch verkleinert.</p>}
+              </>
+            )}
             <div className="field-block">
               <span className="field-label">Heim / Auswärts</span>
               <div className="segmented-control compact">

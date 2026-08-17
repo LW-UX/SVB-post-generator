@@ -37,6 +37,8 @@ test("renders the SVB generator shell", async () => {
   assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
   assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
   assert.match(html, /PNG herunterladen/);
+  assert.doesNotMatch(html, />Vereinsname</);
+  assert.doesNotMatch(html, />Gegner</);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
