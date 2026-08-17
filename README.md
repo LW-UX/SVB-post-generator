@@ -15,6 +15,7 @@ Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken d
 - automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
 - lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
 - lokaler Upload für das Gegnerlogo
+- automatische einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
 - PNG-Download der Hochformate in 2× und der Querformate in 1× Auflösung
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads
 
