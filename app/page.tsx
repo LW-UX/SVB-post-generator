@@ -41,6 +41,11 @@ const FORMATS: Record<
 
 const EXPORT_SCALE = 2;
 
+const EMBED_ORIGINS = [
+  "https://fussball.sportverein-bergheim.de",
+  "https://www.sportverein-bergheim.de",
+];
+
 const TEAM_DESIGNS: Record<TeamDesign, { label: string; clubName: string }> = {
   first: { label: "1. Mannschaft", clubName: "SV Bergheim" },
   second: { label: "2. Mannschaft", clubName: "SV Bergheim II" },
@@ -389,10 +394,12 @@ export default function Home() {
       window.cancelAnimationFrame(animationFrame);
       animationFrame = window.requestAnimationFrame(() => {
         const height = Math.ceil(appShell.getBoundingClientRect().bottom);
-        window.parent.postMessage(
-          { type: "svb-generator-height", height },
-          "https://fussball.sportverein-bergheim.de",
-        );
+        for (const origin of EMBED_ORIGINS) {
+          window.parent.postMessage(
+            { type: "svb-generator-height", height },
+            origin,
+          );
+        }
       });
     }
 
