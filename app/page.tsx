@@ -313,6 +313,18 @@ function drawImageContained(
   if (!tintedContext) return false;
 
   tintedContext.drawImage(image, 0, 0, tintedCanvas.width, tintedCanvas.height);
+  const imageData = tintedContext.getImageData(0, 0, tintedCanvas.width, tintedCanvas.height);
+  const pixels = imageData.data;
+  for (let index = 0; index < pixels.length; index += 4) {
+    const distanceFromWhite = Math.max(
+      255 - pixels[index],
+      255 - pixels[index + 1],
+      255 - pixels[index + 2],
+    );
+    const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
+    pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
+  }
+  tintedContext.putImageData(imageData, 0, 0);
   tintedContext.globalCompositeOperation = "source-in";
   tintedContext.fillStyle = tintColor;
   tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);

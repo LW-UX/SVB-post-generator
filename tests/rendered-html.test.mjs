@@ -70,6 +70,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /function drawImageContained\(/);
   assert.match(page, /Math\.min\(maxWidth \/ sourceWidth, maxHeight \/ sourceHeight\)/);
   assert.match(page, /globalCompositeOperation = "source-in"/);
+  assert.match(page, /const distanceFromWhite = Math\.max\(/);
+  assert.match(page, /putImageData\(imageData, 0, 0\)/);
   assert.match(page, /isBrand \? undefined : inkColor/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
