@@ -37,6 +37,7 @@ test("renders the SVB generator shell", async () => {
   assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
   assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
   assert.match(html, /PNG herunterladen/);
+  assert.doesNotMatch(html, />Mannschaften</);
   assert.doesNotMatch(html, />Vereinsname</);
   assert.doesNotMatch(html, />Gegner</);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
@@ -63,12 +64,14 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /const MATCHDAY_ANGLE_DEGREES = 52/);
   assert.match(page, /Math\.tan\(\(MATCHDAY_ANGLE_DEGREES \* Math\.PI\) \/ 180\)/);
   assert.match(page, /landscape:\s*\{\s*cornerTopX:\s*0\.21/s);
-  assert.match(page, /widescreen:\s*\{[^}]*bottomCornerStartX:\s*0\.85[^}]*bottomCornerRightY:\s*0\.5/s);
+  assert.match(page, /widescreen:\s*\{[^}]*bottomCornerStartX:\s*0\.834/s);
+  assert.match(page, /height - bottomCornerHeight/);
   assert.match(page, /function renderMatchdayGraphic\(/);
   assert.match(page, /venue: "Mößmann Sportanlage"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /Liga \/ Überschrift/);
   assert.match(page, /Spieltag \/ Obere Zeile/);
+  assert.match(page, /value=\{form\.round\} maxLength=\{29\}/);
   assert.match(page, /Region \/ Untere Zeile/);
   assert.doesNotMatch(page, /fallback\.slice\(0, 3\).*drawMatchdayText/s);
   assert.match(page, /competitionRegion/);

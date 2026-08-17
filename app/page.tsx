@@ -77,7 +77,6 @@ const INITIAL_FORM: FormState = {
 type MatchdayLayout = {
   cornerTopX: number;
   bottomCornerStartX?: number;
-  bottomCornerRightY?: number;
   headerX: number;
   roundY: number;
   competitionY: number;
@@ -148,8 +147,7 @@ const MATCHDAY_LAYOUTS: Record<FormatKey, MatchdayLayout> = {
   },
   widescreen: {
     cornerTopX: 0.17,
-    bottomCornerStartX: 0.85,
-    bottomCornerRightY: 0.5,
+    bottomCornerStartX: 0.834,
     headerX: 0.5,
     roundY: 0.245,
     competitionY: 0.345,
@@ -423,9 +421,12 @@ function renderMatchdayGraphic(
   context.closePath();
   context.fill();
 
-  if (layout.bottomCornerStartX !== undefined && layout.bottomCornerRightY !== undefined) {
+  if (layout.bottomCornerStartX !== undefined) {
+    const bottomCornerHeight = width
+      * (1 - layout.bottomCornerStartX)
+      * Math.tan((MATCHDAY_ANGLE_DEGREES * Math.PI) / 180);
     context.beginPath();
-    context.moveTo(width, height * layout.bottomCornerRightY);
+    context.moveTo(width, height - bottomCornerHeight);
     context.lineTo(width, height);
     context.lineTo(width * layout.bottomCornerStartX, height);
     context.closePath();
@@ -443,7 +444,7 @@ function renderMatchdayGraphic(
     textColor,
     300,
     smallTextSize,
-    width * 0.62,
+    width * 0.75,
   );
   drawMatchdayText(
     context,
@@ -1026,7 +1027,7 @@ export default function Home() {
           </div>
 
           <div className="form-section">
-            <h3>Mannschaften</h3>
+            {postType === "result" && <h3>Mannschaften</h3>}
             {postType === "result" && (
               <>
                 <div className="field-grid">
@@ -1064,7 +1065,7 @@ export default function Home() {
               </label>
               <label>
                 <span className="field-label">Spieltag / Obere Zeile</span>
-                <input value={form.round} maxLength={24} onChange={(event) => updateForm("round", event.target.value)} />
+                <input value={form.round} maxLength={29} onChange={(event) => updateForm("round", event.target.value)} />
               </label>
               <label>
                 <span className="field-label">Datum</span>
