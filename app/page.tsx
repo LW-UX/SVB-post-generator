@@ -36,11 +36,13 @@ const FORMATS: Record<
   FormatKey,
   { label: string; short: string; width: number; height: number }
 > = {
-  post: { label: "Instagram Post", short: "1:1", width: 1080, height: 1080 },
+  post: { label: "Instagram Post", short: "4:5", width: 1080, height: 1350 },
   story: { label: "Instagram Story", short: "9:16", width: 1080, height: 1920 },
-  landscape: { label: "Querformat", short: "1,91:1", width: 1200, height: 630 },
+  landscape: { label: "Querformat", short: "3:2", width: 1200, height: 800 },
   widescreen: { label: "16:9 Querformat", short: "16:9", width: 1920, height: 1080 },
 };
+
+const EXPORT_SCALE = 2;
 
 const TEAM_DESIGNS: Record<TeamDesign, { label: string; clubName: string }> = {
   first: { label: "1. Mannschaft", clubName: "SV Bergheim" },
@@ -175,10 +177,11 @@ function renderGraphic(
   type: PostType,
   form: FormState,
   assets: Assets,
+  scale = 1,
 ) {
   const format = FORMATS[formatKey];
-  canvas.width = format.width;
-  canvas.height = format.height;
+  canvas.width = format.width * scale;
+  canvas.height = format.height * scale;
   const context = canvas.getContext("2d");
   if (!context) return;
 
@@ -469,17 +472,18 @@ export default function Home() {
   }
 
   async function downloadSelected() {
-    if (!canvasRef.current) return;
-    setDownloadStatus("PNG wird erstellt …");
-    await downloadCanvas(canvasRef.current, formatKey);
-    setDownloadStatus("PNG wurde erstellt.");
+    setDownloadStatus("PNG in 2× wird erstellt …");
+    const canvas = document.createElement("canvas");
+    renderGraphic(canvas, formatKey, postType, form, assets, EXPORT_SCALE);
+    await downloadCanvas(canvas, formatKey);
+    setDownloadStatus("PNG in 2× wurde erstellt.");
   }
 
   async function downloadAll() {
     setDownloadStatus("Vier Formate werden erstellt …");
     for (const key of Object.keys(FORMATS) as FormatKey[]) {
       const canvas = document.createElement("canvas");
-      renderGraphic(canvas, key, postType, form, assets);
+      renderGraphic(canvas, key, postType, form, assets, EXPORT_SCALE);
       await downloadCanvas(canvas, key);
     }
     setDownloadStatus("Alle vier Formate wurden erstellt.");
@@ -541,7 +545,9 @@ export default function Home() {
               <p className="section-kicker">Live-Vorschau</p>
               <h2 id="preview-title">{selectedFormat.label}</h2>
             </div>
-            <span>{selectedFormat.width} × {selectedFormat.height} px</span>
+            <span>
+              Export {selectedFormat.width * EXPORT_SCALE} × {selectedFormat.height * EXPORT_SCALE} px
+            </span>
           </div>
           <div className={`canvas-stage canvas-${formatKey}`}>
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />

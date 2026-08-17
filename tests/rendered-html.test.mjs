@@ -47,10 +47,11 @@ test("keeps uploads local and supports every requested format", async () => {
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /post:\s*\{[^}]*1080[^}]*1080/s);
+  assert.match(page, /post:\s*\{[^}]*1080[^}]*1350/s);
   assert.match(page, /story:\s*\{[^}]*1080[^}]*1920/s);
-  assert.match(page, /landscape:\s*\{[^}]*1200[^}]*630/s);
+  assert.match(page, /landscape:\s*\{[^}]*1200[^}]*800/s);
   assert.match(page, /widescreen:\s*\{[^}]*1920[^}]*1080/s);
+  assert.match(page, /const EXPORT_SCALE = 2/);
   assert.match(page, /type="file"/);
   assert.match(page, /SV Bergheim II/);
   assert.match(page, /chooseTeamDesign/);

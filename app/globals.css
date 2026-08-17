@@ -268,7 +268,7 @@ label:has(input:focus-visible) .upload-box {
 
 .canvas-post canvas {
   width: min(100%, 620px);
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 5;
 }
 
 .canvas-story canvas {
@@ -279,7 +279,7 @@ label:has(input:focus-visible) .upload-box {
 
 .canvas-landscape canvas {
   width: 100%;
-  aspect-ratio: 1.9048;
+  aspect-ratio: 3 / 2;
 }
 
 .canvas-widescreen canvas {

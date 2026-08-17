@@ -5,14 +5,14 @@ Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken d
 ## Funktionsumfang
 
 - Spieltagsankündigung und Ergebnismeldung
-- Instagram Post (1080 × 1080)
-- Instagram Story (1080 × 1920)
-- Querformat (1200 × 630)
-- 16:9-Querformat (1920 × 1080)
+- Instagram Post, 4:5 (1080 × 1350; Export 2160 × 2700)
+- Instagram Story, 9:16 (1080 × 1920; Export 2160 × 3840)
+- Querformat, 3:2 (1200 × 800; Export 2400 × 1600)
+- 16:9-Querformat (1920 × 1080; Export 3840 × 2160)
 - Live-Vorschau für Desktop und Mobilgeräte
 - lokale Uploads für Vereinslogo, Gegnerlogo und Hintergrundfoto
 - Zoom und vertikaler Bildausschnitt für Hintergrundfotos
-- PNG-Download des gewählten Formats oder aller vier Formate
+- PNG-Download in 2× Auflösung des gewählten Formats oder aller vier Formate
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads
 
 ## Lokale Entwicklung
