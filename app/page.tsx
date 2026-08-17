@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PostType = "matchday" | "result";
 type FormatKey = "post" | "story" | "landscape" | "widescreen";
@@ -31,6 +31,7 @@ type FormState = {
 type Assets = {
   clubLogo: HTMLImageElement | null;
   opponentLogo: HTMLImageElement | null;
+  backgroundImage: HTMLImageElement | null;
 };
 
 const FORMATS: Record<
@@ -41,6 +42,14 @@ const FORMATS: Record<
   story: { label: "Instagram Story", short: "9:16", width: 1080, height: 1920, exportScale: 2 },
   landscape: { label: "Querformat", short: "3:2", width: 1500, height: 1000, exportScale: 1 },
   widescreen: { label: "16:9 Querformat", short: "16:9", width: 1920, height: 1080, exportScale: 1 },
+};
+
+const RESULT_POST_FORMAT = {
+  label: "Instagram Post",
+  short: "4:5",
+  width: 1440,
+  height: 1800,
+  exportScale: 1 as const,
 };
 
 const EMBED_ORIGINS = [
@@ -70,10 +79,10 @@ const INITIAL_FORM: FormState = {
   venue: "Mößmann Sportanlage",
   venueAddress: "Am Langen Berg 5, 86199 Augsburg",
   headline: "MATCHDAY",
-  clubScore: "3",
-  opponentScore: "1",
+  clubScore: "2",
+  opponentScore: "0",
   halfTime: "1:0",
-  footer: "Gemeinsam für den SVB",
+  footer: "",
   homeAway: "home",
 };
 
@@ -340,6 +349,28 @@ function drawImageContained(
   tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);
   context.drawImage(tintedCanvas, centerX - width / 2, centerY - height / 2, width, height);
   return true;
+}
+
+function drawImageCover(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (sourceWidth <= 0 || sourceHeight <= 0) return;
+
+  const scale = Math.max(width / sourceWidth, height / sourceHeight);
+  const renderedWidth = sourceWidth * scale;
+  const renderedHeight = sourceHeight * scale;
+  context.drawImage(
+    image,
+    (width - renderedWidth) / 2,
+    (height - renderedHeight) / 2,
+    renderedWidth,
+    renderedHeight,
+  );
 }
 
 function setMatchdayFont(
@@ -614,6 +645,74 @@ function drawBadge(
   context.restore();
 }
 
+function renderResultGraphic(
+  context: CanvasRenderingContext2D,
+  form: FormState,
+  assets: Assets,
+  teamDesign: TeamDesign,
+) {
+  const { width, height } = RESULT_POST_FORMAT;
+  const blue = "#00448a";
+  const isFirstTeam = teamDesign === "first";
+  const footerY = 1584;
+  const diagonalTopY = 1280;
+  const diagonalBottomX = 1058;
+  const contentY = 1682;
+
+  context.fillStyle = "#a6a6a6";
+  context.fillRect(0, 0, width, height);
+  if (assets.backgroundImage) {
+    drawImageCover(context, assets.backgroundImage, width, height);
+  }
+
+  context.fillStyle = isFirstTeam ? blue : "#ffffff";
+  context.fillRect(0, footerY, width, height - footerY);
+
+  context.fillStyle = isFirstTeam ? "#ffffff" : blue;
+  context.beginPath();
+  context.moveTo(width, diagonalTopY);
+  context.lineTo(width, height);
+  context.lineTo(diagonalBottomX, height);
+  context.closePath();
+  context.fill();
+
+  const clubX = 1120;
+  const opponentX = form.homeAway === "home" ? 1362 : 900;
+  const scoreX = form.homeAway === "home" ? 1235 : 1008;
+  const clubScore = form.clubScore || "0";
+  const opponentScore = form.opponentScore || "0";
+  const score = form.homeAway === "home"
+    ? `${clubScore}:${opponentScore}`
+    : `${opponentScore}:${clubScore}`;
+
+  if (assets.clubLogo) {
+    drawImageContained(context, assets.clubLogo, clubX, contentY, 96, 120);
+  }
+  if (assets.opponentLogo) {
+    drawImageContained(context, assets.opponentLogo, opponentX, contentY, 88, 112, "#ffffff");
+  }
+
+  context.font = '700 40px Inter, Arial, Helvetica, sans-serif';
+  context.fontKerning = "normal";
+  context.letterSpacing = "0.04em";
+  context.fillStyle = isFirstTeam ? "#ffffff" : blue;
+  context.textBaseline = "middle";
+  context.textAlign = "center";
+  context.fillText(score, scoreX, contentY);
+
+  if (form.footer.trim()) {
+    context.textAlign = "left";
+    context.fillText(form.footer.toUpperCase(), 54, contentY);
+  }
+  context.letterSpacing = "0px";
+}
+
+function getGraphicFormat(type: PostType, formatKey: FormatKey) {
+  return type === "result" && formatKey === "post"
+    ? RESULT_POST_FORMAT
+    : FORMATS[formatKey];
+}
+
 function renderGraphic(
   canvas: HTMLCanvasElement,
   formatKey: FormatKey,
@@ -623,7 +722,7 @@ function renderGraphic(
   teamDesign: TeamDesign,
   scale = 1,
 ) {
-  const format = FORMATS[formatKey];
+  const format = getGraphicFormat(type, formatKey);
   canvas.width = format.width * scale;
   canvas.height = format.height * scale;
   const context = canvas.getContext("2d");
@@ -632,6 +731,11 @@ function renderGraphic(
 
   const width = format.width;
   const height = format.height;
+
+  if (type === "result" && formatKey === "post") {
+    renderResultGraphic(context, form, assets, teamDesign);
+    return;
+  }
 
   if (type === "matchday") {
     renderMatchdayGraphic(context, formatKey, form, assets, teamDesign);
@@ -799,7 +903,11 @@ export default function Home() {
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [assets, setAssets] = useState<Assets>({ clubLogo: null, opponentLogo: null });
+  const [assets, setAssets] = useState<Assets>({
+    clubLogo: null,
+    opponentLogo: null,
+    backgroundImage: null,
+  });
   const [downloadStatus, setDownloadStatus] = useState("");
   const [fontReady, setFontReady] = useState(false);
 
@@ -825,9 +933,11 @@ export default function Home() {
 
   useEffect(() => {
     const image = new Image();
-    const fileName = teamDesign === "first"
-      ? "svb-logo-weiss-1906.svg"
-      : "svb-logo-blau-1906.svg";
+    const fileName = postType === "result"
+      ? "svb-logo-farbe-1906.svg"
+      : teamDesign === "first"
+        ? "svb-logo-weiss-1906.svg"
+        : "svb-logo-blau-1906.svg";
 
     image.onload = () => {
       setAssets((current) => ({ ...current, clubLogo: image }));
@@ -841,7 +951,7 @@ export default function Home() {
       image.onload = null;
       image.onerror = null;
     };
-  }, [teamDesign]);
+  }, [postType, teamDesign]);
 
   useEffect(() => {
     const appShell = appShellRef.current;
@@ -876,11 +986,10 @@ export default function Home() {
     };
   }, []);
 
-  const selectedFormat = FORMATS[formatKey];
-  const textWarning = useMemo(
-    () => form.clubName.length > 28 || form.opponentName.length > 28,
-    [form.clubName, form.opponentName],
-  );
+  const selectedFormat = getGraphicFormat(postType, formatKey);
+  const availableFormats: FormatKey[] = postType === "result"
+    ? ["post"]
+    : Object.keys(FORMATS) as FormatKey[];
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -888,6 +997,7 @@ export default function Home() {
 
   function chooseType(type: PostType) {
     setPostType(type);
+    if (type === "result") setFormatKey("post");
     setForm((current) => ({
       ...current,
       headline: type === "matchday" ? "MATCHDAY" : "FULL TIME",
@@ -948,11 +1058,11 @@ export default function Home() {
 
   async function downloadSelected() {
     const exportScale = selectedFormat.exportScale;
-    setDownloadStatus(`PNG in ${exportScale}× wird erstellt …`);
+    setDownloadStatus(`PNG mit ${selectedFormat.width} × ${selectedFormat.height} px wird erstellt …`);
     const canvas = document.createElement("canvas");
     renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
     await downloadCanvas(canvas, formatKey);
-    setDownloadStatus(`PNG in ${exportScale}× wurde erstellt.`);
+    setDownloadStatus(`PNG mit ${selectedFormat.width} × ${selectedFormat.height} px wurde erstellt.`);
   }
 
   async function downloadAll() {
@@ -972,7 +1082,11 @@ export default function Home() {
       competition: TEAM_DESIGNS[teamDesign].competition,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
-    setAssets((current) => ({ ...current, opponentLogo: null }));
+    setAssets((current) => ({
+      ...current,
+      opponentLogo: null,
+      backgroundImage: null,
+    }));
     setDownloadStatus("Eingaben wurden zurückgesetzt.");
   }
 
@@ -1004,14 +1118,15 @@ export default function Home() {
         </div>
         <div className="selector-group format-selector">
           <span className="selector-label">Format</span>
-          <div className="format-options">
-            {(Object.keys(FORMATS) as FormatKey[]).map((key) => (
+          <div className={`format-options ${postType === "result" ? "single-option" : ""}`}>
+            {availableFormats.map((key) => (
               <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => setFormatKey(key)}>
                 <span>{FORMATS[key].label}</span>
                 <small>{FORMATS[key].short}</small>
               </button>
             ))}
           </div>
+          {postType === "result" && <small className="format-note">Weitere Formate folgen.</small>}
         </div>
       </section>
 
@@ -1029,9 +1144,9 @@ export default function Home() {
           <div className={`canvas-stage canvas-${formatKey}`}>
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />
           </div>
-          <div className="preview-actions">
+          <div className={`preview-actions ${postType === "result" ? "single-action" : ""}`}>
             <button className="primary-button" type="button" onClick={downloadSelected}>PNG herunterladen</button>
-            <button className="secondary-button" type="button" onClick={downloadAll}>Alle 4 Formate</button>
+            {postType === "matchday" && <button className="secondary-button" type="button" onClick={downloadAll}>Alle 4 Formate</button>}
           </div>
           <p className="status-message" aria-live="polite">{downloadStatus || "Keine Datei wird hochgeladen oder gespeichert."}</p>
         </section>
@@ -1040,29 +1155,14 @@ export default function Home() {
           <div className="panel-heading form-heading">
             <div>
               <p className="section-kicker">Inhalte</p>
-              <h2 id="details-title">Spieldaten bearbeiten</h2>
+              <h2 id="details-title">{postType === "result" ? "Ergebnis bearbeiten" : "Spieldaten bearbeiten"}</h2>
             </div>
             <button className="text-button reset-button" type="button" onClick={resetForm}>Zurücksetzen</button>
           </div>
 
           <div className="form-section">
-            {postType === "result" && <h3>Mannschaften</h3>}
-            {postType === "result" && (
-              <>
-                <div className="field-grid">
-                  <label>
-                    <span className="field-label">Vereinsname</span>
-                    <input value={form.clubName} maxLength={40} onChange={(event) => updateForm("clubName", event.target.value)} />
-                  </label>
-                  <label>
-                    <span className="field-label">Gegner</span>
-                    <input value={form.opponentName} maxLength={40} onChange={(event) => updateForm("opponentName", event.target.value)} />
-                  </label>
-                </div>
-                {textWarning && <p className="input-warning">Sehr lange Vereinsnamen werden in der Grafik automatisch verkleinert.</p>}
-              </>
-            )}
-            <div className="field-block">
+            <h3>Spielort</h3>
+            <div>
               <span className="field-label">Heim / Auswärts</span>
               <div className="segmented-control compact">
                 <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => updateForm("homeAway", "home")}>Heim</button>
@@ -1071,31 +1171,31 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="form-section">
-            <h3>Spielinformationen</h3>
-            <div className="field-grid">
-              <label>
-                <span className="field-label">Liga / Überschrift</span>
-                <input value={form.competition} maxLength={45} onChange={(event) => updateForm("competition", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Region / Untere Zeile</span>
-                <input value={form.competitionRegion} maxLength={45} onChange={(event) => updateForm("competitionRegion", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Spieltag / Obere Zeile</span>
-                <input value={form.round} maxLength={29} onChange={(event) => updateForm("round", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Datum</span>
-                <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Anstoß</span>
-                <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
-              </label>
-            </div>
-            {postType === "matchday" && (
+          {postType === "matchday" && (
+            <div className="form-section">
+              <h3>Spielinformationen</h3>
+              <div className="field-grid">
+                <label>
+                  <span className="field-label">Liga / Überschrift</span>
+                  <input value={form.competition} maxLength={45} onChange={(event) => updateForm("competition", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Region / Untere Zeile</span>
+                  <input value={form.competitionRegion} maxLength={45} onChange={(event) => updateForm("competitionRegion", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Spieltag / Obere Zeile</span>
+                  <input value={form.round} maxLength={29} onChange={(event) => updateForm("round", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Datum</span>
+                  <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Anstoß</span>
+                  <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
+                </label>
+              </div>
               <div className="field-block">
                 <span className="field-label">Darstellung Datum / Uhrzeit</span>
                 <div className="segmented-control compact">
@@ -1103,18 +1203,18 @@ export default function Home() {
                   <button type="button" className={form.dateDisplay === "day-date" ? "active" : ""} onClick={() => updateForm("dateDisplay", "day-date")}>Tag + Datum</button>
                 </div>
               </div>
-            )}
-            <div className="field-grid field-block">
-              <label>
-                <span className="field-label">Spielstätte</span>
-                <input value={form.venue} maxLength={55} onChange={(event) => updateForm("venue", event.target.value)} />
-              </label>
-              <label>
-                <span className="field-label">Adresse</span>
-                <input value={form.venueAddress} maxLength={65} onChange={(event) => updateForm("venueAddress", event.target.value)} />
-              </label>
+              <div className="field-grid field-block">
+                <label>
+                  <span className="field-label">Spielstätte</span>
+                  <input value={form.venue} maxLength={55} onChange={(event) => updateForm("venue", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Adresse</span>
+                  <input value={form.venueAddress} maxLength={65} onChange={(event) => updateForm("venueAddress", event.target.value)} />
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {postType === "result" && (
             <div className="form-section">
@@ -1130,26 +1230,16 @@ export default function Home() {
                   <input inputMode="numeric" value={form.opponentScore} maxLength={2} onChange={(event) => updateForm("opponentScore", event.target.value.replace(/\D/g, ""))} />
                 </label>
               </div>
-              <label className="field-block">
-                <span className="field-label">Halbzeitstand (optional)</span>
-                <input value={form.halfTime} maxLength={8} onChange={(event) => updateForm("halfTime", event.target.value)} />
-              </label>
             </div>
           )}
 
           {postType === "result" && (
             <div className="form-section">
               <h3>Texte</h3>
-              <div className="field-grid">
-                <label>
-                  <span className="field-label">Headline</span>
-                  <input value={form.headline} maxLength={24} onChange={(event) => updateForm("headline", event.target.value)} />
-                </label>
-                <label>
-                  <span className="field-label">Untere Zeile</span>
-                  <input value={form.footer} maxLength={40} onChange={(event) => updateForm("footer", event.target.value)} />
-                </label>
-              </div>
+              <label className="field-block no-top-margin">
+                <span className="field-label">Untere Zeile (optional)</span>
+                <input value={form.footer} maxLength={40} placeholder="z. B. DERBYSIEGER" onChange={(event) => updateForm("footer", event.target.value)} />
+              </label>
             </div>
           )}
 
@@ -1157,8 +1247,9 @@ export default function Home() {
             <h3>Bilder</h3>
             <div className="upload-grid">
               <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
+              {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
             </div>
-            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo wird passend weiß oder blau eingefärbt und bleibt nur in dieser Browser-Sitzung.</p>
+            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Die Bilder bleiben nur in dieser Browser-Sitzung.</p>
           </div>
 
           <div className="mobile-download">

@@ -205,6 +205,17 @@ label:has(input:focus-visible) .upload-box {
   color: rgba(255, 255, 255, 0.7);
 }
 
+.format-options.single-option {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.format-note {
+  padding-left: 4px;
+  color: #7d8791;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .studio-grid {
   display: grid;
   grid-template-columns: minmax(430px, 0.94fr) minmax(500px, 1.06fr);
@@ -304,6 +315,10 @@ label:has(input:focus-visible) .upload-box {
   margin-top: 16px;
 }
 
+.preview-actions.single-action {
+  grid-template-columns: 1fr;
+}
+
 .primary-button,
 .secondary-button {
   min-height: 54px;
@@ -386,6 +401,10 @@ label:has(input:focus-visible) .upload-box {
   margin-top: 16px;
 }
 
+.field-block.no-top-margin {
+  margin-top: 0;
+}
+
 input[type="text"],
 input:not([type]) {
   appearance: none;
@@ -442,7 +461,7 @@ input:not([type="file"]):not([type="range"]):focus {
 }
 
 .upload-grid {
-  grid-template-columns: minmax(0, 320px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .upload-box {
