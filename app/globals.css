@@ -276,6 +276,8 @@ label:has(input:focus-visible) .upload-box {
 
 .canvas-post canvas {
   width: min(100%, 620px);
+  height: auto;
+  max-height: none;
   aspect-ratio: 4 / 5;
 }
 

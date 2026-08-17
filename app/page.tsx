@@ -285,6 +285,7 @@ function drawImageContained(
   centerY: number,
   maxWidth: number,
   maxHeight: number,
+  tintColor?: string,
 ) {
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
@@ -293,7 +294,29 @@ function drawImageContained(
   const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
   const width = sourceWidth * scale;
   const height = sourceHeight * scale;
-  context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
+
+  if (!tintColor) {
+    context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
+    return true;
+  }
+
+  const transform = context.getTransform();
+  const renderScale = Math.max(
+    Math.hypot(transform.a, transform.b),
+    Math.hypot(transform.c, transform.d),
+    1,
+  );
+  const tintedCanvas = document.createElement("canvas");
+  tintedCanvas.width = Math.max(1, Math.ceil(width * renderScale));
+  tintedCanvas.height = Math.max(1, Math.ceil(height * renderScale));
+  const tintedContext = tintedCanvas.getContext("2d");
+  if (!tintedContext) return false;
+
+  tintedContext.drawImage(image, 0, 0, tintedCanvas.width, tintedCanvas.height);
+  tintedContext.globalCompositeOperation = "source-in";
+  tintedContext.fillStyle = tintColor;
+  tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);
+  context.drawImage(tintedCanvas, centerX - width / 2, centerY - height / 2, width, height);
   return true;
 }
 
@@ -355,8 +378,9 @@ function drawMatchdayLogo(
   fallback: string,
   color: string,
   fallbackSize: number,
+  tintColor?: string,
 ) {
-  if (image && drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight)) return;
+  if (image && drawImageContained(context, image, centerX, centerY, maxWidth, maxHeight, tintColor)) return;
   drawMatchdayText(context, fallback.slice(0, 3), centerX, centerY, color, 700, fallbackSize);
 }
 
@@ -445,6 +469,7 @@ function renderMatchdayGraphic(
     leftName,
     textColor,
     smallTextSize,
+    form.homeAway === "away" ? textColor : undefined,
   );
   drawMatchdayLogo(
     context,
@@ -456,6 +481,7 @@ function renderMatchdayGraphic(
     rightName,
     textColor,
     smallTextSize,
+    form.homeAway === "home" ? textColor : undefined,
   );
 
   if (layout.versusY !== undefined) {
@@ -531,7 +557,7 @@ function drawBadge(
 ) {
   context.save();
 
-  if (!isBrand) {
+  if (!isBrand && inkColor !== "#ffffff") {
     context.beginPath();
     context.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
     context.fillStyle = "rgba(255,255,255,.96)";
@@ -553,11 +579,12 @@ function drawBadge(
         centerY,
         size * (isBrand ? 0.96 : 0.72),
         size * (isBrand ? 0.96 : 0.72),
+        isBrand ? undefined : inkColor,
       )
     : false;
 
   if (!imageWasDrawn) {
-    context.fillStyle = isBrand ? inkColor : "#00448a";
+    context.fillStyle = inkColor;
     context.font = `900 ${size * 0.25}px Arial, Helvetica, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -1097,7 +1124,7 @@ export default function Home() {
             <div className="upload-grid">
               <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
             </div>
-            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo bleibt nur in dieser Browser-Sitzung.</p>
+            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Das Gegnerlogo wird passend weiß oder blau eingefärbt und bleibt nur in dieser Browser-Sitzung.</p>
           </div>
 
           <div className="mobile-download">
