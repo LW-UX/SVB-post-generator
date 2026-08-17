@@ -90,7 +90,7 @@ label:has(input:focus-visible) .upload-box {
 .selector-card {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(330px, 0.9fr) minmax(580px, 1.6fr);
+  grid-template-columns: minmax(230px, 0.9fr) minmax(220px, 0.75fr) minmax(470px, 1.6fr);
   gap: 24px;
   margin-bottom: 24px;
   padding: 22px;

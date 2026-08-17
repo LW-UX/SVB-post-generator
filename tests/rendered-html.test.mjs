@@ -52,6 +52,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /landscape:\s*\{[^}]*1200[^}]*630/s);
   assert.match(page, /widescreen:\s*\{[^}]*1920[^}]*1080/s);
   assert.match(page, /type="file"/);
+  assert.match(page, /SV Bergheim II/);
+  assert.match(page, /chooseTeamDesign/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);

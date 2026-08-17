@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type PostType = "matchday" | "result";
 type FormatKey = "post" | "story" | "landscape" | "widescreen";
 type HomeAway = "home" | "away";
+type TeamDesign = "first" | "second";
 
 type FormState = {
   clubName: string;
@@ -39,6 +40,11 @@ const FORMATS: Record<
   story: { label: "Instagram Story", short: "9:16", width: 1080, height: 1920 },
   landscape: { label: "Querformat", short: "1,91:1", width: 1200, height: 630 },
   widescreen: { label: "16:9 Querformat", short: "16:9", width: 1920, height: 1080 },
+};
+
+const TEAM_DESIGNS: Record<TeamDesign, { label: string; clubName: string }> = {
+  first: { label: "1. Mannschaft", clubName: "SV Bergheim" },
+  second: { label: "2. Mannschaft", clubName: "SV Bergheim II" },
 };
 
 const INITIAL_FORM: FormState = {
@@ -354,6 +360,7 @@ export default function Home() {
   const appShellRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [postType, setPostType] = useState<PostType>("matchday");
+  const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [assets, setAssets] = useState<Assets>({ clubLogo: null, opponentLogo: null, background: null });
@@ -408,6 +415,14 @@ export default function Home() {
     setForm((current) => ({
       ...current,
       headline: type === "matchday" ? "MATCHDAY" : "FULL TIME",
+    }));
+  }
+
+  function chooseTeamDesign(design: TeamDesign) {
+    setTeamDesign(design);
+    setForm((current) => ({
+      ...current,
+      clubName: TEAM_DESIGNS[design].clubName,
     }));
   }
 
@@ -471,7 +486,11 @@ export default function Home() {
   }
 
   function resetForm() {
-    setForm({ ...INITIAL_FORM, headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME" });
+    setForm({
+      ...INITIAL_FORM,
+      clubName: TEAM_DESIGNS[teamDesign].clubName,
+      headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
+    });
     setAssets({ clubLogo: null, opponentLogo: null, background: null });
     setDownloadStatus("Eingaben wurden zurückgesetzt.");
   }
@@ -484,6 +503,22 @@ export default function Home() {
           <div className="segmented-control">
             <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
             <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
+          </div>
+        </div>
+        <div className="selector-group">
+          <span className="selector-label">Mannschaft</span>
+          <div className="segmented-control" role="group" aria-label="Mannschaft auswählen">
+            {(Object.keys(TEAM_DESIGNS) as TeamDesign[]).map((design) => (
+              <button
+                key={design}
+                type="button"
+                className={teamDesign === design ? "active" : ""}
+                aria-pressed={teamDesign === design}
+                onClick={() => chooseTeamDesign(design)}
+              >
+                {TEAM_DESIGNS[design].label}
+              </button>
+            ))}
           </div>
         </div>
         <div className="selector-group format-selector">
