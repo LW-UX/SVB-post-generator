@@ -1,5 +1,5 @@
-import type { ChangeEvent } from "react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 type PostType = "matchday" | "result";
 type FormatKey = "post" | "story" | "landscape" | "widescreen";
@@ -10,6 +10,13 @@ type ExportAction = "shared" | "downloaded" | "cancelled";
 type Department = "football" | "general";
 type AnnouncementPageCount = 1 | 2;
 type AnnouncementPage = 1 | 2;
+
+type OpponentCatalogEntry = {
+  id: string;
+  name: string;
+  searchVariants: string[];
+  src: string;
+};
 
 type FormState = {
   clubName: string;
@@ -36,6 +43,52 @@ type Assets = {
   opponentLogo: HTMLImageElement | null;
   backgroundImage: HTMLImageElement | null;
 };
+
+const OPPONENT_LOGO_FILES = import.meta.glob<string>(
+  "./assets/opponents/*.png",
+  { eager: true, query: "?url", import: "default" },
+);
+
+function germanTransliteration(value: string) {
+  return value
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("ß", "ss");
+}
+
+function basicSearchValue(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("ß", "ss")
+    .toLocaleLowerCase("de")
+    .trim();
+}
+
+function createSearchVariants(value: string) {
+  const normalized = value.normalize("NFC").toLocaleLowerCase("de").trim();
+  return Array.from(new Set([
+    normalized,
+    basicSearchValue(normalized),
+    germanTransliteration(normalized),
+  ]));
+}
+
+function createOpponentCatalog(): OpponentCatalogEntry[] {
+  return Object.entries(OPPONENT_LOGO_FILES)
+    .map(([path, src]) => {
+      const fileName = path.split("/").at(-1) ?? path;
+      const name = fileName.replace(/\.png$/i, "").normalize("NFC");
+      const id = germanTransliteration(basicSearchValue(name))
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      return { id, name, searchVariants: createSearchVariants(name), src };
+    })
+    .sort((left, right) => left.name.localeCompare(right.name, "de", { sensitivity: "base" }));
+}
+
+const OPPONENT_CATALOG = createOpponentCatalog();
 
 type AnnouncementFormState = {
   title: string;
@@ -489,23 +542,180 @@ function drawImageContained(
   if (!tintedContext) return false;
 
   tintedContext.drawImage(image, 0, 0, tintedCanvas.width, tintedCanvas.height);
-  const imageData = tintedContext.getImageData(0, 0, tintedCanvas.width, tintedCanvas.height);
-  const pixels = imageData.data;
-  for (let index = 0; index < pixels.length; index += 4) {
-    const distanceFromWhite = Math.max(
-      255 - pixels[index],
-      255 - pixels[index + 1],
-      255 - pixels[index + 2],
-    );
-    const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
-    pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
-  }
-  tintedContext.putImageData(imageData, 0, 0);
   tintedContext.globalCompositeOperation = "source-in";
   tintedContext.fillStyle = tintColor;
   tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);
   context.drawImage(tintedCanvas, centerX - width / 2, centerY - height / 2, width, height);
   return true;
+}
+
+function loadImageSource(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Das Bild konnte nicht geladen werden."));
+    image.src = src;
+  });
+}
+
+function canvasToImage(canvas: HTMLCanvasElement) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Die Bildmaske konnte nicht erstellt werden."));
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Die Bildmaske konnte nicht gelesen werden."));
+      };
+      image.src = url;
+    }, "image/png");
+  });
+}
+
+function estimateOpaqueBackground(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+) {
+  const buckets = new Map<string, { count: number; red: number; green: number; blue: number }>();
+  const sample = (x: number, y: number) => {
+    const index = (y * width + x) * 4;
+    const red = pixels[index];
+    const green = pixels[index + 1];
+    const blue = pixels[index + 2];
+    const key = `${red >> 4}-${green >> 4}-${blue >> 4}`;
+    const bucket = buckets.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
+    bucket.count += 1;
+    bucket.red += red;
+    bucket.green += green;
+    bucket.blue += blue;
+    buckets.set(key, bucket);
+  };
+  const step = Math.max(1, Math.floor((width + height) / 400));
+
+  for (let x = 0; x < width; x += step) {
+    sample(x, 0);
+    sample(x, height - 1);
+  }
+  for (let y = 0; y < height; y += step) {
+    sample(0, y);
+    sample(width - 1, y);
+  }
+
+  const background = Array.from(buckets.values())
+    .sort((left, right) => right.count - left.count)[0];
+  if (!background) return { red: 255, green: 255, blue: 255 };
+  return {
+    red: background.red / background.count,
+    green: background.green / background.count,
+    blue: background.blue / background.count,
+  };
+}
+
+async function normalizeOpponentLogo(image: HTMLImageElement) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    throw new Error("Das Gegnerlogo besitzt keine lesbare Größe.");
+  }
+
+  const maximumDimension = 2048;
+  const scale = Math.min(1, maximumDimension / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = width;
+  sourceCanvas.height = height;
+  const context = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  if (!context) throw new Error("Das Gegnerlogo konnte nicht verarbeitet werden.");
+  context.drawImage(image, 0, 0, width, height);
+
+  const imageData = context.getImageData(0, 0, width, height);
+  const pixels = imageData.data;
+  let hasTransparency = false;
+  for (let index = 3; index < pixels.length; index += 4) {
+    if (pixels[index] < 250) {
+      hasTransparency = true;
+      break;
+    }
+  }
+  const background = hasTransparency
+    ? null
+    : estimateOpaqueBackground(pixels, width, height);
+  let left = width;
+  let top = height;
+  let right = -1;
+  let bottom = -1;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    const pixelIndex = index / 4;
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    const sourceAlpha = pixels[index + 3];
+    let alpha = sourceAlpha;
+
+    if (background) {
+      const redDistance = pixels[index] - background.red;
+      const greenDistance = pixels[index + 1] - background.green;
+      const blueDistance = pixels[index + 2] - background.blue;
+      const distance = Math.sqrt(
+        redDistance * redDistance
+        + greenDistance * greenDistance
+        + blueDistance * blueDistance,
+      );
+      const foregroundOpacity = Math.min(1, Math.max(0, (distance - 12) / 52));
+      alpha = Math.round(sourceAlpha * foregroundOpacity);
+    }
+
+    pixels[index] = 0;
+    pixels[index + 1] = 0;
+    pixels[index + 2] = 0;
+    pixels[index + 3] = alpha;
+
+    if (alpha > 8) {
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+    }
+  }
+
+  if (right < left || bottom < top) {
+    throw new Error("Im Gegnerlogo wurde kein sichtbares Motiv erkannt.");
+  }
+
+  context.putImageData(imageData, 0, 0);
+  const padding = Math.max(2, Math.round(Math.max(width, height) * 0.008));
+  left = Math.max(0, left - padding);
+  top = Math.max(0, top - padding);
+  right = Math.min(width - 1, right + padding);
+  bottom = Math.min(height - 1, bottom + padding);
+  const output = document.createElement("canvas");
+  output.width = right - left + 1;
+  output.height = bottom - top + 1;
+  const outputContext = output.getContext("2d");
+  if (!outputContext) throw new Error("Das Gegnerlogo konnte nicht zugeschnitten werden.");
+  outputContext.drawImage(
+    sourceCanvas,
+    left,
+    top,
+    output.width,
+    output.height,
+    0,
+    0,
+    output.width,
+    output.height,
+  );
+  return canvasToImage(output);
 }
 
 function drawImageCover(
@@ -1514,6 +1724,183 @@ function renderGraphic(
   context.fillText((form.footer || "GEMEINSAM FÜR DEN SVB").toUpperCase(), width / 2, height - safe * 0.7);
 }
 
+function OpponentLogoPicker({
+  entries,
+  selectedEntry,
+  image,
+  onSelect,
+  onUpload,
+  onClear,
+}: {
+  entries: OpponentCatalogEntry[];
+  selectedEntry: OpponentCatalogEntry | null;
+  image: HTMLImageElement | null;
+  onSelect: (entry: OpponentCatalogEntry) => void;
+  onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+}) {
+  const inputId = useId();
+  const listboxId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState(selectedEntry?.name ?? "");
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const selectedName = selectedEntry?.name ?? "";
+  const isCustomLogo = Boolean(image && !selectedEntry);
+
+  useEffect(() => {
+    function closeOnOutsidePointer(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+        setQuery(selectedName);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [selectedName]);
+
+  const filteredEntries = useMemo(() => {
+    const effectiveQuery = query === selectedName ? "" : query;
+    const queryVariants = createSearchVariants(effectiveQuery);
+    if (!effectiveQuery.trim()) return entries;
+    return entries.filter((entry) => queryVariants.some((variant) =>
+      entry.searchVariants.some((searchValue) => searchValue.includes(variant))
+    ));
+  }, [entries, query, selectedName]);
+
+  useEffect(() => {
+    if (!isOpen || !filteredEntries[activeIndex]) return;
+    document
+      .getElementById(`${listboxId}-${filteredEntries[activeIndex].id}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, filteredEntries, isOpen, listboxId]);
+
+  function selectEntry(entry: OpponentCatalogEntry) {
+    setQuery(entry.name);
+    setIsOpen(false);
+    setActiveIndex(0);
+    onSelect(entry);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((current) => isOpen
+        ? Math.min(current + 1, Math.max(0, filteredEntries.length - 1))
+        : 0);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((current) => isOpen
+        ? Math.max(current - 1, 0)
+        : Math.max(0, filteredEntries.length - 1));
+    } else if (event.key === "Enter" && isOpen && filteredEntries[activeIndex]) {
+      event.preventDefault();
+      selectEntry(filteredEntries[activeIndex]);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setIsOpen(false);
+      setQuery(selectedName);
+    }
+  }
+
+  const previewSrc = selectedEntry?.src ?? (isCustomLogo ? image?.src : undefined);
+  const selectionLabel = selectedEntry
+    ? selectedEntry.name
+    : isCustomLogo
+      ? "Eigenes Logo ausgewählt"
+      : "Kein Gegnerlogo ausgewählt";
+
+  return (
+    <div className="opponent-logo-field">
+      <span className="field-label">Gegnerlogo</span>
+      <div className="opponent-picker" ref={rootRef}>
+        <div className={`opponent-search ${image ? "has-selection" : ""}`}>
+          <span className="opponent-search-preview" aria-hidden="true">
+            {previewSrc ? <img src={previewSrc} alt="" /> : "⌕"}
+          </span>
+          <input
+            id={inputId}
+            role="combobox"
+            aria-label="Gegnerlogo suchen"
+            aria-autocomplete="list"
+            aria-expanded={isOpen}
+            aria-controls={listboxId}
+            aria-activedescendant={isOpen && filteredEntries[activeIndex]
+              ? `${listboxId}-${filteredEntries[activeIndex].id}`
+              : undefined}
+            autoComplete="off"
+            placeholder="Verein suchen …"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActiveIndex(0);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+            onKeyDown={handleKeyDown}
+          />
+          {image && (
+            <button
+              className="opponent-clear-button"
+              type="button"
+              aria-label="Gegnerlogo entfernen"
+              onClick={() => {
+                setQuery("");
+                setIsOpen(false);
+                onClear();
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+        {isOpen && (
+          <div className="opponent-options" id={listboxId} role="listbox" aria-label="Vereinslogos">
+            {filteredEntries.length > 0 ? filteredEntries.map((entry, index) => (
+              <button
+                id={`${listboxId}-${entry.id}`}
+                key={entry.id}
+                className={`opponent-option ${index === activeIndex ? "active" : ""}`}
+                type="button"
+                role="option"
+                tabIndex={-1}
+                aria-selected={selectedEntry?.id === entry.id}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectEntry(entry)}
+              >
+                <span className="opponent-option-logo"><img src={entry.src} alt="" loading="lazy" /></span>
+                <span>{entry.name}</span>
+                {selectedEntry?.id === entry.id && <span className="opponent-option-check" aria-hidden="true">✓</span>}
+              </button>
+            )) : (
+              <p className="opponent-empty" role="status">Kein Verein gefunden.</p>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="opponent-picker-footer">
+        <span className={image ? "selection-status selected" : "selection-status"}>{selectionLabel}</span>
+        <label className="opponent-upload-button">
+          Eigenes Logo hochladen
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            onChange={(event) => {
+              setQuery("");
+              setIsOpen(false);
+              onUpload(event);
+            }}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function UploadField({
   id,
   label,
@@ -1547,6 +1934,7 @@ function UploadField({
 export default function Home() {
   const appShellRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const opponentLoadRequestRef = useRef(0);
   const [department, setDepartment] = useState<Department>("football");
   const [postType, setPostType] = useState<PostType>("matchday");
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
@@ -1564,6 +1952,7 @@ export default function Home() {
     opponentLogo: null,
     backgroundImage: null,
   });
+  const [selectedOpponentId, setSelectedOpponentId] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState("");
   const [fontReady, setFontReady] = useState(false);
   const supportsFileSharing = useSyncExternalStore(
@@ -1693,6 +2082,9 @@ export default function Home() {
   const availableFormats: FormatKey[] = department === "football" && postType === "result"
     ? ["post"]
     : Object.keys(FORMATS) as FormatKey[];
+  const selectedOpponentEntry = selectedOpponentId
+    ? OPPONENT_CATALOG.find((entry) => entry.id === selectedOpponentId) ?? null
+    : null;
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -1755,6 +2147,59 @@ export default function Home() {
       image.src = url;
       event.target.value = "";
     };
+  }
+
+  async function chooseOpponent(entry: OpponentCatalogEntry) {
+    const requestId = ++opponentLoadRequestRef.current;
+    setSelectedOpponentId(entry.id);
+    setForm((current) => ({ ...current, opponentName: entry.name }));
+    setAssets((current) => ({ ...current, opponentLogo: null }));
+    setDownloadStatus(`„${entry.name}“ wird geladen …`);
+
+    try {
+      const source = await loadImageSource(entry.src);
+      const normalizedLogo = await normalizeOpponentLogo(source);
+      if (requestId !== opponentLoadRequestRef.current) return;
+      setAssets((current) => ({ ...current, opponentLogo: normalizedLogo }));
+      setDownloadStatus(`Gegnerlogo „${entry.name}“ wurde ausgewählt.`);
+    } catch {
+      if (requestId !== opponentLoadRequestRef.current) return;
+      setSelectedOpponentId(null);
+      setDownloadStatus(`Das Gegnerlogo „${entry.name}“ konnte nicht verarbeitet werden.`);
+    }
+  }
+
+  function loadOpponentUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const requestId = ++opponentLoadRequestRef.current;
+    const url = URL.createObjectURL(file);
+    setSelectedOpponentId(null);
+    setForm((current) => ({ ...current, opponentName: "Gegner" }));
+    setAssets((current) => ({ ...current, opponentLogo: null }));
+    setDownloadStatus(`„${file.name}“ wird verarbeitet …`);
+
+    void loadImageSource(url)
+      .then(normalizeOpponentLogo)
+      .then((normalizedLogo) => {
+        if (requestId !== opponentLoadRequestRef.current) return;
+        setAssets((current) => ({ ...current, opponentLogo: normalizedLogo }));
+        setDownloadStatus(`„${file.name}“ wurde als Gegnerlogo übernommen.`);
+      })
+      .catch(() => {
+        if (requestId !== opponentLoadRequestRef.current) return;
+        setDownloadStatus("Dieses Gegnerlogo konnte nicht verarbeitet werden.");
+      })
+      .finally(() => URL.revokeObjectURL(url));
+  }
+
+  function clearOpponentLogo() {
+    opponentLoadRequestRef.current += 1;
+    setSelectedOpponentId(null);
+    setForm((current) => ({ ...current, opponentName: INITIAL_FORM.opponentName }));
+    setAssets((current) => ({ ...current, opponentLogo: null }));
+    setDownloadStatus("Gegnerlogo wurde entfernt.");
   }
 
   function fileName(key: FormatKey, page?: AnnouncementPage) {
@@ -1880,6 +2325,8 @@ export default function Home() {
       competition: TEAM_DESIGNS[teamDesign].competition,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
+    opponentLoadRequestRef.current += 1;
+    setSelectedOpponentId(null);
     setAssets((current) => ({
       ...current,
       opponentLogo: null,
@@ -2085,10 +2532,18 @@ export default function Home() {
             <div className="form-section">
               <h3>Bilder</h3>
               <div className="upload-grid">
-                <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
+                <OpponentLogoPicker
+                  key={selectedOpponentEntry?.id ?? (assets.opponentLogo ? "custom" : "none")}
+                  entries={OPPONENT_CATALOG}
+                  selectedEntry={selectedOpponentEntry}
+                  image={assets.opponentLogo}
+                  onSelect={(entry) => void chooseOpponent(entry)}
+                  onUpload={loadOpponentUpload}
+                  onClear={clearOpponentLogo}
+                />
                 {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
               </div>
-              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Die Bilder bleiben nur in dieser Browser-Sitzung.</p>
+              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Suche ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß oder Blau." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 

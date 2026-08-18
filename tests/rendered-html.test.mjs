@@ -24,14 +24,21 @@ test("builds a complete, readable GitHub Pages bundle", async () => {
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, styles, readme, packageJson, workflow, viteConfig] = await Promise.all([
+  const [page, styles, readme, packageJson, workflow, viteConfig, opponentFiles] = await Promise.all([
     readFile(new URL("../src/App.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
     readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
+    readdir(new URL("../src/assets/opponents", import.meta.url)),
   ]);
+
+  const normalizedOpponentFiles = opponentFiles.map((file) => file.normalize("NFC"));
+  assert.ok(opponentFiles.length >= 24, "Der Gegnerkatalog soll mindestens die erste Sammlung enthalten.");
+  assert.ok(normalizedOpponentFiles.includes("TSV Göggingen.png"));
+  assert.ok(normalizedOpponentFiles.includes("TSV Schwabmünchen.png"));
+  assert.ok(normalizedOpponentFiles.includes("Türk SV Bobingen.png"));
 
   assert.match(page, /post:\s*\{[^}]*1080[^}]*1350[^}]*exportScale:\s*2/s);
   assert.match(page, /story:\s*\{[^}]*1080[^}]*1920[^}]*exportScale:\s*2/s);
@@ -112,8 +119,16 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /function drawImageContained\(/);
   assert.match(page, /Math\.min\(maxWidth \/ sourceWidth, maxHeight \/ sourceHeight\)/);
   assert.match(page, /globalCompositeOperation = "source-in"/);
-  assert.match(page, /const distanceFromWhite = Math\.max\(/);
-  assert.match(page, /putImageData\(imageData, 0, 0\)/);
+  assert.match(page, /import\.meta\.glob<string>\(/);
+  assert.match(page, /\.\/assets\/opponents\/\*\.png/);
+  assert.match(page, /function createSearchVariants\(/);
+  assert.match(page, /function normalizeOpponentLogo\(/);
+  assert.match(page, /function estimateOpaqueBackground\(/);
+  assert.match(page, /normalize\("NFC"\)/);
+  assert.match(page, /role="combobox"/);
+  assert.match(page, /role="listbox"/);
+  assert.match(page, /Eigenes Logo hochladen/);
+  assert.match(page, /opponentName: entry\.name/);
   assert.match(page, /isBrand \? undefined : inkColor/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
@@ -130,6 +145,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /Beide PNGs herunterladen/);
   assert.match(page, /Allgemein Ankuendigung\$\{pagePart\}\.png/);
   assert.match(readme, /allow="web-share"/);
+  assert.match(readme, /Gegnerlogos ergänzen/);
+  assert.match(readme, /src\/assets\/opponents\//);
   assert.match(page, /"Bild speichern \/ teilen" : "PNG herunterladen"/);
   assert.doesNotMatch(page, /downloadAll|Alle 4 speichern|Alle 4 Formate herunterladen/);
   assert.doesNotMatch(page, /Weitere Formate folgen\./);
@@ -151,6 +168,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.selector-card-general\s*\{/);
   assert.match(styles, /\.department-card \.selector-group\s*\{/);
   assert.match(styles, /\.preview-page-control\s*\{/);
+  assert.match(styles, /\.opponent-picker\s*\{/);
+  assert.match(styles, /\.opponent-options\s*\{/);
+  assert.match(styles, /\.opponent-option\.active\s*\{/);
   assert.ok(
     page.indexOf('className={`canvas-stage') <
       page.indexOf('className="segmented-control compact preview-page-control"'),

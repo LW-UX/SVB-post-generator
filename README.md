@@ -19,8 +19,9 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - referenzgetreue Spieltagslayouts mit eigenen Positionen für alle vier Formate
 - automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
 - lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
-- lokaler Upload für das Gegnerlogo
-- automatische einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
+- automatisch aus `src/assets/opponents/` erzeugte, durchsuchbare Gegnerlogo-Auswahl
+- alternativer lokaler Upload für eigene Gegnerlogos
+- automatische Freistellung, Beschneidung und einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
 - PNG-Download der Hochformate in 2× und der Querformate in 1× Auflösung
 - keine Datenbank und keine Speicherung von Eingaben oder Uploads
 
@@ -46,6 +47,7 @@ pnpm run start
 - `src/App.tsx`: Oberfläche, Canvas-Renderer und Exportlogik
 - `src/styles.css`: vollständig editierbare Oberflächenstile
 - `src/assets/Inter-Variable.ttf`: lokal verwendete Inter-Schrift
+- `src/assets/opponents/`: automatisch eingelesene blaue PNG-Gegnerlogos
 - `public/assets/`: die drei benötigten SVB-Logovarianten
 - `pages-dist/`: automatisch erzeugte, nicht in Git gespeicherte Build-Ausgabe
 
@@ -87,3 +89,16 @@ Die Oberfläche und der Grafik-Renderer sind voneinander getrennt. Farben und
 Oberflächenstile liegen in `src/styles.css`; Inhalte, Größen und die vier
 Grafiklayouts liegen in `src/App.tsx`. Dadurch können die Layouts ohne
 Änderungen an Upload- oder Downloadfunktionen weiterentwickelt werden.
+
+### Gegnerlogos ergänzen
+
+Neue Gegnerlogos werden als blaue PNG-Datei mit transparentem Hintergrund unter
+`src/assets/opponents/` abgelegt. Der Dateiname ohne `.png` ist zugleich der
+sichtbare Vereinsname, daher sollen Umlaute und Großschreibung bereits korrekt
+geschrieben sein, zum Beispiel `TSV Schwabmünchen.png`. Beim nächsten Build
+erscheint die Datei automatisch in der alphabetischen Suche. Eine weiße Kopie
+ist nicht nötig; die benötigte Farbe wird beim Rendern erzeugt.
+
+Eigene Logos, die über die Oberfläche gewählt werden, werden im Browser
+freigestellt und beschnitten. Sie werden weder hochgeladen noch dauerhaft
+gespeichert.

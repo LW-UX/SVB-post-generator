@@ -98,7 +98,8 @@ button {
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-label:has(input:focus-visible) .upload-box {
+label:has(input:focus-visible) .upload-box,
+.opponent-upload-button:has(input:focus-visible) {
   outline: 3px solid rgba(0, 68, 138, 0.22);
   outline-offset: 2px;
 }
@@ -539,6 +540,194 @@ textarea:focus {
 
 .upload-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.opponent-logo-field {
+  display: flex;
+  min-width: 0;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opponent-picker {
+  position: relative;
+  z-index: 4;
+}
+
+.opponent-search {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fafbfc;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.opponent-search:hover,
+.opponent-search:focus-within {
+  border-color: #8ca6d8;
+  background: white;
+}
+
+.opponent-search.has-selection {
+  grid-template-columns: 38px minmax(0, 1fr) 40px;
+}
+
+.opponent-search input:not([type="file"]):not([type="range"]) {
+  height: 46px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  outline: 0;
+}
+
+.opponent-search-preview,
+.opponent-option-logo {
+  display: grid;
+  place-items: center;
+  background: white;
+  color: var(--navy);
+}
+
+.opponent-search-preview {
+  width: 30px;
+  height: 30px;
+  margin-left: 7px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  font-size: 18px;
+}
+
+.opponent-search-preview img,
+.opponent-option-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.opponent-search-preview img {
+  padding: 3px;
+}
+
+.opponent-clear-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  justify-self: center;
+  border-radius: 2px;
+  color: var(--ink-helper);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.opponent-clear-button:hover {
+  background: var(--blue-pale);
+  color: var(--navy);
+}
+
+.opponent-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 304px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 14px 34px rgba(7, 18, 38, 0.16);
+}
+
+.opponent-option {
+  display: grid;
+  min-height: 50px;
+  grid-template-columns: 38px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.opponent-option.active {
+  background: var(--blue-pale);
+  color: var(--navy);
+}
+
+.opponent-option[aria-selected="true"] {
+  font-weight: 800;
+}
+
+.opponent-option-logo {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #edf0f4;
+  border-radius: 2px;
+}
+
+.opponent-option-logo img {
+  padding: 4px;
+}
+
+.opponent-option-check {
+  color: var(--success);
+  font-size: 15px;
+  text-align: center;
+}
+
+.opponent-empty {
+  padding: 18px 12px;
+  color: var(--ink-helper);
+  font-size: 13px;
+  text-align: center;
+}
+
+.opponent-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 7px;
+}
+
+.selection-status {
+  overflow: hidden;
+  color: var(--ink-helper);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-status.selected {
+  color: var(--success);
+}
+
+.opponent-upload-button {
+  flex: 0 0 auto;
+  color: var(--blue-bright);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.opponent-upload-button:hover {
+  text-decoration: underline;
+}
+
+.opponent-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .upload-box {
