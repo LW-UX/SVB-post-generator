@@ -649,10 +649,12 @@ function renderResultGraphic(
   context: CanvasRenderingContext2D,
   form: FormState,
   assets: Assets,
+  teamDesign: TeamDesign,
 ) {
   const { width, height } = RESULT_POST_FORMAT;
   const blue = "#00448a";
   const isHomeMatch = form.homeAway === "home";
+  const isFirstTeam = teamDesign === "first";
   const footerY = 1215;
   const diagonalTopY = 982;
   const logoDiagonalSlope = (2245.41 - 164.95) / (2040.45 - 411.84);
@@ -665,10 +667,10 @@ function renderResultGraphic(
     drawImageCover(context, assets.backgroundImage, width, height);
   }
 
-  context.fillStyle = isHomeMatch ? "#ffffff" : blue;
+  context.fillStyle = isFirstTeam ? blue : "#ffffff";
   context.fillRect(0, footerY, width, height - footerY);
 
-  context.fillStyle = isHomeMatch ? blue : "#ffffff";
+  context.fillStyle = isFirstTeam ? "#ffffff" : blue;
   context.beginPath();
   context.moveTo(width, diagonalTopY);
   context.lineTo(width, height);
@@ -696,10 +698,10 @@ function renderResultGraphic(
   const scoreX = isHomeMatch ? 941 : 773;
   const diagonalXAtContent = width - (contentY - diagonalTopY) / logoDiagonalSlope;
   const opponentIsOnDiagonal = opponentX >= diagonalXAtContent;
-  const opponentIsOnBlue = isHomeMatch
-    ? opponentIsOnDiagonal
-    : !opponentIsOnDiagonal;
-  const opponentLogoColor = opponentIsOnBlue ? "#ffffff" : blue;
+  const opponentIsOnBlue = isFirstTeam
+    ? !opponentIsOnDiagonal
+    : opponentIsOnDiagonal;
+  const detailColor = opponentIsOnBlue ? "#ffffff" : blue;
   const clubScore = form.clubScore || "0";
   const opponentScore = form.opponentScore || "0";
   const score = form.homeAway === "home"
@@ -724,7 +726,7 @@ function renderResultGraphic(
       contentY,
       66,
       90,
-      opponentLogoColor,
+      detailColor,
     );
   }
 
@@ -733,12 +735,12 @@ function renderResultGraphic(
   context.letterSpacing = "0.04em";
   context.textBaseline = "middle";
   context.textAlign = "center";
-  context.fillStyle = "#ffffff";
+  context.fillStyle = detailColor;
   context.fillText(score, scoreX, contentY);
 
   if (form.footer.trim()) {
     context.textAlign = "left";
-    context.fillStyle = isHomeMatch ? blue : "#ffffff";
+    context.fillStyle = isFirstTeam ? "#ffffff" : blue;
     context.fillText(form.footer.toUpperCase(), 40, contentY);
   }
   context.letterSpacing = "0px";
@@ -770,7 +772,7 @@ function renderGraphic(
   const height = format.height;
 
   if (type === "result" && formatKey === "post") {
-    renderResultGraphic(context, form, assets);
+    renderResultGraphic(context, form, assets, teamDesign);
     return;
   }
 
