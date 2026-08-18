@@ -334,19 +334,16 @@ function drawImageContained(
   tintedContext.drawImage(image, 0, 0, tintedCanvas.width, tintedCanvas.height);
   const imageData = tintedContext.getImageData(0, 0, tintedCanvas.width, tintedCanvas.height);
   const pixels = imageData.data;
-  const hasTransparency = pixels.some((value, index) => index % 4 === 3 && value < 250);
-  if (!hasTransparency) {
-    for (let index = 0; index < pixels.length; index += 4) {
-      const distanceFromWhite = Math.max(
-        255 - pixels[index],
-        255 - pixels[index + 1],
-        255 - pixels[index + 2],
-      );
-      const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
-      pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
-    }
-    tintedContext.putImageData(imageData, 0, 0);
+  for (let index = 0; index < pixels.length; index += 4) {
+    const distanceFromWhite = Math.max(
+      255 - pixels[index],
+      255 - pixels[index + 1],
+      255 - pixels[index + 2],
+    );
+    const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
+    pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
   }
+  tintedContext.putImageData(imageData, 0, 0);
   tintedContext.globalCompositeOperation = "source-in";
   tintedContext.fillStyle = tintColor;
   tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);
@@ -697,6 +694,12 @@ function renderResultGraphic(
   const clubY = logoDividerY - logoDividerOffsetY;
   const opponentX = isHomeMatch ? 1025 : 689;
   const scoreX = isHomeMatch ? 941 : 773;
+  const diagonalXAtContent = width - (contentY - diagonalTopY) / logoDiagonalSlope;
+  const opponentIsOnDiagonal = opponentX >= diagonalXAtContent;
+  const opponentIsOnBlue = isHomeMatch
+    ? opponentIsOnDiagonal
+    : !opponentIsOnDiagonal;
+  const opponentLogoColor = opponentIsOnBlue ? "#ffffff" : blue;
   const clubScore = form.clubScore || "0";
   const opponentScore = form.opponentScore || "0";
   const score = form.homeAway === "home"
@@ -714,7 +717,15 @@ function renderResultGraphic(
     );
   }
   if (assets.opponentLogo) {
-    drawImageContained(context, assets.opponentLogo, opponentX, contentY, 66, 90, "#ffffff");
+    drawImageContained(
+      context,
+      assets.opponentLogo,
+      opponentX,
+      contentY,
+      66,
+      90,
+      opponentLogoColor,
+    );
   }
 
   context.font = '700 40px Inter, Arial, Helvetica, sans-serif';
@@ -1063,23 +1074,54 @@ export default function Home() {
     return `svb-${team}-${postType === "matchday" ? "spieltag" : "ergebnis"}-${slugify(form.opponentName) || "gegner"}-${key}.png`;
   }
 
-  function downloadCanvas(canvas: HTMLCanvasElement, key: FormatKey) {
-    return new Promise<void>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          setDownloadStatus("Das Bild konnte nicht erstellt werden.");
-          resolve();
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = fileName(key);
-        anchor.click();
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-        resolve();
-      }, "image/png");
+  function createPngBlob(canvas: HTMLCanvasElement) {
+    return new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/png");
     });
+  }
+
+  async function downloadCanvas(canvas: HTMLCanvasElement, key: FormatKey) {
+    const blob = await createPngBlob(canvas);
+    if (!blob) {
+      setDownloadStatus("Das Bild konnte nicht erstellt werden.");
+      return false;
+    }
+
+    const name = fileName(key);
+    const file = new File([blob], name, { type: "image/png" });
+    const isMobileViewport = window.matchMedia("(max-width: 820px)").matches;
+    const canShareFile = isMobileViewport
+      && typeof navigator.share === "function"
+      && typeof navigator.canShare === "function"
+      && navigator.canShare({ files: [file] });
+
+    if (canShareFile) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "SVB Social Media Grafik",
+        });
+        return true;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          setDownloadStatus("Speichern wurde abgebrochen.");
+          return false;
+        }
+        // Eingebettete Browser können die Web-Share-API blockieren. In diesem
+        // Fall wird die Datei über einen regulären Download-Link gespeichert.
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = name;
+    anchor.hidden = true;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    return true;
   }
 
   async function downloadSelected() {
@@ -1089,8 +1131,10 @@ export default function Home() {
     setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wird erstellt …`);
     const canvas = document.createElement("canvas");
     renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
-    await downloadCanvas(canvas, formatKey);
-    setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde erstellt.`);
+    const downloaded = await downloadCanvas(canvas, formatKey);
+    if (downloaded) {
+      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde erstellt.`);
+    }
   }
 
   async function downloadAll() {
@@ -1278,10 +1322,6 @@ export default function Home() {
               {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
             </div>
             <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Die Bilder bleiben nur in dieser Browser-Sitzung.</p>
-          </div>
-
-          <div className="mobile-download">
-            <button className="primary-button" type="button" onClick={downloadSelected}>PNG herunterladen</button>
           </div>
         </section>
       </div>

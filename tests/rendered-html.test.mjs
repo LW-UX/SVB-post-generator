@@ -44,8 +44,9 @@ test("renders the SVB generator shell", async () => {
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, packageJson, workflow] = await Promise.all([
+  const [page, styles, packageJson, workflow] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
   ]);
@@ -94,6 +95,12 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /isBrand \? undefined : inkColor/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
+  assert.match(page, /navigator\.share/);
+  assert.match(page, /document\.body\.appendChild\(anchor\)/);
+  assert.doesNotMatch(page, /className="mobile-download"/);
+  assert.match(page, /PNG herunterladen[\s\S]*Alle 4 Formate/);
+  assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
+  assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);
   assert.match(page, /svb-generator-height/);
   assert.match(page, /https:\/\/fussball\.sportverein-bergheim\.de/);

@@ -293,9 +293,10 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .canvas-story canvas {
-  height: min(68vh, 720px);
   width: auto;
-  aspect-ratio: 9 / 16;
+  height: auto;
+  max-width: min(100%, 405px);
+  max-height: min(68vh, 720px);
 }
 
 .canvas-landscape canvas {
@@ -540,10 +541,6 @@ input:not([type="file"]):not([type="range"]):focus {
   accent-color: var(--blue);
 }
 
-.mobile-download {
-  display: none;
-}
-
 @media (max-width: 1080px) {
   .selector-card {
     grid-template-columns: 1fr;
@@ -597,11 +594,6 @@ input:not([type="file"]):not([type="range"]):focus {
     max-height: 62vh;
   }
 
-  .preview-actions .primary-button,
-  .status-message {
-    display: none;
-  }
-
   .preview-actions {
     grid-template-columns: 1fr;
   }
@@ -612,20 +604,6 @@ input:not([type="file"]):not([type="range"]):focus {
     padding-left: 18px;
   }
 
-  .mobile-download {
-    position: sticky;
-    z-index: 5;
-    bottom: 0;
-    display: block;
-    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(14px);
-  }
-
-  .mobile-download .primary-button {
-    width: 100%;
-  }
 }
 
 @media (max-width: 560px) {
@@ -658,6 +636,7 @@ input:not([type="file"]):not([type="range"]):focus {
   }
 
   .canvas-story canvas {
+    max-width: min(100%, 33.75vh);
     max-height: 60vh;
   }
 }
