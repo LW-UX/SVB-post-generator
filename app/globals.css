@@ -21,8 +21,8 @@
   --canvas: #ffffff;
   --success: #19734b;
   --warning: #8a510b;
-  --radius-lg: 4px;
-  --radius-md: 3px;
+  --radius-lg: 8px;
+  --radius-md: 8px;
   --shadow: 0 12px 36px rgba(0, 68, 138, 0.075);
 }
 
@@ -129,19 +129,6 @@ label:has(input:focus-visible) .upload-box {
   grid-template-columns: minmax(220px, 0.75fr) minmax(470px, 1.6fr);
 }
 
-.department-card::before,
-.selector-card::before,
-.preview-column::before,
-.form-column::before {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  left: -1px;
-  height: 4px;
-  background: var(--blue);
-  content: "";
-}
-
 .selector-group {
   display: flex;
   flex-direction: column;
@@ -190,6 +177,7 @@ label:has(input:focus-visible) .upload-box {
 
 .segmented-control button.active,
 .format-options button.active {
+  border-radius: 4px;
   background: #1e73b9;
   box-shadow: none;
   color: white;
@@ -621,11 +609,6 @@ textarea:focus {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-  }
-
-  .department-card::before,
-  .selector-card::before {
-    display: none;
   }
 
   .format-options {

@@ -1942,7 +1942,6 @@ export default function Home() {
               </button>
             ))}
           </div>
-          {department === "football" && postType === "result" && <small className="format-note">Weitere Formate folgen.</small>}
         </div>
       </section>
 

@@ -147,6 +147,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(readme, /allow="web-share"/);
   assert.match(page, /"Bild speichern \/ teilen" : "PNG herunterladen"/);
   assert.doesNotMatch(page, /downloadAll|Alle 4 speichern|Alle 4 Formate herunterladen/);
+  assert.doesNotMatch(page, /Weitere Formate folgen\./);
   assert.match(page, /Dieser Browser kann Bilder nicht direkt an die Fotobibliothek übergeben/);
   assert.doesNotMatch(page, /window\.matchMedia\("\(max-width: 820px\)"\)/);
   assert.match(page, /document\.body\.appendChild\(anchor\)/);
