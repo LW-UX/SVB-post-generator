@@ -9,6 +9,9 @@ type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
 type DateDisplay = "date-time" | "day-date";
 type ExportAction = "shared" | "downloaded" | "cancelled";
+type Department = "football" | "general";
+type AnnouncementPageCount = 1 | 2;
+type AnnouncementPage = 1 | 2;
 
 type FormState = {
   clubName: string;
@@ -31,8 +34,18 @@ type FormState = {
 
 type Assets = {
   clubLogo: HTMLImageElement | null;
+  colorClubLogo: HTMLImageElement | null;
   opponentLogo: HTMLImageElement | null;
   backgroundImage: HTMLImageElement | null;
+};
+
+type AnnouncementFormState = {
+  title: string;
+  subtitleBold: string;
+  subtitleLight: string;
+  secondHeadline: string;
+  body: string;
+  disclaimer: string;
 };
 
 const FORMATS: Record<
@@ -92,6 +105,89 @@ const INITIAL_FORM: FormState = {
   halfTime: "1:0",
   footer: "",
   homeAway: "home",
+};
+
+const INITIAL_ANNOUNCEMENT_FORM: AnnouncementFormState = {
+  title: "ÜBERSCHRIFT",
+  subtitleBold: "UNTERE ZEILE BOLD",
+  subtitleLight: "UNTERE ZEILE LIGHT, KANN AUCH\nZWEIZEILIG SEIN",
+  secondHeadline: "TAGESORDNUNG",
+  body: "Fließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.\n\nFließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.",
+  disclaimer: "Dies ist ein Disclaimer",
+};
+
+type AnnouncementTitleLayout = {
+  cornerTopX: number;
+  logoX: number;
+  logoY: number;
+  logoMaxWidth: number;
+  logoMaxHeight: number;
+  titleX: number;
+  titleTopY: number;
+  titleMaxWidth: number;
+  lowerX: number;
+  lowerBoldY: number;
+  lowerLightY: number;
+  lowerMaxWidth: number;
+};
+
+const ANNOUNCEMENT_TITLE_LAYOUTS: Record<FormatKey, AnnouncementTitleLayout> = {
+  post: {
+    cornerTopX: 0.27,
+    logoX: 0.5,
+    logoY: 0.36,
+    logoMaxWidth: 0.19,
+    logoMaxHeight: 0.235,
+    titleX: 0.5,
+    titleTopY: 0.505,
+    titleMaxWidth: 0.94,
+    lowerX: 0.5,
+    lowerBoldY: 0.797,
+    lowerLightY: 0.842,
+    lowerMaxWidth: 0.86,
+  },
+  story: {
+    cornerTopX: 0.18,
+    logoX: 0.5,
+    logoY: 0.31,
+    logoMaxWidth: 0.2,
+    logoMaxHeight: 0.19,
+    titleX: 0.5,
+    titleTopY: 0.47,
+    titleMaxWidth: 0.9,
+    lowerX: 0.5,
+    lowerBoldY: 0.79,
+    lowerLightY: 0.83,
+    lowerMaxWidth: 0.84,
+  },
+  landscape: {
+    cornerTopX: 0.21,
+    logoX: 0.5,
+    logoY: 0.26,
+    logoMaxWidth: 0.14,
+    logoMaxHeight: 0.25,
+    titleX: 0.5,
+    titleTopY: 0.43,
+    titleMaxWidth: 0.82,
+    lowerX: 0.5,
+    lowerBoldY: 0.74,
+    lowerLightY: 0.8,
+    lowerMaxWidth: 0.76,
+  },
+  widescreen: {
+    cornerTopX: 0.17,
+    logoX: 0.5,
+    logoY: 0.24,
+    logoMaxWidth: 0.12,
+    logoMaxHeight: 0.27,
+    titleX: 0.5,
+    titleTopY: 0.42,
+    titleMaxWidth: 0.78,
+    lowerX: 0.5,
+    lowerBoldY: 0.72,
+    lowerLightY: 0.79,
+    lowerMaxWidth: 0.7,
+  },
 };
 
 type MatchdayLayout = {
@@ -647,6 +743,436 @@ function renderMatchdayGraphic(
   context.letterSpacing = "0px";
 }
 
+function setAnnouncementFont(
+  context: CanvasRenderingContext2D,
+  weight: 300 | 700,
+  size: number,
+) {
+  context.font = `${weight} ${size}px Inter, Arial, Helvetica, sans-serif`;
+  context.fontKerning = "normal";
+  context.letterSpacing = "0.04em";
+}
+
+function fitAnnouncementFontToLongestWord(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxSize: number,
+  minSize: number,
+  weight: 300 | 700,
+) {
+  const words = text.split(/\s+/).filter(Boolean);
+  for (let size = maxSize; size >= minSize; size -= 1) {
+    setAnnouncementFont(context, weight, size);
+    if (words.every((word) => context.measureText(word).width <= maxWidth)) {
+      return size;
+    }
+  }
+  return minSize;
+}
+
+function breakLongWord(
+  context: CanvasRenderingContext2D,
+  word: string,
+  maxWidth: number,
+) {
+  const parts: string[] = [];
+  let part = "";
+
+  for (const character of Array.from(word)) {
+    const candidate = `${part}${character}`;
+    if (part && context.measureText(candidate).width > maxWidth) {
+      parts.push(part);
+      part = character;
+    } else {
+      part = candidate;
+    }
+  }
+  if (part) parts.push(part);
+  return parts;
+}
+
+function wrapCanvasText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+) {
+  const lines: string[] = [];
+  const paragraphs = text.replaceAll("\r\n", "\n").split("\n");
+
+  paragraphs.forEach((paragraph) => {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      lines.push("");
+      return;
+    }
+
+    let line = "";
+    for (const word of words) {
+      const wordParts = context.measureText(word).width > maxWidth
+        ? breakLongWord(context, word, maxWidth)
+        : [word];
+
+      for (const wordPart of wordParts) {
+        const candidate = line ? `${line} ${wordPart}` : wordPart;
+        if (line && context.measureText(candidate).width > maxWidth) {
+          lines.push(line);
+          line = wordPart;
+        } else {
+          line = candidate;
+        }
+      }
+    }
+    if (line) lines.push(line);
+  });
+
+  while (lines.length > 1 && lines.at(-1) === "") lines.pop();
+  return lines.length ? lines : [""];
+}
+
+function lineBlockHeight(lines: string[], lineHeight: number) {
+  return lines.reduce(
+    (height, line) => height + (line ? lineHeight : lineHeight * 0.68),
+    0,
+  );
+}
+
+function drawLineBlock(
+  context: CanvasRenderingContext2D,
+  lines: string[],
+  x: number,
+  top: number,
+  lineHeight: number,
+) {
+  let y = top;
+  for (const line of lines) {
+    if (line) context.fillText(line, x, y);
+    y += line ? lineHeight : lineHeight * 0.68;
+  }
+}
+
+function drawAnnouncementBackground(
+  context: CanvasRenderingContext2D,
+  formatKey: FormatKey,
+  pageWidth: number,
+  height: number,
+  pageCount: AnnouncementPageCount,
+) {
+  const totalWidth = pageWidth * pageCount;
+  const layout = ANNOUNCEMENT_TITLE_LAYOUTS[formatKey];
+  const gradient = createAngledGradient(
+    context,
+    totalWidth,
+    height,
+    MATCHDAY_ANGLE_DEGREES,
+  );
+  gradient.addColorStop(0, "#003076");
+  gradient.addColorStop(1, "#14589e");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, totalWidth, height);
+
+  context.fillStyle = "#ffffff";
+  const cornerWidth = pageWidth * layout.cornerTopX;
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(cornerWidth, 0);
+  context.lineTo(
+    0,
+    cornerWidth * Math.tan((MATCHDAY_ANGLE_DEGREES * Math.PI) / 180),
+  );
+  context.closePath();
+  context.fill();
+
+  if (formatKey === "post" && pageCount === 2) {
+    const lowerCornerWidth = pageWidth * 0.27;
+    context.beginPath();
+    context.moveTo(totalWidth, height * 0.73);
+    context.lineTo(totalWidth, height);
+    context.lineTo(totalWidth - lowerCornerWidth, height);
+    context.closePath();
+    context.fill();
+  }
+}
+
+function drawAnnouncementArrow(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
+  const startX = width * 0.28;
+  const endX = width * 0.72;
+  const y = height * 0.94;
+  const arrowSize = width * 0.025;
+
+  context.save();
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = Math.max(3, width * 0.0026);
+  context.lineCap = "square";
+  context.lineJoin = "miter";
+  context.beginPath();
+  context.moveTo(startX, y);
+  context.lineTo(endX, y);
+  context.moveTo(endX - arrowSize, y - arrowSize);
+  context.lineTo(endX, y);
+  context.lineTo(endX - arrowSize, y + arrowSize);
+  context.stroke();
+  context.restore();
+}
+
+function drawAnnouncementTitleSlide(
+  context: CanvasRenderingContext2D,
+  formatKey: FormatKey,
+  form: AnnouncementFormState,
+  whiteLogo: HTMLImageElement | null,
+  showArrow: boolean,
+) {
+  const { width, height } = FORMATS[formatKey];
+  const layout = ANNOUNCEMENT_TITLE_LAYOUTS[formatKey];
+  const typeScale = formatKey === "post" || formatKey === "story"
+    ? 1
+    : Math.min(1.18, width / 1500 + 0.18);
+  const titleSize = 76 * typeScale;
+  const smallSize = 40 * typeScale;
+
+  if (whiteLogo) {
+    drawImageContained(
+      context,
+      whiteLogo,
+      width * layout.logoX,
+      height * layout.logoY,
+      width * layout.logoMaxWidth,
+      height * layout.logoMaxHeight,
+    );
+  }
+
+  context.fillStyle = "#ffffff";
+  context.textAlign = "center";
+  context.textBaseline = "top";
+
+  const titleValue = (form.title || "ÜBERSCHRIFT").toUpperCase();
+  const fittedTitleSize = fitAnnouncementFontToLongestWord(
+    context,
+    titleValue,
+    width * layout.titleMaxWidth,
+    titleSize,
+    titleSize * 0.78,
+    700,
+  );
+  setAnnouncementFont(context, 700, fittedTitleSize);
+  const titleLines = wrapCanvasText(
+    context,
+    titleValue,
+    width * layout.titleMaxWidth,
+  );
+  drawLineBlock(
+    context,
+    titleLines,
+    width * layout.titleX,
+    height * layout.titleTopY,
+    fittedTitleSize * 1.16,
+  );
+
+  setAnnouncementFont(context, 700, smallSize);
+  context.fillText(
+    (form.subtitleBold || "UNTERE ZEILE BOLD").toUpperCase(),
+    width * layout.lowerX,
+    height * layout.lowerBoldY,
+    width * layout.lowerMaxWidth,
+  );
+
+  setAnnouncementFont(context, 300, smallSize);
+  const lowerLines = wrapCanvasText(
+    context,
+    (form.subtitleLight || "UNTERE ZEILE LIGHT").toUpperCase(),
+    width * layout.lowerMaxWidth,
+  );
+  drawLineBlock(
+    context,
+    lowerLines,
+    width * layout.lowerX,
+    height * layout.lowerLightY,
+    smallSize * 1.22,
+  );
+
+  if (showArrow && formatKey === "post") {
+    drawAnnouncementArrow(context, width, height);
+  }
+  context.letterSpacing = "0px";
+}
+
+function getAnnouncementBodyLayout(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxHeight: number,
+) {
+  for (let size = 30; size >= 20; size -= 1) {
+    setAnnouncementFont(context, 300, size);
+    const lines = wrapCanvasText(context, text, maxWidth);
+    const lineHeight = size * 1.28;
+    const height = lineBlockHeight(lines, lineHeight);
+    if (height <= maxHeight || size === 20) {
+      return { size, lines, lineHeight, height };
+    }
+  }
+
+  return { size: 20, lines: [text], lineHeight: 25.6, height: 25.6 };
+}
+
+function drawAnnouncementSecondSlide(
+  context: CanvasRenderingContext2D,
+  form: AnnouncementFormState,
+  colorLogo: HTMLImageElement | null,
+  xOffset: number,
+) {
+  const { width, height } = FORMATS.post;
+  const headlineValue = (form.secondHeadline || "TAGESORDNUNG").toUpperCase();
+  const headlineSize = fitAnnouncementFontToLongestWord(
+    context,
+    headlineValue,
+    width * 0.86,
+    76,
+    58,
+    700,
+  );
+  const headlineLineHeight = headlineSize * 1.16;
+  const headlineBodyGap = 48;
+  const contentCenterY = height * 0.5;
+  const contentMaxHeight = height * 0.61;
+
+  context.save();
+  context.translate(xOffset, 0);
+  context.fillStyle = "#ffffff";
+  context.textBaseline = "top";
+
+  setAnnouncementFont(context, 700, headlineSize);
+  context.textAlign = "center";
+  const headlineLines = wrapCanvasText(
+    context,
+    headlineValue,
+    width * 0.86,
+  );
+  const headlineHeight = lineBlockHeight(headlineLines, headlineLineHeight);
+  const bodyMaxHeight = Math.max(
+    120,
+    contentMaxHeight - headlineHeight - headlineBodyGap,
+  );
+  const bodyLayout = getAnnouncementBodyLayout(
+    context,
+    form.body,
+    width * 0.78,
+    bodyMaxHeight,
+  );
+  const totalHeight = headlineHeight + headlineBodyGap + bodyLayout.height;
+  const contentTop = contentCenterY - totalHeight / 2;
+
+  setAnnouncementFont(context, 700, headlineSize);
+  drawLineBlock(
+    context,
+    headlineLines,
+    width / 2,
+    contentTop,
+    headlineLineHeight,
+  );
+
+  setAnnouncementFont(context, 300, bodyLayout.size);
+  context.textAlign = "left";
+  drawLineBlock(
+    context,
+    bodyLayout.lines,
+    width * 0.11,
+    contentTop + headlineHeight + headlineBodyGap,
+    bodyLayout.lineHeight,
+  );
+
+  if (form.disclaimer.trim()) {
+    setAnnouncementFont(context, 300, 24);
+    context.textAlign = "left";
+    const disclaimerLines = wrapCanvasText(context, form.disclaimer, width * 0.58);
+    drawLineBlock(context, disclaimerLines, width * 0.04, height * 0.94, 30);
+  }
+
+  if (colorLogo) {
+    context.save();
+    context.shadowColor = "rgba(0, 0, 0, 0.22)";
+    context.shadowBlur = 8;
+    context.shadowOffsetY = 3;
+    drawImageContained(
+      context,
+      colorLogo,
+      width * 0.87,
+      height * 0.895,
+      width * 0.17,
+      height * 0.19,
+    );
+    context.restore();
+  }
+
+  context.letterSpacing = "0px";
+  context.restore();
+}
+
+function renderAnnouncementGraphic(
+  canvas: HTMLCanvasElement,
+  formatKey: FormatKey,
+  form: AnnouncementFormState,
+  assets: Assets,
+  page: AnnouncementPage,
+  requestedPageCount: AnnouncementPageCount,
+  scale = 1,
+) {
+  const format = FORMATS[formatKey];
+  const pageCount: AnnouncementPageCount = formatKey === "post"
+    ? requestedPageCount
+    : 1;
+  const renderedPage: AnnouncementPage = pageCount === 2 ? page : 1;
+  const master = document.createElement("canvas");
+  master.width = format.width * pageCount * scale;
+  master.height = format.height * scale;
+  const masterContext = master.getContext("2d");
+  if (!masterContext) return;
+  masterContext.scale(scale, scale);
+
+  drawAnnouncementBackground(
+    masterContext,
+    formatKey,
+    format.width,
+    format.height,
+    pageCount,
+  );
+  drawAnnouncementTitleSlide(
+    masterContext,
+    formatKey,
+    form,
+    assets.clubLogo,
+    pageCount === 2,
+  );
+  if (pageCount === 2) {
+    drawAnnouncementSecondSlide(
+      masterContext,
+      form,
+      assets.colorClubLogo,
+      format.width,
+    );
+  }
+
+  canvas.width = format.width * scale;
+  canvas.height = format.height * scale;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  context.drawImage(
+    master,
+    (renderedPage - 1) * format.width * scale,
+    0,
+    format.width * scale,
+    format.height * scale,
+    0,
+    0,
+    format.width * scale,
+    format.height * scale,
+  );
+}
+
 function drawBadge(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement | null,
@@ -796,8 +1322,12 @@ function renderResultGraphic(
   context.letterSpacing = "0px";
 }
 
-function getGraphicFormat(type: PostType, formatKey: FormatKey) {
-  return type === "result" && formatKey === "post"
+function getGraphicFormat(
+  department: Department,
+  type: PostType,
+  formatKey: FormatKey,
+) {
+  return department === "football" && type === "result" && formatKey === "post"
     ? RESULT_POST_FORMAT
     : FORMATS[formatKey];
 }
@@ -809,9 +1339,26 @@ function renderGraphic(
   form: FormState,
   assets: Assets,
   teamDesign: TeamDesign,
+  department: Department,
+  announcementForm: AnnouncementFormState,
+  announcementPage: AnnouncementPage,
+  announcementPageCount: AnnouncementPageCount,
   scale = 1,
 ) {
-  const format = getGraphicFormat(type, formatKey);
+  if (department === "general") {
+    renderAnnouncementGraphic(
+      canvas,
+      formatKey,
+      announcementForm,
+      assets,
+      announcementPage,
+      announcementPageCount,
+      scale,
+    );
+    return;
+  }
+
+  const format = getGraphicFormat(department, type, formatKey);
   canvas.width = format.width * scale;
   canvas.height = format.height * scale;
   const context = canvas.getContext("2d");
@@ -988,12 +1535,20 @@ function UploadField({
 export default function Home() {
   const appShellRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [department, setDepartment] = useState<Department>("football");
   const [postType, setPostType] = useState<PostType>("matchday");
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [announcementForm, setAnnouncementForm] = useState<AnnouncementFormState>(
+    INITIAL_ANNOUNCEMENT_FORM,
+  );
+  const [announcementPageCount, setAnnouncementPageCount] =
+    useState<AnnouncementPageCount>(2);
+  const [announcementPage, setAnnouncementPage] = useState<AnnouncementPage>(1);
   const [assets, setAssets] = useState<Assets>({
     clubLogo: null,
+    colorClubLogo: null,
     opponentLogo: null,
     backgroundImage: null,
   });
@@ -1009,6 +1564,8 @@ export default function Home() {
     let isActive = true;
     Promise.all([
       document.fonts.load('300 40px "Inter"'),
+      document.fonts.load('300 30px "Inter"'),
+      document.fonts.load('700 76px "Inter"'),
       document.fonts.load('700 100px "Inter"'),
     ]).finally(() => {
       if (isActive) setFontReady(true);
@@ -1021,13 +1578,37 @@ export default function Home() {
 
   useEffect(() => {
     if (canvasRef.current) {
-      renderGraphic(canvasRef.current, formatKey, postType, form, assets, teamDesign);
+      renderGraphic(
+        canvasRef.current,
+        formatKey,
+        postType,
+        form,
+        assets,
+        teamDesign,
+        department,
+        announcementForm,
+        announcementPage,
+        announcementPageCount,
+      );
     }
-  }, [formatKey, postType, form, assets, teamDesign, fontReady]);
+  }, [
+    formatKey,
+    postType,
+    form,
+    assets,
+    teamDesign,
+    department,
+    announcementForm,
+    announcementPage,
+    announcementPageCount,
+    fontReady,
+  ]);
 
   useEffect(() => {
     const image = new Image();
-    const fileName = postType === "result"
+    const fileName = department === "general"
+      ? "svb-logo-weiss-1906.svg"
+      : postType === "result"
       ? "svb-logo-farbe-1906.svg"
       : teamDesign === "first"
         ? "svb-logo-weiss-1906.svg"
@@ -1045,7 +1626,23 @@ export default function Home() {
       image.onload = null;
       image.onerror = null;
     };
-  }, [postType, teamDesign]);
+  }, [department, postType, teamDesign]);
+
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => {
+      setAssets((current) => ({ ...current, colorClubLogo: image }));
+    };
+    image.onerror = () => {
+      setDownloadStatus("Das farbige SVB-Vereinslogo konnte nicht geladen werden.");
+    };
+    image.src = new URL("./assets/svb-logo-farbe-1906.svg", window.location.href).href;
+
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, []);
 
   useEffect(() => {
     const appShell = appShellRef.current;
@@ -1080,13 +1677,35 @@ export default function Home() {
     };
   }, []);
 
-  const selectedFormat = getGraphicFormat(postType, formatKey);
-  const availableFormats: FormatKey[] = postType === "result"
+  const selectedFormat = getGraphicFormat(department, postType, formatKey);
+  const availableFormats: FormatKey[] = department === "football" && postType === "result"
     ? ["post"]
     : Object.keys(FORMATS) as FormatKey[];
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateAnnouncementForm<Key extends keyof AnnouncementFormState>(
+    key: Key,
+    value: AnnouncementFormState[Key],
+  ) {
+    setAnnouncementForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function chooseDepartment(nextDepartment: Department) {
+    setDepartment(nextDepartment);
+    setAnnouncementPage(1);
+  }
+
+  function chooseFormat(key: FormatKey) {
+    setFormatKey(key);
+    if (key !== "post") setAnnouncementPage(1);
+  }
+
+  function chooseAnnouncementPageCount(pageCount: AnnouncementPageCount) {
+    setAnnouncementPageCount(pageCount);
+    if (pageCount === 1) setAnnouncementPage(1);
   }
 
   function chooseType(type: PostType) {
@@ -1126,7 +1745,12 @@ export default function Home() {
     };
   }
 
-  function fileName(key: FormatKey) {
+  function fileName(key: FormatKey, page?: AnnouncementPage) {
+    if (department === "general") {
+      const pagePart = page ? ` Seite ${page}` : "";
+      return `SVB ${FORMAT_FILE_NAMES[key]} Allgemein Ankuendigung${pagePart}.png`;
+    }
+
     const team = teamDesign === "first" ? "Erste" : "Zweite";
     const venue = form.homeAway === "home" ? "Heim" : "Auswaerts";
     return `SVB ${FORMAT_FILE_NAMES[key]} ${team} ${roundFilePart(form.round)} ${venue}.png`;
@@ -1159,13 +1783,17 @@ export default function Home() {
     return "downloaded";
   }
 
-  async function createPngFile(canvas: HTMLCanvasElement, key: FormatKey) {
+  async function createPngFile(
+    canvas: HTMLCanvasElement,
+    key: FormatKey,
+    page?: AnnouncementPage,
+  ) {
     const blob = await createPngBlob(canvas);
     if (!blob) {
       return null;
     }
 
-    const name = fileName(key);
+    const name = fileName(key, page);
     return new File([blob], name, { type: "image/png" });
   }
 
@@ -1173,26 +1801,67 @@ export default function Home() {
     const exportScale = selectedFormat.exportScale;
     const exportWidth = selectedFormat.width * exportScale;
     const exportHeight = selectedFormat.height * exportScale;
-    setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wird erstellt …`);
-    const canvas = document.createElement("canvas");
-    renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
-    const file = await createPngFile(canvas, formatKey);
-    if (!file) {
-      setDownloadStatus("Das Bild konnte nicht erstellt werden.");
-      return;
+    const isTwoPageAnnouncement = department === "general"
+      && formatKey === "post"
+      && announcementPageCount === 2;
+    const pages: AnnouncementPage[] = isTwoPageAnnouncement ? [1, 2] : [1];
+    setDownloadStatus(
+      `${pages.length === 2 ? "Zwei PNGs" : "PNG"} mit ${exportWidth} × ${exportHeight} px ${pages.length === 2 ? "werden" : "wird"} erstellt …`,
+    );
+    const files: File[] = [];
+
+    for (const page of pages) {
+      const canvas = document.createElement("canvas");
+      renderGraphic(
+        canvas,
+        formatKey,
+        postType,
+        form,
+        assets,
+        teamDesign,
+        department,
+        announcementForm,
+        page,
+        announcementPageCount,
+        exportScale,
+      );
+      const file = await createPngFile(
+        canvas,
+        formatKey,
+        isTwoPageAnnouncement ? page : undefined,
+      );
+      if (!file) {
+        setDownloadStatus("Das Bild konnte nicht erstellt werden.");
+        return;
+      }
+      files.push(file);
     }
 
-    const action = await saveFiles([file]);
+    const action = await saveFiles(files);
     if (action === "shared") {
-      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde gespeichert oder geteilt.`);
+      setDownloadStatus(
+        `${files.length === 2 ? "Beide PNGs wurden" : "Das PNG wurde"} gespeichert oder geteilt.`,
+      );
     } else if (action === "downloaded") {
-      setDownloadStatus(`„${file.name}“ wurde heruntergeladen.`);
+      setDownloadStatus(
+        files.length === 2
+          ? "Beide Seiten wurden als einzelne PNG-Dateien heruntergeladen."
+          : `„${files[0].name}“ wurde heruntergeladen.`,
+      );
     } else {
       setDownloadStatus("Speichern wurde abgebrochen.");
     }
   }
 
   function resetForm() {
+    if (department === "general") {
+      setAnnouncementForm(INITIAL_ANNOUNCEMENT_FORM);
+      setAnnouncementPageCount(2);
+      setAnnouncementPage(1);
+      setDownloadStatus("Ankündigung wurde zurückgesetzt.");
+      return;
+    }
+
     setForm({
       ...INITIAL_FORM,
       clubName: TEAM_DESIGNS[teamDesign].clubName,
@@ -1209,41 +1878,59 @@ export default function Home() {
 
   return (
     <main ref={appShellRef} className="app-shell">
-      <section className="selector-card" aria-label="Grafik auswählen">
+      <section
+        className={`selector-card selector-card-${department}`}
+        aria-label="Grafik auswählen"
+      >
+        <div className="selector-group">
+          <span className="selector-label">Abteilung</span>
+          <div className="segmented-control">
+            <button type="button" className={department === "football" ? "active" : ""} onClick={() => chooseDepartment("football")}>Fußball</button>
+            <button type="button" className={department === "general" ? "active" : ""} onClick={() => chooseDepartment("general")}>Allgemein</button>
+          </div>
+        </div>
         <div className="selector-group">
           <span className="selector-label">Beitrag</span>
-          <div className="segmented-control">
-            <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
-            <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
+          <div className={`segmented-control ${department === "general" ? "single-segment" : ""}`}>
+            {department === "football" ? (
+              <>
+                <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
+                <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
+              </>
+            ) : (
+              <button type="button" className="active" aria-pressed="true">Ankündigung</button>
+            )}
           </div>
         </div>
-        <div className="selector-group">
-          <span className="selector-label">Mannschaft</span>
-          <div className="segmented-control" role="group" aria-label="Mannschaft auswählen">
-            {(Object.keys(TEAM_DESIGNS) as TeamDesign[]).map((design) => (
-              <button
-                key={design}
-                type="button"
-                className={teamDesign === design ? "active" : ""}
-                aria-pressed={teamDesign === design}
-                onClick={() => chooseTeamDesign(design)}
-              >
-                {TEAM_DESIGNS[design].label}
-              </button>
-            ))}
+        {department === "football" && (
+          <div className="selector-group">
+            <span className="selector-label">Mannschaft</span>
+            <div className="segmented-control" role="group" aria-label="Mannschaft auswählen">
+              {(Object.keys(TEAM_DESIGNS) as TeamDesign[]).map((design) => (
+                <button
+                  key={design}
+                  type="button"
+                  className={teamDesign === design ? "active" : ""}
+                  aria-pressed={teamDesign === design}
+                  onClick={() => chooseTeamDesign(design)}
+                >
+                  {TEAM_DESIGNS[design].label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         <div className="selector-group format-selector">
           <span className="selector-label">Format</span>
-          <div className={`format-options ${postType === "result" ? "single-option" : ""}`}>
+          <div className={`format-options ${department === "football" && postType === "result" ? "single-option" : ""}`}>
             {availableFormats.map((key) => (
-              <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => setFormatKey(key)}>
+              <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
                 <span>{FORMATS[key].label}</span>
                 <small>{FORMATS[key].short}</small>
               </button>
             ))}
           </div>
-          {postType === "result" && <small className="format-note">Weitere Formate folgen.</small>}
+          {department === "football" && postType === "result" && <small className="format-note">Weitere Formate folgen.</small>}
         </div>
       </section>
 
@@ -1258,12 +1945,20 @@ export default function Home() {
               Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
             </span>
           </div>
+          {department === "general" && formatKey === "post" && announcementPageCount === 2 && (
+            <div className="segmented-control compact preview-page-control" role="group" aria-label="Vorschauseite auswählen">
+              <button type="button" className={announcementPage === 1 ? "active" : ""} aria-pressed={announcementPage === 1} onClick={() => setAnnouncementPage(1)}>Seite 1</button>
+              <button type="button" className={announcementPage === 2 ? "active" : ""} aria-pressed={announcementPage === 2} onClick={() => setAnnouncementPage(2)}>Seite 2</button>
+            </div>
+          )}
           <div className={`canvas-stage canvas-${formatKey}`}>
-            <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />
+            <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
           </div>
           <div className="preview-actions">
             <button className="primary-button" type="button" onClick={downloadSelected}>
-              {supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
+              {department === "general" && formatKey === "post" && announcementPageCount === 2
+                ? supportsFileSharing ? "Beide Seiten speichern / teilen" : "Beide PNGs herunterladen"
+                : supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
             </button>
           </div>
           {!supportsFileSharing && (
@@ -1278,23 +1973,29 @@ export default function Home() {
           <div className="panel-heading form-heading">
             <div>
               <p className="section-kicker">Inhalte</p>
-              <h2 id="details-title">{postType === "result" ? "Ergebnis bearbeiten" : "Spieldaten bearbeiten"}</h2>
+              <h2 id="details-title">
+                {department === "general"
+                  ? "Ankündigung bearbeiten"
+                  : postType === "result" ? "Ergebnis bearbeiten" : "Spieldaten bearbeiten"}
+              </h2>
             </div>
             <button className="text-button reset-button" type="button" onClick={resetForm}>Zurücksetzen</button>
           </div>
 
-          <div className="form-section">
-            <h3>Spielort</h3>
-            <div>
-              <span className="field-label">Heim / Auswärts</span>
-              <div className="segmented-control compact">
-                <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => updateForm("homeAway", "home")}>Heim</button>
-                <button type="button" className={form.homeAway === "away" ? "active" : ""} onClick={() => updateForm("homeAway", "away")}>Auswärts</button>
+          {department === "football" && (
+            <div className="form-section">
+              <h3>Spielort</h3>
+              <div>
+                <span className="field-label">Heim / Auswärts</span>
+                <div className="segmented-control compact">
+                  <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => updateForm("homeAway", "home")}>Heim</button>
+                  <button type="button" className={form.homeAway === "away" ? "active" : ""} onClick={() => updateForm("homeAway", "away")}>Auswärts</button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {postType === "matchday" && (
+          {department === "football" && postType === "matchday" && (
             <div className="form-section">
               <h3>Spielinformationen</h3>
               <div className="field-grid">
@@ -1339,7 +2040,7 @@ export default function Home() {
             </div>
           )}
 
-          {postType === "result" && (
+          {department === "football" && postType === "result" && (
             <div className="form-section">
               <h3>Ergebnis</h3>
               <div className="score-grid">
@@ -1356,7 +2057,7 @@ export default function Home() {
             </div>
           )}
 
-          {postType === "result" && (
+          {department === "football" && postType === "result" && (
             <div className="form-section">
               <h3>Texte</h3>
               <label className="field-block no-top-margin">
@@ -1366,14 +2067,67 @@ export default function Home() {
             </div>
           )}
 
-          <div className="form-section">
-            <h3>Bilder</h3>
-            <div className="upload-grid">
-              <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
-              {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
+          {department === "football" && (
+            <div className="form-section">
+              <h3>Bilder</h3>
+              <div className="upload-grid">
+                <UploadField id="opponent-logo" label="Gegnerlogo" image={assets.opponentLogo} onChange={loadAsset("opponentLogo")} onRemove={() => setAssets((current) => ({ ...current, opponentLogo: null }))} />
+                {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
+              </div>
+              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Die Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
-            <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Die Bilder bleiben nur in dieser Browser-Sitzung.</p>
-          </div>
+          )}
+
+          {department === "general" && formatKey === "post" && (
+            <div className="form-section">
+              <h3>Seiten</h3>
+              <div>
+                <span className="field-label">Umfang des Posts</span>
+                <div className="segmented-control compact">
+                  <button type="button" className={announcementPageCount === 1 ? "active" : ""} aria-pressed={announcementPageCount === 1} onClick={() => chooseAnnouncementPageCount(1)}>1 Seite</button>
+                  <button type="button" className={announcementPageCount === 2 ? "active" : ""} aria-pressed={announcementPageCount === 2} onClick={() => chooseAnnouncementPageCount(2)}>2 Seiten</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {department === "general" && (
+            <div className="form-section">
+              <h3>Titelseite</h3>
+              <label className="field-block no-top-margin">
+                <span className="field-label">Titel</span>
+                <textarea className="textarea-title" value={announcementForm.title} maxLength={180} rows={3} onChange={(event) => updateAnnouncementForm("title", event.target.value)} />
+              </label>
+              <label className="field-block">
+                <span className="field-label">Untere Zeile bold</span>
+                <input value={announcementForm.subtitleBold} maxLength={80} onChange={(event) => updateAnnouncementForm("subtitleBold", event.target.value)} />
+              </label>
+              <label className="field-block">
+                <span className="field-label">Untere Zeile light</span>
+                <textarea value={announcementForm.subtitleLight} maxLength={180} rows={3} onChange={(event) => updateAnnouncementForm("subtitleLight", event.target.value)} />
+              </label>
+              <p className="helper-text">Titel und leichte Unterzeile umbrechen automatisch; manuelle Zeilenumbrüche werden übernommen. Das SVB-Logo wird aus den vorhandenen Vereinsdateien eingesetzt.</p>
+            </div>
+          )}
+
+          {department === "general" && formatKey === "post" && announcementPageCount === 2 && (
+            <div className="form-section">
+              <h3>Seite 2</h3>
+              <label className="field-block no-top-margin">
+                <span className="field-label">Headline</span>
+                <textarea value={announcementForm.secondHeadline} maxLength={120} rows={2} onChange={(event) => updateAnnouncementForm("secondHeadline", event.target.value)} />
+              </label>
+              <label className="field-block">
+                <span className="field-label">Fließtext</span>
+                <textarea className="textarea-body" value={announcementForm.body} maxLength={1800} rows={10} onChange={(event) => updateAnnouncementForm("body", event.target.value)} />
+              </label>
+              <label className="field-block">
+                <span className="field-label">Disclaimer</span>
+                <textarea value={announcementForm.disclaimer} maxLength={240} rows={2} onChange={(event) => updateAnnouncementForm("disclaimer", event.target.value)} />
+              </label>
+              <p className="helper-text">Der Fließtext startet bei 30 px, bleibt als Block mittig ausgerichtet und wird bei Platzmangel automatisch bis auf 20 px verkleinert.</p>
+            </div>
+          )}
         </section>
       </div>
     </main>

@@ -1,10 +1,15 @@
 # SVB Social Media Post Generator
 
-Browserbasierter Generator für markenkonforme Spieltags- und Ergebnisgrafiken des SV Bergheim.
+Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine Ankündigungen des SV Bergheim.
 
 ## Funktionsumfang
 
 - Spieltagsankündigung und Ergebnismeldung
+- übergeordnete Auswahl zwischen Fußball und allgemeinen Vereinsbeiträgen
+- allgemeine Ankündigungen mit eigener Titelseite in allen vier Formaten
+- ein- oder zweiseitige 4:5-Ankündigungen mit nahtlosem Hintergrund, Seitenvorschau und gemeinsamem Export beider PNG-Dateien
+- frei editierbare Titel-, Unterzeilen-, Headline-, Fließtext- und Disclaimer-Felder
+- automatischer Textumbruch und dynamische Verkleinerung langer Fließtexte von 30 px bis 20 px
 - Instagram Post, 4:5 (1080 × 1350; Export 2160 × 2700)
 - Instagram Story, 9:16 (1080 × 1920; Export 2160 × 3840)
 - Querformat, 3:2 (1500 × 1000; Export 1500 × 1000)

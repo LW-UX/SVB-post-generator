@@ -49,7 +49,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -59,6 +60,7 @@ button {
 
 button:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 label:has(input:focus-visible) .upload-box {
   outline: 3px solid rgba(0, 68, 138, 0.22);
   outline-offset: 2px;
@@ -106,6 +108,18 @@ label:has(input:focus-visible) .upload-box {
   margin-bottom: 24px;
   padding: 22px;
   border-radius: var(--radius-lg);
+}
+
+.selector-card-football {
+  grid-template-columns:
+    minmax(175px, 0.66fr)
+    minmax(260px, 1fr)
+    minmax(220px, 0.78fr)
+    minmax(430px, 1.55fr);
+}
+
+.selector-card-general {
+  grid-template-columns: minmax(210px, 0.75fr) minmax(220px, 0.75fr) minmax(470px, 1.6fr);
 }
 
 .selector-card::before,
@@ -167,6 +181,10 @@ label:has(input:focus-visible) .upload-box {
 
 .segmented-control.compact {
   max-width: 340px;
+}
+
+.segmented-control.single-segment {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .format-options {
@@ -279,6 +297,10 @@ label:has(input:focus-visible) .upload-box {
   border: 1px solid #d8dee5;
   border-radius: 2px;
   background: #ffffff;
+}
+
+.preview-page-control {
+  margin: 0 auto 14px;
 }
 
 .canvas-stage canvas {
@@ -411,8 +433,33 @@ input:not([type="file"]):not([type="range"]) {
   transition: border-color 150ms ease, background 150ms ease;
 }
 
+textarea {
+  width: 100%;
+  min-height: 82px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fafbfc;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.textarea-title {
+  min-height: 104px;
+}
+
+.textarea-body {
+  min-height: 220px;
+}
+
 input:not([type="file"]):not([type="range"]):hover,
-input:not([type="file"]):not([type="range"]):focus {
+input:not([type="file"]):not([type="range"]):focus,
+textarea:hover,
+textarea:focus {
   border-color: #8ca6d8;
   background: white;
 }
@@ -529,7 +576,9 @@ input:not([type="file"]):not([type="range"]):focus {
 }
 
 @media (max-width: 1080px) {
-  .selector-card {
+  .selector-card,
+  .selector-card-football,
+  .selector-card-general {
     grid-template-columns: 1fr;
   }
 
