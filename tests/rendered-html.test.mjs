@@ -105,6 +105,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /PNG herunterladen[\s\S]*Alle 4 Formate/);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
   assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.app-shell\s*\{[^}]*width:\s*100%/);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card\s*\{[^}]*padding:\s*0[^}]*border:\s*0[^}]*box-shadow:\s*none/s);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);
   assert.match(page, /svb-generator-height/);
   assert.match(page, /https:\/\/fussball\.sportverein-bergheim\.de/);
