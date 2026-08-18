@@ -52,6 +52,13 @@ const RESULT_POST_FORMAT = {
   exportScale: 2 as const,
 };
 
+const FORMAT_FILE_NAMES: Record<FormatKey, string> = {
+  post: "Post",
+  story: "Story",
+  landscape: "Querformat",
+  widescreen: "16-9",
+};
+
 const EMBED_ORIGINS = [
   "https://fussball.sportverein-bergheim.de",
   "https://www.sportverein-bergheim.de",
@@ -249,14 +256,8 @@ function formatRound(value: string) {
   return trimmed.toUpperCase() || "SPIELTAG";
 }
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ß/g, "ss")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+function roundFilePart(value: string) {
+  return value.replaceAll(".", "").trim() || "ohne Angabe";
 }
 
 function fitFont(
@@ -1072,8 +1073,9 @@ export default function Home() {
   }
 
   function fileName(key: FormatKey) {
-    const team = teamDesign === "first" ? "erste" : "zweite";
-    return `svb-${team}-${postType === "matchday" ? "spieltag" : "ergebnis"}-${slugify(form.opponentName) || "gegner"}-${key}.png`;
+    const team = teamDesign === "first" ? "Erste" : "Zweite";
+    const venue = form.homeAway === "home" ? "Heim" : "Auswaerts";
+    return `SVB ${FORMAT_FILE_NAMES[key]} ${team} ${roundFilePart(form.round)} ${venue}.png`;
   }
 
   function createPngBlob(canvas: HTMLCanvasElement) {

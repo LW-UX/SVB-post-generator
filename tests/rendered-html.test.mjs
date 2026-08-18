@@ -97,6 +97,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /canvas\.toBlob/);
   assert.match(page, /navigator\.share/);
   assert.match(page, /document\.body\.appendChild\(anchor\)/);
+  assert.match(page, /value\.replaceAll\("\."\s*,\s*""\)\.trim\(\)/);
+  assert.match(page, /SVB \$\{FORMAT_FILE_NAMES\[key\]\} \$\{team\} \$\{roundFilePart\(form\.round\)\} \$\{venue\}\.png/);
+  assert.match(page, /teamDesign === "first" \? "Erste" : "Zweite"/);
+  assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
   assert.match(page, /PNG herunterladen[\s\S]*Alle 4 Formate/);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
