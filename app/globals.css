@@ -9,8 +9,8 @@
 }
 
 :root {
-  --ink: #1a1a1a;
-  --ink-soft: #5f6772;
+  --ink: #111;
+  --ink-soft: #c6c6c6;
   --blue: #00448a;
   --blue-dark: #003568;
   --blue-bright: #1767ad;
@@ -78,16 +78,17 @@ label:has(input:focus-visible) .upload-box {
 .section-kicker,
 .selector-label,
 .field-label {
-  color: #65707c;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   line-height: 1.35;
   text-transform: uppercase;
 }
 
 .section-kicker {
   color: var(--blue);
+  font-size: 16px;
 }
 
 .department-card,
@@ -207,7 +208,7 @@ label:has(input:focus-visible) .upload-box {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding: 0 12px;
+  padding: 6px 12px;
   text-align: left;
 }
 
@@ -219,7 +220,6 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .format-options small {
-  margin-top: 3px;
   color: #7d8791;
   font-size: 10px;
   font-weight: 800;
@@ -287,7 +287,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .form-heading {
-  padding: 28px 26px 22px;
+  padding: 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -374,7 +374,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .form-section {
-  padding: 25px 26px 27px;
+  padding: 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -383,7 +383,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .form-section h3 {
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: var(--blue);
   font-size: 14px;
   font-weight: 700;
@@ -407,7 +407,7 @@ label:has(input:focus-visible) .upload-box {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .field-block,
@@ -561,9 +561,9 @@ textarea:focus {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--blue);
-  font-size: 11px;
-  font-weight: 800;
+  color: var(--blue-bright);
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .text-button:hover {
