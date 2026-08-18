@@ -92,6 +92,7 @@ label:has(input:focus-visible) .upload-box {
   color: var(--blue);
 }
 
+.department-card,
 .selector-card,
 .preview-column,
 .form-column {
@@ -100,28 +101,37 @@ label:has(input:focus-visible) .upload-box {
   box-shadow: var(--shadow);
 }
 
+.department-card,
 .selector-card {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(230px, 0.9fr) minmax(220px, 0.75fr) minmax(470px, 1.6fr);
-  gap: 24px;
   margin-bottom: 24px;
   padding: 22px;
   border-radius: var(--radius-lg);
 }
 
+.department-card .selector-group {
+  width: 100%;
+  max-width: 420px;
+}
+
+.selector-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(470px, 1.6fr);
+  gap: 24px;
+}
+
 .selector-card-football {
   grid-template-columns:
-    minmax(175px, 0.66fr)
     minmax(260px, 1fr)
     minmax(220px, 0.78fr)
     minmax(430px, 1.55fr);
 }
 
 .selector-card-general {
-  grid-template-columns: minmax(210px, 0.75fr) minmax(220px, 0.75fr) minmax(470px, 1.6fr);
+  grid-template-columns: minmax(220px, 0.75fr) minmax(470px, 1.6fr);
 }
 
+.department-card::before,
 .selector-card::before,
 .preview-column::before,
 .form-column::before {
@@ -605,6 +615,7 @@ textarea:focus {
     padding-top: 20px;
   }
 
+  .department-card,
   .selector-card {
     padding: 0;
     border: 0;
@@ -613,6 +624,7 @@ textarea:focus {
     box-shadow: none;
   }
 
+  .department-card::before,
   .selector-card::before {
     display: none;
   }

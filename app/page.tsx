@@ -1878,17 +1878,20 @@ export default function Home() {
 
   return (
     <main ref={appShellRef} className="app-shell">
+      <section className="department-card" aria-label="Abteilung auswählen">
+        <div className="selector-group">
+          <span className="selector-label">Abteilung</span>
+          <div className="segmented-control">
+            <button type="button" className={department === "general" ? "active" : ""} onClick={() => chooseDepartment("general")}>Allgemein</button>
+            <button type="button" className={department === "football" ? "active" : ""} onClick={() => chooseDepartment("football")}>Fußball</button>
+          </div>
+        </div>
+      </section>
+
       <section
         className={`selector-card selector-card-${department}`}
         aria-label="Grafik auswählen"
       >
-        <div className="selector-group">
-          <span className="selector-label">Abteilung</span>
-          <div className="segmented-control">
-            <button type="button" className={department === "football" ? "active" : ""} onClick={() => chooseDepartment("football")}>Fußball</button>
-            <button type="button" className={department === "general" ? "active" : ""} onClick={() => chooseDepartment("general")}>Allgemein</button>
-          </div>
-        </div>
         <div className="selector-group">
           <span className="selector-label">Beitrag</span>
           <div className={`segmented-control ${department === "general" ? "single-segment" : ""}`}>

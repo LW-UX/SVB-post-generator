@@ -66,6 +66,11 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /useState<AnnouncementPageCount>\(2\)/);
   assert.match(page, />Fußball</);
   assert.match(page, />Allgemein</);
+  assert.ok(page.indexOf(">Allgemein</") < page.indexOf(">Fußball</"));
+  assert.ok(
+    page.indexOf('className="department-card"') <
+      page.indexOf("className={`selector-card selector-card-${department}`}"),
+  );
   assert.match(page, />Ankündigung</);
   assert.match(page, />1 Seite</);
   assert.match(page, />2 Seiten</);
@@ -152,6 +157,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.format-options button\s*\{[^}]*min-height:\s*44px[^}]*border-radius:\s*1px/s);
   assert.match(styles, /\.selector-card-football\s*\{/);
   assert.match(styles, /\.selector-card-general\s*\{/);
+  assert.match(styles, /\.department-card \.selector-group\s*\{/);
   assert.match(styles, /\.preview-page-control\s*\{/);
   assert.ok(
     page.indexOf('className={`canvas-stage') <
