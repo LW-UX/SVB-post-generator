@@ -36,7 +36,7 @@ test("renders the SVB generator shell", async () => {
   assert.match(html, /16:9 Querformat/);
   assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
   assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
-  assert.match(html, /Bild speichern \/ teilen/);
+  assert.match(html, /PNG herunterladen/);
   assert.doesNotMatch(html, />Mannschaften</);
   assert.doesNotMatch(html, />Vereinsname</);
   assert.doesNotMatch(html, />Gegner</);
@@ -99,10 +99,15 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /navigator\.share/);
   assert.match(page, /function supportsSharingFiles\(files: File\[\]\)/);
   assert.match(page, /navigator\.canShare\(\{ files \}\)/);
+  assert.match(page, /useSyncExternalStore/);
+  assert.match(page, /function isFirefoxOnAndroid\(\)/);
+  assert.match(page, /application\/x-binary/);
+  assert.match(page, /„\$\{file\.name\}“ wurde heruntergeladen/);
   assert.match(page, /files\.forEach\(downloadFile\)/);
   assert.match(readme, /allow="web-share"/);
-  assert.match(page, />Bild speichern \/ teilen</);
-  assert.match(page, />Alle 4 speichern \/ teilen</);
+  assert.match(page, /"Bild speichern \/ teilen" : "PNG herunterladen"/);
+  assert.match(page, /"Alle 4 speichern \/ teilen" : "Alle 4 Formate herunterladen"/);
+  assert.match(page, /Dieser Browser kann Bilder nicht direkt an die Fotobibliothek übergeben/);
   assert.doesNotMatch(page, /window\.matchMedia\("\(max-width: 820px\)"\)/);
   assert.match(page, /document\.body\.appendChild\(anchor\)/);
   assert.match(page, /value\.replaceAll\("\."\s*,\s*""\)\.trim\(\)/);

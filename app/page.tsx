@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type PostType = "matchday" | "result";
 type FormatKey = "post" | "story" | "landscape" | "widescreen";
@@ -273,8 +273,32 @@ function supportsSharingFiles(files: File[]) {
   }
 }
 
+function getFileShareSupport() {
+  if (typeof File === "undefined") return false;
+
+  const probeFile = new File([new Uint8Array([0])], "svb-export.png", {
+    type: "image/png",
+  });
+  return supportsSharingFiles([probeFile]);
+}
+
+function subscribeToFileShareSupport() {
+  return () => {};
+}
+
+function isFirefoxOnAndroid() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent) && /Firefox\/\d+/i.test(navigator.userAgent);
+}
+
 function downloadFile(file: File) {
-  const url = URL.createObjectURL(file);
+  // Firefox für Android öffnet darstellbare blob:-Dateien teilweise in einer
+  // Einzelansicht und ignoriert dabei den vorgegebenen Downloadnamen. Ein
+  // binärer MIME-Typ erzwingt dort den Download; die .png-Endung bleibt erhalten.
+  const downloadableFile = isFirefoxOnAndroid()
+    ? new Blob([file], { type: "application/x-binary" })
+    : file;
+  const url = URL.createObjectURL(downloadableFile);
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = file.name;
@@ -975,6 +999,11 @@ export default function Home() {
   });
   const [downloadStatus, setDownloadStatus] = useState("");
   const [fontReady, setFontReady] = useState(false);
+  const supportsFileSharing = useSyncExternalStore(
+    subscribeToFileShareSupport,
+    getFileShareSupport,
+    () => false,
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -1157,7 +1186,7 @@ export default function Home() {
     if (action === "shared") {
       setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde gespeichert oder geteilt.`);
     } else if (action === "downloaded") {
-      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde heruntergeladen.`);
+      setDownloadStatus(`„${file.name}“ wurde heruntergeladen.`);
     } else {
       setDownloadStatus("Speichern wurde abgebrochen.");
     }
@@ -1258,11 +1287,20 @@ export default function Home() {
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />
           </div>
           <div className={`preview-actions ${postType === "result" ? "single-action" : ""}`}>
-            <button className="primary-button" type="button" onClick={downloadSelected}>Bild speichern / teilen</button>
+            <button className="primary-button" type="button" onClick={downloadSelected}>
+              {supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
+            </button>
             {postType === "matchday" && (
-              <button className="secondary-button" type="button" onClick={downloadAll}>Alle 4 speichern / teilen</button>
+              <button className="secondary-button" type="button" onClick={downloadAll}>
+                {supportsFileSharing ? "Alle 4 speichern / teilen" : "Alle 4 Formate herunterladen"}
+              </button>
             )}
           </div>
+          {!supportsFileSharing && (
+            <p className="format-note">
+              Dieser Browser kann Bilder nicht direkt an die Fotobibliothek übergeben. In Firefox werden die PNG-Dateien heruntergeladen; für „Bild sichern“ bitte Chrome auf Android oder Safari auf iPhone und iPad verwenden.
+            </p>
+          )}
           <p className="status-message" aria-live="polite">{downloadStatus || "Keine Datei wird hochgeladen oder gespeichert."}</p>
         </section>
 

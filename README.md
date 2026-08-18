@@ -51,6 +51,11 @@ der native Teilen- und Speichern-Dialog am `iframe` freigegeben werden:
 Ohne `allow="web-share"` fällt der PNG-Export im eingebetteten Generator auf
 einen regulären Browser-Download zurück.
 
+Firefox unterstützt das Teilen von Dateien über die Web Share API nicht. Dort
+wird deshalb ein regulärer PNG-Download mit dem vorgesehenen Dateinamen
+angeboten. Für die Übergabe an die Fotobibliothek ist auf Android Chrome und
+auf iPhone oder iPad Safari erforderlich.
+
 ## Anpassung an das Vereinsdesign
 
 Die Oberfläche und der Grafik-Renderer sind voneinander getrennt. Farben und Oberflächenstile liegen in `app/globals.css`; Inhalte, Größen und die vier Grafiklayouts liegen in `app/page.tsx`. Dadurch können die vorläufigen Layouts später ohne Änderungen an Upload- oder Downloadfunktionen durch die finalen Vereinsvorlagen ersetzt werden.
