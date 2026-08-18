@@ -19,7 +19,6 @@
   --blue-pale: #edf4fa;
   --orange: #ffb000;
   --line: #dfe5eb;
-  --surface: #ffffff;
   --canvas: #ffffff;
   --success: #19734b;
   --warning: #8a510b;
@@ -98,15 +97,15 @@ label:has(input:focus-visible) .upload-box {
 .preview-column,
 .form-column {
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--canvas);
   box-shadow: var(--shadow);
 }
 
 .department-card,
 .selector-card {
   position: relative;
-  margin-bottom: 24px;
-  padding: 22px;
+  margin-bottom: 12px;
+  padding: 16px 24px;
   border-radius: var(--radius-lg);
 }
 
