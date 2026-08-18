@@ -283,7 +283,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .panel-heading > span {
-  color: var(--ink-soft);
+  color: var(--ink-helper);
   font-size: 12px;
   font-weight: 400;
 }
