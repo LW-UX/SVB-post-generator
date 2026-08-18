@@ -74,7 +74,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /venue: "Mößmann Sportanlage"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /Liga \/ Überschrift/);
-  assert.match(page, /formatKey === "widescreen" \? 0\.5 : 0\.72/);
+  assert.match(page, /formatKey === "widescreen" \? 0\.38 : 0\.72/);
   assert.match(page, /Spieltag \/ Obere Zeile/);
   assert.match(page, /value=\{form\.round\} maxLength=\{29\}/);
   assert.match(page, /Region \/ Untere Zeile/);

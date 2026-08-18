@@ -47,9 +47,9 @@ const FORMATS: Record<
 const RESULT_POST_FORMAT = {
   label: "Instagram Post",
   short: "4:5",
-  width: 1440,
-  height: 1800,
-  exportScale: 1 as const,
+  width: 1080,
+  height: 1350,
+  exportScale: 2 as const,
 };
 
 const EMBED_ORIGINS = [
@@ -334,16 +334,19 @@ function drawImageContained(
   tintedContext.drawImage(image, 0, 0, tintedCanvas.width, tintedCanvas.height);
   const imageData = tintedContext.getImageData(0, 0, tintedCanvas.width, tintedCanvas.height);
   const pixels = imageData.data;
-  for (let index = 0; index < pixels.length; index += 4) {
-    const distanceFromWhite = Math.max(
-      255 - pixels[index],
-      255 - pixels[index + 1],
-      255 - pixels[index + 2],
-    );
-    const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
-    pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
+  const hasTransparency = pixels.some((value, index) => index % 4 === 3 && value < 250);
+  if (!hasTransparency) {
+    for (let index = 0; index < pixels.length; index += 4) {
+      const distanceFromWhite = Math.max(
+        255 - pixels[index],
+        255 - pixels[index + 1],
+        255 - pixels[index + 2],
+      );
+      const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 12) / 36));
+      pixels[index + 3] = Math.round(pixels[index + 3] * foregroundOpacity);
+    }
+    tintedContext.putImageData(imageData, 0, 0);
   }
-  tintedContext.putImageData(imageData, 0, 0);
   tintedContext.globalCompositeOperation = "source-in";
   tintedContext.fillStyle = tintColor;
   tintedContext.fillRect(0, 0, tintedCanvas.width, tintedCanvas.height);
@@ -504,7 +507,7 @@ function renderMatchdayGraphic(
     textColor,
     700,
     largeTextSize,
-    width * (formatKey === "widescreen" ? 0.5 : 0.72),
+    width * (formatKey === "widescreen" ? 0.38 : 0.72),
   );
   drawMatchdayText(
     context,
@@ -649,15 +652,15 @@ function renderResultGraphic(
   context: CanvasRenderingContext2D,
   form: FormState,
   assets: Assets,
-  teamDesign: TeamDesign,
 ) {
   const { width, height } = RESULT_POST_FORMAT;
   const blue = "#00448a";
-  const isFirstTeam = teamDesign === "first";
-  const footerY = 1584;
-  const diagonalTopY = 1280;
-  const diagonalBottomX = 1058;
-  const contentY = 1682;
+  const isHomeMatch = form.homeAway === "home";
+  const footerY = 1215;
+  const diagonalTopY = 982;
+  const logoDiagonalSlope = (2245.41 - 164.95) / (2040.45 - 411.84);
+  const diagonalBottomX = width - (height - diagonalTopY) / logoDiagonalSlope;
+  const contentY = 1281;
 
   context.fillStyle = "#a6a6a6";
   context.fillRect(0, 0, width, height);
@@ -665,10 +668,10 @@ function renderResultGraphic(
     drawImageCover(context, assets.backgroundImage, width, height);
   }
 
-  context.fillStyle = isFirstTeam ? blue : "#ffffff";
+  context.fillStyle = isHomeMatch ? "#ffffff" : blue;
   context.fillRect(0, footerY, width, height - footerY);
 
-  context.fillStyle = isFirstTeam ? "#ffffff" : blue;
+  context.fillStyle = isHomeMatch ? blue : "#ffffff";
   context.beginPath();
   context.moveTo(width, diagonalTopY);
   context.lineTo(width, height);
@@ -676,9 +679,24 @@ function renderResultGraphic(
   context.closePath();
   context.fill();
 
-  const clubX = 1120;
-  const opponentX = form.homeAway === "home" ? 1362 : 900;
-  const scoreX = form.homeAway === "home" ? 1235 : 1008;
+  const clubX = 857;
+  const clubMaxWidth = 74;
+  const clubMaxHeight = 94;
+  const clubSourceWidth = 2583.26;
+  const clubSourceHeight = 3249.74;
+  const clubScale = Math.min(
+    clubMaxWidth / clubSourceWidth,
+    clubMaxHeight / clubSourceHeight,
+  );
+  const clubWidth = clubSourceWidth * clubScale;
+  const clubHeight = clubSourceHeight * clubScale;
+  const logoDividerOffsetX = (2040.45 / clubSourceWidth - 0.5) * clubWidth;
+  const logoDividerOffsetY = (164.95 / clubSourceHeight - 0.5) * clubHeight;
+  const logoDividerX = clubX + logoDividerOffsetX;
+  const logoDividerY = diagonalTopY + logoDiagonalSlope * (width - logoDividerX);
+  const clubY = logoDividerY - logoDividerOffsetY;
+  const opponentX = isHomeMatch ? 1025 : 689;
+  const scoreX = isHomeMatch ? 941 : 773;
   const clubScore = form.clubScore || "0";
   const opponentScore = form.opponentScore || "0";
   const score = form.homeAway === "home"
@@ -686,23 +704,31 @@ function renderResultGraphic(
     : `${opponentScore}:${clubScore}`;
 
   if (assets.clubLogo) {
-    drawImageContained(context, assets.clubLogo, clubX, contentY, 96, 120);
+    drawImageContained(
+      context,
+      assets.clubLogo,
+      clubX,
+      clubY,
+      clubMaxWidth,
+      clubMaxHeight,
+    );
   }
   if (assets.opponentLogo) {
-    drawImageContained(context, assets.opponentLogo, opponentX, contentY, 88, 112, "#ffffff");
+    drawImageContained(context, assets.opponentLogo, opponentX, contentY, 66, 90, "#ffffff");
   }
 
   context.font = '700 40px Inter, Arial, Helvetica, sans-serif';
   context.fontKerning = "normal";
   context.letterSpacing = "0.04em";
-  context.fillStyle = isFirstTeam ? "#ffffff" : blue;
   context.textBaseline = "middle";
   context.textAlign = "center";
+  context.fillStyle = "#ffffff";
   context.fillText(score, scoreX, contentY);
 
   if (form.footer.trim()) {
     context.textAlign = "left";
-    context.fillText(form.footer.toUpperCase(), 54, contentY);
+    context.fillStyle = isHomeMatch ? blue : "#ffffff";
+    context.fillText(form.footer.toUpperCase(), 40, contentY);
   }
   context.letterSpacing = "0px";
 }
@@ -733,7 +759,7 @@ function renderGraphic(
   const height = format.height;
 
   if (type === "result" && formatKey === "post") {
-    renderResultGraphic(context, form, assets, teamDesign);
+    renderResultGraphic(context, form, assets);
     return;
   }
 
@@ -1058,11 +1084,13 @@ export default function Home() {
 
   async function downloadSelected() {
     const exportScale = selectedFormat.exportScale;
-    setDownloadStatus(`PNG mit ${selectedFormat.width} × ${selectedFormat.height} px wird erstellt …`);
+    const exportWidth = selectedFormat.width * exportScale;
+    const exportHeight = selectedFormat.height * exportScale;
+    setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wird erstellt …`);
     const canvas = document.createElement("canvas");
     renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
     await downloadCanvas(canvas, formatKey);
-    setDownloadStatus(`PNG mit ${selectedFormat.width} × ${selectedFormat.height} px wurde erstellt.`);
+    setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde erstellt.`);
   }
 
   async function downloadAll() {
