@@ -124,6 +124,11 @@ const ANNOUNCEMENT_PLACEHOLDERS = {
   body: "Fließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.",
 };
 
+const ANNOUNCEMENT_FIELD_PLACEHOLDERS = {
+  subtitleBold: "z.B.: Datum",
+  subtitleLight: "z.B.: Ort",
+};
+
 type AnnouncementTitleLayout = {
   cornerTopX: number;
   logoX: number;
@@ -2111,11 +2116,11 @@ export default function Home() {
               </label>
               <label className="field-block">
                 <span className="field-label">Untere Zeile bold</span>
-                <input value={announcementForm.subtitleBold} maxLength={80} placeholder={ANNOUNCEMENT_PLACEHOLDERS.subtitleBold} onChange={(event) => updateAnnouncementForm("subtitleBold", event.target.value)} />
+                <input value={announcementForm.subtitleBold} maxLength={80} placeholder={ANNOUNCEMENT_FIELD_PLACEHOLDERS.subtitleBold} onChange={(event) => updateAnnouncementForm("subtitleBold", event.target.value)} />
               </label>
               <label className="field-block">
                 <span className="field-label">Untere Zeile light</span>
-                <textarea value={announcementForm.subtitleLight} maxLength={180} rows={3} placeholder={ANNOUNCEMENT_PLACEHOLDERS.subtitleLight} onChange={(event) => updateAnnouncementForm("subtitleLight", event.target.value)} />
+                <textarea value={announcementForm.subtitleLight} maxLength={180} rows={3} placeholder={ANNOUNCEMENT_FIELD_PLACEHOLDERS.subtitleLight} onChange={(event) => updateAnnouncementForm("subtitleLight", event.target.value)} />
               </label>
               <p className="helper-text">Titel und leichte Unterzeile umbrechen automatisch; manuelle Zeilenumbrüche werden übernommen. Das SVB-Logo wird aus den vorhandenen Vereinsdateien eingesetzt.</p>
             </div>

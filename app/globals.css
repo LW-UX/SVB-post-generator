@@ -11,9 +11,10 @@
 :root {
   --ink: #111;
   --ink-soft: #c6c6c6;
-  --blue: #00448a;
+  --navy: #00448a;
   --blue-dark: #003568;
   --blue-bright: #1767ad;
+  --blue-skyblue: #1e73b9;
   --blue-pale: #edf4fa;
   --orange: #ffb000;
   --line: #dfe5eb;
@@ -87,8 +88,8 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .section-kicker {
-  color: var(--blue);
-  font-size: 16px;
+  color: var(--navy);
+  font-size: 12px;
 }
 
 .department-card,
@@ -179,7 +180,7 @@ label:has(input:focus-visible) .upload-box {
 .segmented-control button.active,
 .format-options button.active {
   border-radius: 4px;
-  background: #1e73b9;
+  background: var(--blue-skyblue);
   box-shadow: none;
   color: white;
 }
@@ -236,6 +237,7 @@ label:has(input:focus-visible) .upload-box {
 .format-note {
   margin: 10px 2px 0;
   color: var(--ink-soft);
+  text-align: center;
   font-size: 12px;
 }
 
@@ -272,21 +274,21 @@ label:has(input:focus-visible) .upload-box {
 
 .panel-heading h2 {
   margin-top: 4px;
-  color: var(--blue);
-  font-size: 30px;
+  color: var(--navy);
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .panel-heading > span {
-  color: #7a8496;
+  color: var(--ink-soft);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .form-heading {
-  padding: 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -372,7 +374,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .form-section {
-  padding: 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -382,7 +384,7 @@ label:has(input:focus-visible) .upload-box {
 
 .form-section h3 {
   margin: 0 0 12px;
-  color: var(--blue);
+  color: var(--navy);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -521,7 +523,7 @@ textarea:focus {
 }
 
 .upload-box:hover {
-  border-color: var(--blue);
+  border-color: var(--navy);
   background: var(--blue-pale);
 }
 
@@ -540,7 +542,7 @@ textarea:focus {
   border-radius: 1px;
   background: white;
   box-shadow: 0 2px 8px rgba(7, 18, 38, 0.08);
-  color: var(--blue);
+  color: var(--navy);
   font-size: 18px;
   font-weight: 700;
 }
@@ -574,7 +576,7 @@ textarea:focus {
 
 .range-grid input {
   width: 100%;
-  accent-color: var(--blue);
+  accent-color: var(--navy);
 }
 
 @media (max-width: 1080px) {
