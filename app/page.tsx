@@ -108,12 +108,20 @@ const INITIAL_FORM: FormState = {
 };
 
 const INITIAL_ANNOUNCEMENT_FORM: AnnouncementFormState = {
-  title: "ÜBERSCHRIFT",
-  subtitleBold: "UNTERE ZEILE BOLD",
-  subtitleLight: "UNTERE ZEILE LIGHT, KANN AUCH\nZWEIZEILIG SEIN",
-  secondHeadline: "TAGESORDNUNG",
-  body: "Fließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.\n\nFließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.",
-  disclaimer: "Dies ist ein Disclaimer",
+  title: "",
+  subtitleBold: "",
+  subtitleLight: "",
+  secondHeadline: "",
+  body: "",
+  disclaimer: "",
+};
+
+const ANNOUNCEMENT_PLACEHOLDERS = {
+  title: "Überschrift",
+  subtitleBold: "Untere Zeile Bold",
+  subtitleLight: "Untere Zeile Light",
+  secondHeadline: "Überschrift",
+  body: "Fließtext kann auch lange sein und mit mehreren Absätzen beginnen. Aber der Text ist immer zentriert auf der Seite. Der Text wächst also aus der Mitte heraus nach oben.",
 };
 
 type AnnouncementTitleLayout = {
@@ -949,7 +957,7 @@ function drawAnnouncementTitleSlide(
   context.textAlign = "center";
   context.textBaseline = "top";
 
-  const titleValue = (form.title || "ÜBERSCHRIFT").toUpperCase();
+  const titleValue = (form.title || ANNOUNCEMENT_PLACEHOLDERS.title).toUpperCase();
   const fittedTitleSize = fitAnnouncementFontToLongestWord(
     context,
     titleValue,
@@ -974,7 +982,7 @@ function drawAnnouncementTitleSlide(
 
   setAnnouncementFont(context, 700, smallSize);
   context.fillText(
-    (form.subtitleBold || "UNTERE ZEILE BOLD").toUpperCase(),
+    (form.subtitleBold || ANNOUNCEMENT_PLACEHOLDERS.subtitleBold).toUpperCase(),
     width * layout.lowerX,
     height * layout.lowerBoldY,
     width * layout.lowerMaxWidth,
@@ -983,7 +991,7 @@ function drawAnnouncementTitleSlide(
   setAnnouncementFont(context, 300, smallSize);
   const lowerLines = wrapCanvasText(
     context,
-    (form.subtitleLight || "UNTERE ZEILE LIGHT").toUpperCase(),
+    (form.subtitleLight || ANNOUNCEMENT_PLACEHOLDERS.subtitleLight).toUpperCase(),
     width * layout.lowerMaxWidth,
   );
   drawLineBlock(
@@ -1026,7 +1034,8 @@ function drawAnnouncementSecondSlide(
   xOffset: number,
 ) {
   const { width, height } = FORMATS.post;
-  const headlineValue = (form.secondHeadline || "TAGESORDNUNG").toUpperCase();
+  const headlineValue = (form.secondHeadline || ANNOUNCEMENT_PLACEHOLDERS.secondHeadline).toUpperCase();
+  const bodyValue = form.body || ANNOUNCEMENT_PLACEHOLDERS.body;
   const headlineSize = fitAnnouncementFontToLongestWord(
     context,
     headlineValue,
@@ -1059,7 +1068,7 @@ function drawAnnouncementSecondSlide(
   );
   const bodyLayout = getAnnouncementBodyLayout(
     context,
-    form.body,
+    bodyValue,
     width * 0.78,
     bodyMaxHeight,
   );
@@ -2099,15 +2108,15 @@ export default function Home() {
               <h3>Titelseite</h3>
               <label className="field-block no-top-margin">
                 <span className="field-label">Titel</span>
-                <textarea className="textarea-title" value={announcementForm.title} maxLength={180} rows={3} onChange={(event) => updateAnnouncementForm("title", event.target.value)} />
+                <textarea className="textarea-title" value={announcementForm.title} maxLength={180} rows={3} placeholder={ANNOUNCEMENT_PLACEHOLDERS.title} onChange={(event) => updateAnnouncementForm("title", event.target.value)} />
               </label>
               <label className="field-block">
                 <span className="field-label">Untere Zeile bold</span>
-                <input value={announcementForm.subtitleBold} maxLength={80} onChange={(event) => updateAnnouncementForm("subtitleBold", event.target.value)} />
+                <input value={announcementForm.subtitleBold} maxLength={80} placeholder={ANNOUNCEMENT_PLACEHOLDERS.subtitleBold} onChange={(event) => updateAnnouncementForm("subtitleBold", event.target.value)} />
               </label>
               <label className="field-block">
                 <span className="field-label">Untere Zeile light</span>
-                <textarea value={announcementForm.subtitleLight} maxLength={180} rows={3} onChange={(event) => updateAnnouncementForm("subtitleLight", event.target.value)} />
+                <textarea value={announcementForm.subtitleLight} maxLength={180} rows={3} placeholder={ANNOUNCEMENT_PLACEHOLDERS.subtitleLight} onChange={(event) => updateAnnouncementForm("subtitleLight", event.target.value)} />
               </label>
               <p className="helper-text">Titel und leichte Unterzeile umbrechen automatisch; manuelle Zeilenumbrüche werden übernommen. Das SVB-Logo wird aus den vorhandenen Vereinsdateien eingesetzt.</p>
             </div>
@@ -2118,11 +2127,11 @@ export default function Home() {
               <h3>Seite 2</h3>
               <label className="field-block no-top-margin">
                 <span className="field-label">Headline</span>
-                <textarea value={announcementForm.secondHeadline} maxLength={120} rows={2} onChange={(event) => updateAnnouncementForm("secondHeadline", event.target.value)} />
+                <textarea value={announcementForm.secondHeadline} maxLength={120} rows={2} placeholder={ANNOUNCEMENT_PLACEHOLDERS.secondHeadline} onChange={(event) => updateAnnouncementForm("secondHeadline", event.target.value)} />
               </label>
               <label className="field-block">
                 <span className="field-label">Fließtext</span>
-                <textarea className="textarea-body" value={announcementForm.body} maxLength={1800} rows={10} onChange={(event) => updateAnnouncementForm("body", event.target.value)} />
+                <textarea className="textarea-body" value={announcementForm.body} maxLength={1800} rows={10} placeholder={ANNOUNCEMENT_PLACEHOLDERS.body} onChange={(event) => updateAnnouncementForm("body", event.target.value)} />
               </label>
               <label className="field-block">
                 <span className="field-label">Disclaimer</span>

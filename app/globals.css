@@ -16,8 +16,6 @@
   --blue-bright: #1767ad;
   --blue-pale: #edf4fa;
   --orange: #ffb000;
-  --orange-dark: #d99500;
-  --orange-pale: #fff8e6;
   --line: #dfe5eb;
   --surface: #ffffff;
   --canvas: #ffffff;
@@ -361,7 +359,7 @@ label:has(input:focus-visible) .upload-box {
 
 .primary-button {
   min-height: 54px;
-  border: 1px solid var(--orange);
+  border: 2px solid var(--orange);
   border-radius: 4px;
   background: transparent;
   box-shadow: none;
@@ -372,10 +370,11 @@ label:has(input:focus-visible) .upload-box {
   text-transform: uppercase;
 }
 
-.primary-button:hover {
-  border-color: var(--orange-dark);
-  background: var(--orange-pale);
-  color: var(--orange-dark);
+.primary-button:hover,
+.primary-button:active {
+  border-color: var(--orange);
+  background: var(--orange);
+  color: white;
 }
 
 .status-message {

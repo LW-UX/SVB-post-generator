@@ -64,6 +64,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type AnnouncementPageCount = 1 \| 2/);
   assert.match(page, /useState<Department>\("football"\)/);
   assert.match(page, /useState<AnnouncementPageCount>\(2\)/);
+  assert.match(page, /const INITIAL_ANNOUNCEMENT_FORM:[\s\S]*?title:\s*""[\s\S]*?subtitleBold:\s*""[\s\S]*?subtitleLight:\s*""[\s\S]*?secondHeadline:\s*""[\s\S]*?body:\s*""[\s\S]*?disclaimer:\s*""/);
+  assert.match(page, /const ANNOUNCEMENT_PLACEHOLDERS = \{[\s\S]*?title:\s*"Überschrift"[\s\S]*?subtitleBold:\s*"Untere Zeile Bold"[\s\S]*?subtitleLight:\s*"Untere Zeile Light"[\s\S]*?secondHeadline:\s*"Überschrift"/);
+  assert.match(page, /bodyValue = form\.body \|\| ANNOUNCEMENT_PLACEHOLDERS\.body/);
+  assert.match(page, /if \(form\.disclaimer\.trim\(\)\)/);
   assert.match(page, />Fußball</);
   assert.match(page, />Allgemein</);
   assert.ok(page.indexOf(">Allgemein</") < page.indexOf(">Fußball</"));
@@ -152,7 +156,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
   assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*#1e73b9/);
-  assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*1px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
+  assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
+  assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
   assert.match(styles, /\.segmented-control button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
   assert.match(styles, /\.format-options button\s*\{[^}]*min-height:\s*44px[^}]*border-radius:\s*1px/s);
   assert.match(styles, /\.selector-card-football\s*\{/);
