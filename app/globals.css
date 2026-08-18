@@ -15,6 +15,9 @@
   --blue-dark: #003568;
   --blue-bright: #1767ad;
   --blue-pale: #edf4fa;
+  --orange: #ffb000;
+  --orange-dark: #d99500;
+  --orange-pale: #fff8e6;
   --line: #dfe5eb;
   --surface: #ffffff;
   --canvas: #ffffff;
@@ -139,7 +142,7 @@ label:has(input:focus-visible) .upload-box {
 
 .segmented-control button,
 .format-options button {
-  min-height: 48px;
+  min-height: 44px;
   border: 0;
   border-radius: 1px;
   background: transparent;
@@ -157,7 +160,7 @@ label:has(input:focus-visible) .upload-box {
 
 .segmented-control button.active,
 .format-options button.active {
-  background: var(--blue);
+  background: #1e73b9;
   box-shadow: none;
   color: white;
 }
@@ -311,44 +314,28 @@ label:has(input:focus-visible) .upload-box {
 
 .preview-actions {
   display: grid;
-  grid-template-columns: 1.25fr 0.9fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 16px;
 }
 
-.preview-actions.single-action {
-  grid-template-columns: 1fr;
-}
-
-.primary-button,
-.secondary-button {
+.primary-button {
   min-height: 54px;
-  border-radius: 2px;
+  border: 1px solid var(--orange);
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--orange);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
 
-.primary-button {
-  border: 1px solid var(--blue);
-  background: var(--blue);
-  box-shadow: none;
-  color: white;
-}
-
 .primary-button:hover {
-  background: var(--blue-dark);
-}
-
-.secondary-button {
-  border: 1px solid var(--line);
-  background: white;
-  color: var(--blue-dark);
-}
-
-.secondary-button:hover {
-  background: var(--blue-pale);
+  border-color: var(--orange-dark);
+  background: var(--orange-pale);
+  color: var(--orange-dark);
 }
 
 .status-message {
@@ -619,8 +606,8 @@ input:not([type="file"]):not([type="range"]):focus {
   }
 
   .segmented-control:not(.compact) button {
-    min-height: 54px;
-    padding: 6px 8px;
+    min-height: 44px;
+    padding: 4px 8px;
     font-size: 11px;
   }
 

@@ -106,7 +106,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /files\.forEach\(downloadFile\)/);
   assert.match(readme, /allow="web-share"/);
   assert.match(page, /"Bild speichern \/ teilen" : "PNG herunterladen"/);
-  assert.match(page, /"Alle 4 speichern \/ teilen" : "Alle 4 Formate herunterladen"/);
+  assert.doesNotMatch(page, /downloadAll|Alle 4 speichern|Alle 4 Formate herunterladen/);
   assert.match(page, /Dieser Browser kann Bilder nicht direkt an die Fotobibliothek übergeben/);
   assert.doesNotMatch(page, /window\.matchMedia\("\(max-width: 820px\)"\)/);
   assert.match(page, /document\.body\.appendChild\(anchor\)/);
@@ -115,7 +115,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /teamDesign === "first" \? "Erste" : "Zweite"/);
   assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
-  assert.match(page, /Bild speichern \/ teilen[\s\S]*Alle 4 speichern \/ teilen/);
+  assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*#1e73b9/);
+  assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*1px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
+  assert.match(styles, /\.segmented-control button,[\s\S]*?\.format-options button\s*\{[^}]*min-height:\s*44px/);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
   assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.app-shell\s*\{[^}]*width:\s*100%/);

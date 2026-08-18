@@ -1192,31 +1192,6 @@ export default function Home() {
     }
   }
 
-  async function downloadAll() {
-    setDownloadStatus("Vier Formate werden erstellt …");
-    const files: File[] = [];
-
-    for (const key of Object.keys(FORMATS) as FormatKey[]) {
-      const canvas = document.createElement("canvas");
-      renderGraphic(canvas, key, postType, form, assets, teamDesign, FORMATS[key].exportScale);
-      const file = await createPngFile(canvas, key);
-      if (!file) {
-        setDownloadStatus("Mindestens eines der Bilder konnte nicht erstellt werden.");
-        return;
-      }
-      files.push(file);
-    }
-
-    const action = await saveFiles(files);
-    if (action === "shared") {
-      setDownloadStatus("Alle vier Formate wurden gespeichert oder geteilt.");
-    } else if (action === "downloaded") {
-      setDownloadStatus("Alle vier Formate wurden heruntergeladen.");
-    } else {
-      setDownloadStatus("Speichern wurde abgebrochen.");
-    }
-  }
-
   function resetForm() {
     setForm({
       ...INITIAL_FORM,
@@ -1286,15 +1261,10 @@ export default function Home() {
           <div className={`canvas-stage canvas-${formatKey}`}>
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />
           </div>
-          <div className={`preview-actions ${postType === "result" ? "single-action" : ""}`}>
+          <div className="preview-actions">
             <button className="primary-button" type="button" onClick={downloadSelected}>
               {supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
             </button>
-            {postType === "matchday" && (
-              <button className="secondary-button" type="button" onClick={downloadAll}>
-                {supportsFileSharing ? "Alle 4 speichern / teilen" : "Alle 4 Formate herunterladen"}
-              </button>
-            )}
           </div>
           {!supportsFileSharing && (
             <p className="format-note">
