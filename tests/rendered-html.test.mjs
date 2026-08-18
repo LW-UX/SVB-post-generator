@@ -45,12 +45,14 @@ test("renders the SVB generator shell", async () => {
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, styles, readme, packageJson, workflow] = await Promise.all([
+  const [page, styles, readme, packageJson, workflow, pagesViteConfig, postcssConfig] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
+    readFile(new URL("../vite.pages.config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../postcss.config.mjs", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /post:\s*\{[^}]*1080[^}]*1350[^}]*exportScale:\s*2/s);
@@ -146,10 +148,15 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.doesNotMatch(page, /className="mobile-download"/);
   assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*#1e73b9/);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*1px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
-  assert.match(styles, /\.segmented-control button,[\s\S]*?\.format-options button\s*\{[^}]*min-height:\s*44px/);
+  assert.match(styles, /\.segmented-control button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
+  assert.match(styles, /\.format-options button\s*\{[^}]*min-height:\s*44px[^}]*border-radius:\s*1px/s);
   assert.match(styles, /\.selector-card-football\s*\{/);
   assert.match(styles, /\.selector-card-general\s*\{/);
   assert.match(styles, /\.preview-page-control\s*\{/);
+  assert.ok(
+    page.indexOf('className={`canvas-stage') <
+      page.indexOf('className="segmented-control compact preview-page-control"'),
+  );
   assert.match(styles, /textarea\s*\{[^}]*resize:\s*vertical/s);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
   assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
@@ -162,6 +169,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(/);
   assert.match(packageJson, /"build:pages"/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(pagesViteConfig, /cssMinify:\s*false/);
+  assert.match(postcssConfig, /optimize:\s*false/);
 
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
   await access(new URL("../app/fonts/Inter-Variable.ttf", import.meta.url));

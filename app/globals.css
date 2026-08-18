@@ -156,15 +156,23 @@ label:has(input:focus-visible) .upload-box {
 
 .segmented-control button,
 .format-options button {
-  min-height: 44px;
   border: 0;
-  border-radius: 1px;
   background: transparent;
   color: #566075;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.025em;
   transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.segmented-control button {
+  min-height: 32px;
+  border-radius: 4px;
+}
+
+.format-options button {
+  min-height: 44px;
+  border-radius: 1px;
 }
 
 .segmented-control button:hover,
@@ -300,7 +308,7 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .preview-page-control {
-  margin: 0 auto 14px;
+  margin: 14px auto 0;
 }
 
 .canvas-stage canvas {
@@ -655,7 +663,7 @@ textarea:focus {
   }
 
   .segmented-control:not(.compact) button {
-    min-height: 44px;
+    min-height: 32px;
     padding: 4px 8px;
     font-size: 11px;
   }

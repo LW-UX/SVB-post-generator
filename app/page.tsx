@@ -1945,15 +1945,15 @@ export default function Home() {
               Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
             </span>
           </div>
+          <div className={`canvas-stage canvas-${formatKey}`}>
+            <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
+          </div>
           {department === "general" && formatKey === "post" && announcementPageCount === 2 && (
             <div className="segmented-control compact preview-page-control" role="group" aria-label="Vorschauseite auswählen">
               <button type="button" className={announcementPage === 1 ? "active" : ""} aria-pressed={announcementPage === 1} onClick={() => setAnnouncementPage(1)}>Seite 1</button>
               <button type="button" className={announcementPage === 2 ? "active" : ""} aria-pressed={announcementPage === 2} onClick={() => setAnnouncementPage(2)}>Seite 2</button>
             </div>
           )}
-          <div className={`canvas-stage canvas-${formatKey}`}>
-            <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
-          </div>
           <div className="preview-actions">
             <button className="primary-button" type="button" onClick={downloadSelected}>
               {department === "general" && formatKey === "post" && announcementPageCount === 2

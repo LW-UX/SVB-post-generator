@@ -7,5 +7,6 @@ export default defineConfig({
   build: {
     outDir: "pages-dist",
     emptyOutDir: true,
+    cssMinify: false,
   },
 });
