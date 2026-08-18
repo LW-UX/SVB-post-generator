@@ -133,10 +133,20 @@ const MATCHDAY_ANGLE_DEGREES = 52;
 
 const TEAM_DESIGNS: Record<
   TeamDesign,
-  { label: string; clubName: string; competition: string }
+  { label: string; clubName: string; competition: string; competitionRegion: string }
 > = {
-  first: { label: "1. Mannschaft", clubName: "SV Bergheim", competition: "Kreisklasse" },
-  second: { label: "2. Mannschaft", clubName: "SV Bergheim II", competition: "A-Klasse" },
+  first: {
+    label: "1. Mannschaft",
+    clubName: "SV Bergheim",
+    competition: "Kreisklasse",
+    competitionRegion: "Augsburg Süd",
+  },
+  second: {
+    label: "2. Mannschaft",
+    clubName: "SV Bergheim II",
+    competition: "A-Klasse",
+    competitionRegion: "Augsburg Mitte",
+  },
 };
 
 const INITIAL_FORM: FormState = {
@@ -2127,6 +2137,7 @@ export default function Home() {
       ...current,
       clubName: TEAM_DESIGNS[design].clubName,
       competition: TEAM_DESIGNS[design].competition,
+      competitionRegion: TEAM_DESIGNS[design].competitionRegion,
     }));
   }
 
@@ -2323,6 +2334,7 @@ export default function Home() {
       ...INITIAL_FORM,
       clubName: TEAM_DESIGNS[teamDesign].clubName,
       competition: TEAM_DESIGNS[teamDesign].competition,
+      competitionRegion: TEAM_DESIGNS[teamDesign].competitionRegion,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
     opponentLoadRequestRef.current += 1;
@@ -2456,6 +2468,25 @@ export default function Home() {
             </div>
           )}
 
+          {department === "football" && (
+            <div className="form-section">
+              <h3>Bilder</h3>
+              <div className="upload-grid">
+                <OpponentLogoPicker
+                  key={selectedOpponentEntry?.id ?? (assets.opponentLogo ? "custom" : "none")}
+                  entries={OPPONENT_CATALOG}
+                  selectedEntry={selectedOpponentEntry}
+                  image={assets.opponentLogo}
+                  onSelect={(entry) => void chooseOpponent(entry)}
+                  onUpload={loadOpponentUpload}
+                  onClear={clearOpponentLogo}
+                />
+                {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
+              </div>
+              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Suche ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß oder Blau." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
+            </div>
+          )}
+
           {department === "football" && postType === "matchday" && (
             <div className="form-section">
               <h3>Spielinformationen</h3>
@@ -2525,25 +2556,6 @@ export default function Home() {
                 <span className="field-label">Untere Zeile (optional)</span>
                 <input value={form.footer} maxLength={40} placeholder="z. B. DERBYSIEGER" onChange={(event) => updateForm("footer", event.target.value)} />
               </label>
-            </div>
-          )}
-
-          {department === "football" && (
-            <div className="form-section">
-              <h3>Bilder</h3>
-              <div className="upload-grid">
-                <OpponentLogoPicker
-                  key={selectedOpponentEntry?.id ?? (assets.opponentLogo ? "custom" : "none")}
-                  entries={OPPONENT_CATALOG}
-                  selectedEntry={selectedOpponentEntry}
-                  image={assets.opponentLogo}
-                  onSelect={(entry) => void chooseOpponent(entry)}
-                  onUpload={loadOpponentUpload}
-                  onClear={clearOpponentLogo}
-                />
-                {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
-              </div>
-              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Suche ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß oder Blau." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 

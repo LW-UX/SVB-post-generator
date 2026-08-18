@@ -77,6 +77,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /Fließtext/);
   assert.match(page, /Disclaimer/);
   assert.match(page, /SV Bergheim II/);
+  assert.match(page, /second:\s*\{[\s\S]*?competition:\s*"A-Klasse"[\s\S]*?competitionRegion:\s*"Augsburg Mitte"/);
+  assert.match(page, /competitionRegion: TEAM_DESIGNS\[design\]\.competitionRegion/);
+  assert.match(page, /competitionRegion: TEAM_DESIGNS\[teamDesign\]\.competitionRegion/);
   assert.match(page, /chooseTeamDesign/);
   assert.match(page, /svb-logo-weiss-1906\.svg/);
   assert.match(page, /svb-logo-blau-1906\.svg/);
@@ -129,6 +132,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /role="listbox"/);
   assert.match(page, /Eigenes Logo hochladen/);
   assert.match(page, /opponentName: entry\.name/);
+  assert.ok(page.indexOf("<h3>Bilder</h3>") < page.indexOf("<h3>Spielinformationen</h3>"));
+  assert.ok(page.indexOf("<h3>Bilder</h3>") < page.indexOf("<h3>Ergebnis</h3>"));
   assert.match(page, /isBrand \? undefined : inkColor/);
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
