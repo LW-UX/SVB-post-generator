@@ -176,6 +176,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.opponent-picker\s*\{/);
   assert.match(styles, /\.opponent-options\s*\{/);
   assert.match(styles, /\.opponent-option\.active\s*\{/);
+  assert.match(styles, /@container opponent-picker \(min-width: 680px\)[\s\S]*?repeat\(2,/);
+  assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);
   assert.ok(
     page.indexOf('className={`canvas-stage') <
       page.indexOf('className="segmented-control compact preview-page-control"'),

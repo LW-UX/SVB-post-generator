@@ -1794,13 +1794,28 @@ function OpponentLogoPicker({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    const pickerWidth = rootRef.current?.clientWidth ?? 0;
+    const columnCount = pickerWidth >= 680 ? 2 : 1;
+
     if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((current) => isOpen
+        ? Math.min(current + columnCount, Math.max(0, filteredEntries.length - 1))
+        : 0);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((current) => isOpen
+        ? Math.max(current - columnCount, 0)
+        : Math.max(0, filteredEntries.length - 1));
+    } else if (event.key === "ArrowRight") {
       event.preventDefault();
       setIsOpen(true);
       setActiveIndex((current) => isOpen
         ? Math.min(current + 1, Math.max(0, filteredEntries.length - 1))
         : 0);
-    } else if (event.key === "ArrowUp") {
+    } else if (event.key === "ArrowLeft") {
       event.preventDefault();
       setIsOpen(true);
       setActiveIndex((current) => isOpen

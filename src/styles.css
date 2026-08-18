@@ -553,6 +553,8 @@ textarea:focus {
 .opponent-picker {
   position: relative;
   z-index: 4;
+  container-name: opponent-picker;
+  container-type: inline-size;
 }
 
 .opponent-search {
@@ -634,13 +636,22 @@ textarea:focus {
   top: calc(100% + 4px);
   right: 0;
   left: 0;
+  display: grid;
   max-height: 304px;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   overflow-y: auto;
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: white;
   box-shadow: 0 14px 34px rgba(7, 18, 38, 0.16);
+}
+
+@container opponent-picker (min-width: 680px) {
+  .opponent-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .opponent-option {
@@ -655,6 +666,7 @@ textarea:focus {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  text-align: left;
 }
 
 .opponent-option.active {
