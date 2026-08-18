@@ -10,11 +10,12 @@
 
 :root {
   --ink: #111;
-  --ink-soft: #c6c6c6;
+  --ink-soft: #666;
+  --ink-helper: #7a8496;
   --navy: #00448a;
   --blue-dark: #003568;
   --blue-bright: #1767ad;
-  --blue-skyblue: #1e73b9;
+  --skyblue: #1e73b9;
   --blue-pale: #edf4fa;
   --orange: #ffb000;
   --line: #dfe5eb;
@@ -155,8 +156,8 @@ label:has(input:focus-visible) .upload-box {
 .format-options button {
   border: 0;
   background: transparent;
-  color: #566075;
-  font-size: 13px;
+  color: var(--navy);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.025em;
   transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
@@ -180,7 +181,7 @@ label:has(input:focus-visible) .upload-box {
 .segmented-control button.active,
 .format-options button.active {
   border-radius: 4px;
-  background: var(--blue-skyblue);
+  background: var(--skyblue);
   box-shadow: none;
   color: white;
 }
@@ -200,7 +201,7 @@ label:has(input:focus-visible) .upload-box {
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: #f4f6f8;
+  background: var(--blue-pale);
 }
 
 .format-options button {
@@ -221,13 +222,13 @@ label:has(input:focus-visible) .upload-box {
 }
 
 .format-options small {
-  color: #7d8791;
+  color: var(--ink-soft);
   font-size: 10px;
   font-weight: 800;
 }
 
 .format-options button.active small {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .format-options.single-option {
@@ -236,7 +237,7 @@ label:has(input:focus-visible) .upload-box {
 
 .format-note {
   margin: 10px 2px 0;
-  color: var(--ink-soft);
+  color: var(--ink-helper);
   text-align: center;
   font-size: 12px;
 }
@@ -367,7 +368,7 @@ label:has(input:focus-visible) .upload-box {
 
 .status-message {
   margin: 10px 2px 0;
-  color: var(--ink-soft);
+  color: var(--ink-helper);
   font-size: 12px;
   line-height: 1.5;
   text-align: center;
@@ -477,7 +478,7 @@ textarea:focus {
 }
 
 .helper-text {
-  color: #7a8496;
+  color: var(--ink-helper);
 }
 
 .score-grid {
