@@ -1,58 +1,36 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+test("builds a complete, readable GitHub Pages bundle", async () => {
+  const html = await readFile(new URL("../pages-dist/index.html", import.meta.url), "utf8");
+  const assets = await readdir(new URL("../pages-dist/assets", import.meta.url));
+  const cssFile = assets.find((file) => /^index-.+\.css$/.test(file));
 
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
-}
-
-test("renders the SVB generator shell", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
-  const html = await response.text();
   assert.match(html, /<title>SVB Social Media Studio<\/title>/i);
-  assert.match(html, /Spieltagsankündigung/);
-  assert.match(html, /Ergebnismeldung/);
-  assert.match(html, /Allgemein/);
-  assert.match(html, /Instagram Story/);
-  assert.match(html, /16:9 Querformat/);
-  assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
-  assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
-  assert.match(html, /PNG herunterladen/);
-  assert.doesNotMatch(html, />Mannschaften</);
-  assert.doesNotMatch(html, />Vereinsname</);
-  assert.doesNotMatch(html, />Gegner</);
-  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+  assert.match(html, /assets\/svb-logo-blau-1906\.svg/);
+  assert.match(html, /assets\/index-.+\.js/);
+  assert.match(html, /assets\/index-.+\.css/);
+  assert.ok(cssFile, "Der Build muss eine CSS-Datei enthalten.");
+  assert.ok(assets.some((file) => /^Inter-Variable-.+\.ttf$/.test(file)));
+
+  for (const logo of ["blau", "farbe", "weiss"]) {
+    await access(new URL(`../pages-dist/assets/svb-logo-${logo}-1906.svg`, import.meta.url));
+  }
+
+  const builtCss = await readFile(new URL(`../pages-dist/assets/${cssFile}`, import.meta.url), "utf8");
+  assert.ok(builtCss.split("\n").length > 500, "Die Build-CSS soll lesbar formatiert bleiben.");
+  assert.doesNotMatch(builtCss, /tailwindcss/i);
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, styles, readme, packageJson, workflow, pagesViteConfig, postcssConfig] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  const [page, styles, readme, packageJson, workflow, viteConfig] = await Promise.all([
+    readFile(new URL("../src/App.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
-    readFile(new URL("../vite.pages.config.ts", import.meta.url), "utf8"),
-    readFile(new URL("../postcss.config.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /post:\s*\{[^}]*1080[^}]*1350[^}]*exportScale:\s*2/s);
@@ -79,6 +57,10 @@ test("keeps uploads local and supports every requested format", async () => {
       page.indexOf("className={`selector-card selector-card-${department}`}"),
   );
   assert.match(page, />Ankündigung</);
+  assert.match(page, />Spieltagsankündigung</);
+  assert.match(page, />Ergebnismeldung</);
+  assert.match(page, /Instagram Story/);
+  assert.match(page, /16:9 Querformat/);
   assert.match(page, />1 Seite</);
   assert.match(page, />2 Seiten</);
   assert.match(page, /Vorschauseite auswählen/);
@@ -159,8 +141,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /teamDesign === "first" \? "Erste" : "Zweite"/);
   assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
-  assert.match(styles, /--blue-skyblue:\s*#1e73b9/);
-  assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*var\(--blue-skyblue\)/);
+  assert.match(styles, /--skyblue:\s*#1e73b9/);
+  assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*var\(--skyblue\)/);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
   assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
   assert.match(styles, /\.segmented-control button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
@@ -184,10 +166,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /https:\/\/www\.sportverein-bergheim\.de/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(/);
   assert.match(packageJson, /"build:pages"/);
+  assert.doesNotMatch(packageJson, /vinext|wrangler|drizzle|tailwind|cloudflare/i);
   assert.match(workflow, /actions\/deploy-pages@v4/);
-  assert.match(pagesViteConfig, /cssMinify:\s*false/);
-  assert.match(postcssConfig, /optimize:\s*false/);
+  assert.match(viteConfig, /base:\s*"\.\/"/);
+  assert.match(viteConfig, /cssMinify:\s*false/);
 
-  await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
-  await access(new URL("../app/fonts/Inter-Variable.ttf", import.meta.url));
+  await access(new URL("../src/assets/Inter-Variable.ttf", import.meta.url));
 });

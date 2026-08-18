@@ -3,15 +3,10 @@ node_modules/
 .pnpm-store/
 
 # Build-Ausgaben
-.next/
-dist/
 pages-dist/
 coverage/
 
-# Lokale Entwicklungs- und Deployment-Daten
-.wrangler/
-.vercel/
-.dev.vars
+# Lokale Konfiguration
 .env
 .env.*
 !.env.example

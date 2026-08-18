@@ -33,6 +33,26 @@ pnpm install
 pnpm run dev
 ```
 
+Der lokale Entwicklungsserver wird von Vite gestartet. Einen produktionsnahen
+Build mit Vorschau erzeugen diese Befehle:
+
+```bash
+pnpm run build
+pnpm run start
+```
+
+## Projektstruktur
+
+- `src/App.tsx`: Oberfläche, Canvas-Renderer und Exportlogik
+- `src/styles.css`: vollständig editierbare Oberflächenstile
+- `src/assets/Inter-Variable.ttf`: lokal verwendete Inter-Schrift
+- `public/assets/`: die drei benötigten SVB-Logovarianten
+- `pages-dist/`: automatisch erzeugte, nicht in Git gespeicherte Build-Ausgabe
+
+Gehashte Dateien wie `index-….css` sowie Kopien von Schrift und Logos unter
+`pages-dist` werden bei jedem Build neu erzeugt. Änderungen gehören deshalb
+immer in die Dateien unter `src` beziehungsweise `public`.
+
 ## GitHub Pages
 
 Der statische Build wird mit folgendem Befehl erstellt:
@@ -63,4 +83,7 @@ auf iPhone oder iPad Safari erforderlich.
 
 ## Anpassung an das Vereinsdesign
 
-Die Oberfläche und der Grafik-Renderer sind voneinander getrennt. Farben und Oberflächenstile liegen in `app/globals.css`; Inhalte, Größen und die vier Grafiklayouts liegen in `app/page.tsx`. Dadurch können die vorläufigen Layouts später ohne Änderungen an Upload- oder Downloadfunktionen durch die finalen Vereinsvorlagen ersetzt werden.
+Die Oberfläche und der Grafik-Renderer sind voneinander getrennt. Farben und
+Oberflächenstile liegen in `src/styles.css`; Inhalte, Größen und die vier
+Grafiklayouts liegen in `src/App.tsx`. Dadurch können die Layouts ohne
+Änderungen an Upload- oder Downloadfunktionen weiterentwickelt werden.
