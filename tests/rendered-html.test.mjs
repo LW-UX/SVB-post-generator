@@ -36,7 +36,7 @@ test("renders the SVB generator shell", async () => {
   assert.match(html, /16:9 Querformat/);
   assert.doesNotMatch(html, /Alles bleibt auf diesem Gerät/);
   assert.doesNotMatch(html, /Ein Spiel\. Vier Formate\. Sofort bereit\./i);
-  assert.match(html, /PNG herunterladen/);
+  assert.match(html, /Bild speichern \/ teilen/);
   assert.doesNotMatch(html, />Mannschaften</);
   assert.doesNotMatch(html, />Vereinsname</);
   assert.doesNotMatch(html, />Gegner</);
@@ -44,9 +44,10 @@ test("renders the SVB generator shell", async () => {
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, styles, packageJson, workflow] = await Promise.all([
+  const [page, styles, readme, packageJson, workflow] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8"),
   ]);
@@ -96,13 +97,20 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /URL\.createObjectURL/);
   assert.match(page, /canvas\.toBlob/);
   assert.match(page, /navigator\.share/);
+  assert.match(page, /function supportsSharingFiles\(files: File\[\]\)/);
+  assert.match(page, /navigator\.canShare\(\{ files \}\)/);
+  assert.match(page, /files\.forEach\(downloadFile\)/);
+  assert.match(readme, /allow="web-share"/);
+  assert.match(page, />Bild speichern \/ teilen</);
+  assert.match(page, />Alle 4 speichern \/ teilen</);
+  assert.doesNotMatch(page, /window\.matchMedia\("\(max-width: 820px\)"\)/);
   assert.match(page, /document\.body\.appendChild\(anchor\)/);
   assert.match(page, /value\.replaceAll\("\."\s*,\s*""\)\.trim\(\)/);
   assert.match(page, /SVB \$\{FORMAT_FILE_NAMES\[key\]\} \$\{team\} \$\{roundFilePart\(form\.round\)\} \$\{venue\}\.png/);
   assert.match(page, /teamDesign === "first" \? "Erste" : "Zweite"/);
   assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
-  assert.match(page, /PNG herunterladen[\s\S]*Alle 4 Formate/);
+  assert.match(page, /Bild speichern \/ teilen[\s\S]*Alle 4 speichern \/ teilen/);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
   assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.app-shell\s*\{[^}]*width:\s*100%/);

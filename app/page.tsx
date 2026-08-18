@@ -8,6 +8,7 @@ type FormatKey = "post" | "story" | "landscape" | "widescreen";
 type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
 type DateDisplay = "date-time" | "day-date";
+type ExportAction = "shared" | "downloaded" | "cancelled";
 
 type FormState = {
   clubName: string;
@@ -258,6 +259,30 @@ function formatRound(value: string) {
 
 function roundFilePart(value: string) {
   return value.replaceAll(".", "").trim() || "ohne Angabe";
+}
+
+function supportsSharingFiles(files: File[]) {
+  if (typeof navigator === "undefined") return false;
+
+  try {
+    return typeof navigator.share === "function"
+      && typeof navigator.canShare === "function"
+      && navigator.canShare({ files });
+  } catch {
+    return false;
+  }
+}
+
+function downloadFile(file: File) {
+  const url = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = file.name;
+  anchor.hidden = true;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 function fitFont(
@@ -1084,48 +1109,35 @@ export default function Home() {
     });
   }
 
-  async function downloadCanvas(canvas: HTMLCanvasElement, key: FormatKey) {
-    const blob = await createPngBlob(canvas);
-    if (!blob) {
-      setDownloadStatus("Das Bild konnte nicht erstellt werden.");
-      return false;
-    }
-
-    const name = fileName(key);
-    const file = new File([blob], name, { type: "image/png" });
-    const isMobileViewport = window.matchMedia("(max-width: 820px)").matches;
-    const canShareFile = isMobileViewport
-      && typeof navigator.share === "function"
-      && typeof navigator.canShare === "function"
-      && navigator.canShare({ files: [file] });
-
-    if (canShareFile) {
+  async function saveFiles(files: File[]): Promise<ExportAction> {
+    if (supportsSharingFiles(files)) {
       try {
         await navigator.share({
-          files: [file],
+          files,
           title: "SVB Social Media Grafik",
         });
-        return true;
+        return "shared";
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
-          setDownloadStatus("Speichern wurde abgebrochen.");
-          return false;
+          return "cancelled";
         }
-        // Eingebettete Browser können die Web-Share-API blockieren. In diesem
-        // Fall wird die Datei über einen regulären Download-Link gespeichert.
+        // Falls der Systemdialog trotz positiver Erkennung blockiert wird,
+        // bleiben die PNG-Dateien über den regulären Download erreichbar.
       }
     }
 
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = name;
-    anchor.hidden = true;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    return true;
+    files.forEach(downloadFile);
+    return "downloaded";
+  }
+
+  async function createPngFile(canvas: HTMLCanvasElement, key: FormatKey) {
+    const blob = await createPngBlob(canvas);
+    if (!blob) {
+      return null;
+    }
+
+    const name = fileName(key);
+    return new File([blob], name, { type: "image/png" });
   }
 
   async function downloadSelected() {
@@ -1135,20 +1147,45 @@ export default function Home() {
     setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wird erstellt …`);
     const canvas = document.createElement("canvas");
     renderGraphic(canvas, formatKey, postType, form, assets, teamDesign, exportScale);
-    const downloaded = await downloadCanvas(canvas, formatKey);
-    if (downloaded) {
-      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde erstellt.`);
+    const file = await createPngFile(canvas, formatKey);
+    if (!file) {
+      setDownloadStatus("Das Bild konnte nicht erstellt werden.");
+      return;
+    }
+
+    const action = await saveFiles([file]);
+    if (action === "shared") {
+      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde gespeichert oder geteilt.`);
+    } else if (action === "downloaded") {
+      setDownloadStatus(`PNG mit ${exportWidth} × ${exportHeight} px wurde heruntergeladen.`);
+    } else {
+      setDownloadStatus("Speichern wurde abgebrochen.");
     }
   }
 
   async function downloadAll() {
     setDownloadStatus("Vier Formate werden erstellt …");
+    const files: File[] = [];
+
     for (const key of Object.keys(FORMATS) as FormatKey[]) {
       const canvas = document.createElement("canvas");
       renderGraphic(canvas, key, postType, form, assets, teamDesign, FORMATS[key].exportScale);
-      await downloadCanvas(canvas, key);
+      const file = await createPngFile(canvas, key);
+      if (!file) {
+        setDownloadStatus("Mindestens eines der Bilder konnte nicht erstellt werden.");
+        return;
+      }
+      files.push(file);
     }
-    setDownloadStatus("Alle vier Formate wurden erstellt.");
+
+    const action = await saveFiles(files);
+    if (action === "shared") {
+      setDownloadStatus("Alle vier Formate wurden gespeichert oder geteilt.");
+    } else if (action === "downloaded") {
+      setDownloadStatus("Alle vier Formate wurden heruntergeladen.");
+    } else {
+      setDownloadStatus("Speichern wurde abgebrochen.");
+    }
   }
 
   function resetForm() {
@@ -1221,8 +1258,10 @@ export default function Home() {
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}`} />
           </div>
           <div className={`preview-actions ${postType === "result" ? "single-action" : ""}`}>
-            <button className="primary-button" type="button" onClick={downloadSelected}>PNG herunterladen</button>
-            {postType === "matchday" && <button className="secondary-button" type="button" onClick={downloadAll}>Alle 4 Formate</button>}
+            <button className="primary-button" type="button" onClick={downloadSelected}>Bild speichern / teilen</button>
+            {postType === "matchday" && (
+              <button className="secondary-button" type="button" onClick={downloadAll}>Alle 4 speichern / teilen</button>
+            )}
           </div>
           <p className="status-message" aria-live="polite">{downloadStatus || "Keine Datei wird hochgeladen oder gespeichert."}</p>
         </section>

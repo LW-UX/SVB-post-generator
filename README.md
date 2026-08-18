@@ -38,6 +38,19 @@ pnpm run build:pages
 
 Der Workflow unter `.github/workflows/deploy-pages.yml` veröffentlicht den Inhalt von `pages-dist` nach jedem Push auf `main`. Im GitHub-Repository muss unter **Settings → Pages → Source** einmalig **GitHub Actions** ausgewählt werden.
 
+Wird der Generator domainübergreifend in eine andere Website eingebettet, muss
+der native Teilen- und Speichern-Dialog am `iframe` freigegeben werden:
+
+```html
+<iframe
+  src="https://lw-ux.github.io/SVB-post-generator/"
+  allow="web-share"
+></iframe>
+```
+
+Ohne `allow="web-share"` fällt der PNG-Export im eingebetteten Generator auf
+einen regulären Browser-Download zurück.
+
 ## Anpassung an das Vereinsdesign
 
 Die Oberfläche und der Grafik-Renderer sind voneinander getrennt. Farben und Oberflächenstile liegen in `app/globals.css`; Inhalte, Größen und die vier Grafiklayouts liegen in `app/page.tsx`. Dadurch können die vorläufigen Layouts später ohne Änderungen an Upload- oder Downloadfunktionen durch die finalen Vereinsvorlagen ersetzt werden.
