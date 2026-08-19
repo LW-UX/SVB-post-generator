@@ -2215,14 +2215,13 @@ export default function Home() {
     setSelectedOpponentId(entry.id);
     setForm((current) => ({ ...current, opponentName: entry.name }));
     setAssets((current) => ({ ...current, opponentLogo: null }));
-    setDownloadStatus(`„${entry.name}“ wird geladen …`);
+    setDownloadStatus("");
 
     try {
       const source = await loadImageSource(entry.src);
       const normalizedLogo = await normalizeOpponentLogo(source);
       if (requestId !== opponentLoadRequestRef.current) return;
       setAssets((current) => ({ ...current, opponentLogo: normalizedLogo }));
-      setDownloadStatus(`Gegnerlogo „${entry.name}“ wurde ausgewählt.`);
     } catch {
       if (requestId !== opponentLoadRequestRef.current) return;
       setSelectedOpponentId(null);
@@ -2484,12 +2483,7 @@ export default function Home() {
                 : supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
             </button>
           </div>
-          {!supportsFileSharing && (
-            <p className="format-note">
-              Dieser Browser kann Bilder nicht direkt an die Fotobibliothek übergeben. In Firefox werden die PNG-Dateien heruntergeladen; für „Bild sichern“ bitte Chrome auf Android oder Safari auf iPhone und iPad verwenden.
-            </p>
-          )}
-          <p className="status-message" aria-live="polite">{downloadStatus || "Keine Datei wird hochgeladen oder gespeichert."}</p>
+          {downloadStatus && <p className="status-message" aria-live="polite">{downloadStatus}</p>}
         </section>
 
         <section className="form-column" aria-labelledby="details-title">
@@ -2533,7 +2527,7 @@ export default function Home() {
                 />
                 {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
               </div>
-              <p className="helper-text">Das SVB-Logo, die Inter-Schrift und das Mannschaftsdesign werden automatisch gewählt. Suche ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten; das Gegnerlogo erscheint automatisch in Weiß oder Blau." : "Das Gegnerlogo wird passend weiß oder blau eingefärbt."} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
+              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Wird es nicht richtig dargestellt, lasse es von einer KI aufbereiten. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 

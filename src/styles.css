@@ -273,13 +273,6 @@ label:has(input:focus-visible) .upload-box,
   grid-template-columns: minmax(0, 1fr);
 }
 
-.format-note {
-  margin: 10px 2px 0;
-  color: var(--ink-helper);
-  text-align: center;
-  font-size: 12px;
-}
-
 .studio-grid {
   display: grid;
   grid-template-columns: minmax(430px, 0.94fr) minmax(500px, 1.06fr);
@@ -511,7 +504,7 @@ textarea:focus {
 .helper-text {
   margin: 10px 0 0;
   color: var(--warning);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -713,7 +706,7 @@ textarea:focus {
 .selection-status {
   overflow: hidden;
   color: var(--ink-helper);
-  font-size: 11px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -724,8 +717,8 @@ textarea:focus {
 
 .opponent-upload-button {
   flex: 0 0 auto;
-  color: var(--blue-bright);
-  font-size: 12px;
+  color: var(--skyblue);
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -744,7 +737,6 @@ textarea:focus {
 
 .upload-box {
   display: flex;
-  min-height: 104px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -753,9 +745,9 @@ textarea:focus {
   border: 1px dashed #aab4c6;
   border-radius: 2px;
   background: #f8f9fc;
-  color: #536077;
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--skyblue);
+  font-size: 14px;
+  font-weight: 400;
   text-align: center;
   cursor: pointer;
   transition: border-color 150ms ease, background 150ms ease;
@@ -768,7 +760,7 @@ textarea:focus {
 
 .upload-box.has-file {
   border-style: solid;
-  border-color: #7db99b;
+  border-color: var(--success);
   background: #edf8f2;
   color: var(--success);
 }
@@ -781,7 +773,7 @@ textarea:focus {
   border-radius: 1px;
   background: white;
   box-shadow: 0 2px 8px rgba(7, 18, 38, 0.08);
-  color: var(--navy);
+  color: var(--skyblue);
   font-size: 18px;
   font-weight: 700;
 }
