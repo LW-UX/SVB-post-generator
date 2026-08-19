@@ -599,6 +599,7 @@ function estimateOpaqueBackground(
   const buckets = new Map<string, { count: number; red: number; green: number; blue: number }>();
   const sample = (x: number, y: number) => {
     const index = (y * width + x) * 4;
+    if (pixels[index + 3] < 128) return;
     const red = pixels[index];
     const green = pixels[index + 1];
     const blue = pixels[index + 2];
@@ -611,14 +612,20 @@ function estimateOpaqueBackground(
     buckets.set(key, bucket);
   };
   const step = Math.max(1, Math.floor((width + height) / 400));
+  const inset = Math.min(
+    Math.max(1, Math.round(Math.min(width, height) * 0.025)),
+    Math.floor((Math.min(width, height) - 1) / 2),
+  );
 
-  for (let x = 0; x < width; x += step) {
-    sample(x, 0);
-    sample(x, height - 1);
-  }
-  for (let y = 0; y < height; y += step) {
-    sample(0, y);
-    sample(width - 1, y);
+  for (const edgeInset of Array.from(new Set([0, inset]))) {
+    for (let x = edgeInset; x < width - edgeInset; x += step) {
+      sample(x, edgeInset);
+      sample(x, height - 1 - edgeInset);
+    }
+    for (let y = edgeInset; y < height - edgeInset; y += step) {
+      sample(edgeInset, y);
+      sample(width - 1 - edgeInset, y);
+    }
   }
 
   const background = Array.from(buckets.values())
@@ -651,14 +658,13 @@ async function normalizeOpponentLogo(image: HTMLImageElement) {
 
   const imageData = context.getImageData(0, 0, width, height);
   const pixels = imageData.data;
-  let hasTransparency = false;
+  let transparentPixelCount = 0;
   for (let index = 3; index < pixels.length; index += 4) {
-    if (pixels[index] < 250) {
-      hasTransparency = true;
-      break;
-    }
+    if (pixels[index] < 16) transparentPixelCount += 1;
   }
-  const background = hasTransparency
+  const transparentPixelRatio = transparentPixelCount / (pixels.length / 4);
+  const hasTransparentBackground = transparentPixelRatio >= 0.05;
+  const background = hasTransparentBackground
     ? null
     : estimateOpaqueBackground(pixels, width, height);
   let left = width;
