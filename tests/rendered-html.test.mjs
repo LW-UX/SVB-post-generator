@@ -127,7 +127,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /function createSearchVariants\(/);
   assert.match(page, /function normalizeOpponentLogo\(/);
   assert.match(page, /function estimateOpaqueBackground\(/);
+  assert.match(page, /function shouldRemoveLightLogoAreas\(/);
   assert.match(page, /const hasTransparentBackground = transparentPixelRatio >= 0\.05/);
+  assert.match(page, /const removeLightLogoAreas = hasTransparentBackground/);
+  assert.match(page, /const distanceFromWhite = Math\.max\(/);
   assert.match(page, /if \(pixels\[index \+ 3\] < 128\) return/);
   assert.match(page, /normalize\("NFC"\)/);
   assert.match(page, /role="combobox"/);

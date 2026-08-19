@@ -638,6 +638,25 @@ function estimateOpaqueBackground(
   };
 }
 
+function shouldRemoveLightLogoAreas(pixels: Uint8ClampedArray) {
+  let visiblePixelCount = 0;
+  let coloredOrDarkPixelCount = 0;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] < 16) continue;
+    visiblePixelCount += 1;
+    const red = pixels[index];
+    const green = pixels[index + 1];
+    const blue = pixels[index + 2];
+    const brightness = (red + green + blue) / 3;
+    const chroma = Math.max(red, green, blue) - Math.min(red, green, blue);
+    if (brightness < 225 || chroma > 20) coloredOrDarkPixelCount += 1;
+  }
+
+  return visiblePixelCount > 0
+    && coloredOrDarkPixelCount / visiblePixelCount >= 0.15;
+}
+
 async function normalizeOpponentLogo(image: HTMLImageElement) {
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
@@ -667,6 +686,8 @@ async function normalizeOpponentLogo(image: HTMLImageElement) {
   const background = hasTransparentBackground
     ? null
     : estimateOpaqueBackground(pixels, width, height);
+  const removeLightLogoAreas = hasTransparentBackground
+    && shouldRemoveLightLogoAreas(pixels);
   let left = width;
   let top = height;
   let right = -1;
@@ -689,6 +710,14 @@ async function normalizeOpponentLogo(image: HTMLImageElement) {
         + blueDistance * blueDistance,
       );
       const foregroundOpacity = Math.min(1, Math.max(0, (distance - 12) / 52));
+      alpha = Math.round(sourceAlpha * foregroundOpacity);
+    } else if (removeLightLogoAreas) {
+      const distanceFromWhite = Math.max(
+        255 - pixels[index],
+        255 - pixels[index + 1],
+        255 - pixels[index + 2],
+      );
+      const foregroundOpacity = Math.min(1, Math.max(0, (distanceFromWhite - 10) / 42));
       alpha = Math.round(sourceAlpha * foregroundOpacity);
     }
 
