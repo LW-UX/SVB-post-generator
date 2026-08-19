@@ -372,20 +372,21 @@ label:has(input:focus-visible) .upload-box,
 
 .preview-actions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 0.4fr;
   gap: 10px;
   margin-top: 16px;
+  justify-content: center;
 }
 
 .primary-button {
-  min-height: 54px;
+  padding: 12px;
   border: 2px solid var(--orange);
   border-radius: 4px;
   background: transparent;
   box-shadow: none;
   color: var(--orange);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
