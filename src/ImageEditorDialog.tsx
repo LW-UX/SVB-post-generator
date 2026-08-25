@@ -40,6 +40,7 @@ type ImageEditorDialogProps = {
   initialImage: EditableBackgroundImage;
   formatKey: BackgroundFormatKey;
   format: ImageDimensions & { label: string; short: string };
+  renderPreview?: (canvas: HTMLCanvasElement, image: EditableBackgroundImage) => void;
   onApply: (image: EditableBackgroundImage) => void;
   onCancel: () => void;
 };
@@ -77,6 +78,7 @@ export default function ImageEditorDialog({
   initialImage,
   formatKey,
   format,
+  renderPreview,
   onApply,
   onCancel,
 }: ImageEditorDialogProps) {
@@ -110,6 +112,10 @@ export default function ImageEditorDialog({
     const animationFrame = window.requestAnimationFrame(() => {
       canvas.width = dimensions.width;
       canvas.height = dimensions.height;
+      if (renderPreview) {
+        renderPreview(canvas, draft);
+        return;
+      }
       const context = canvas.getContext("2d", { colorSpace: "srgb" });
       if (!context) return;
       const rendered = renderEditableBackground(
@@ -121,7 +127,7 @@ export default function ImageEditorDialog({
       context.drawImage(rendered, 0, 0);
     });
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [dimensions.height, dimensions.width, draft, formatKey]);
+  }, [dimensions.height, dimensions.width, draft, formatKey, renderPreview]);
 
   function updateCrop(updater: (current: CropState) => CropState) {
     setDraft((current) => ({

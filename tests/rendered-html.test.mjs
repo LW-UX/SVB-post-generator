@@ -56,6 +56,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(editorDialog, />\s*Filter\s*</);
   assert.match(editorDialog, /label: "Retro"/);
   assert.match(editorDialog, /label: "Vignette"/);
+  assert.match(editorDialog, /renderPreview\?: \(canvas: HTMLCanvasElement, image: EditableBackgroundImage\) => void/);
+  assert.match(editorDialog, /renderPreview\(canvas, draft\)/);
   assert.match(editorDialog, /defaultValue|DEFAULT_FILTER_STRENGTH|85 %/);
   assert.match(editor, /FILTER_LUT_SIZE = 17/);
   assert.match(editor, /MAX_BACKGROUND_EDGE = 4096/);
@@ -120,6 +122,11 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type MatchdayDesign = "classic" \| "photo"/);
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
   assert.match(page, /function renderPhotoMatchdayGraphic\(/);
+  assert.match(page, /shadowColor = "rgba\(0, 0, 0, 0\.75\)"/);
+  assert.match(page, /shadowOffsetX = 0\.558/);
+  assert.match(page, /shadowOffsetY = 7\.981/);
+  assert.match(page, /shadowBlur = 17/);
+  assert.match(page, /renderPreview=\{\(canvas, image\) =>/);
   assert.match(page, /matchdayDesign === "photo"/);
   assert.match(page, /const separator = form\.homeAway === "home" \? "vs\." : "@"/);
   assert.match(page, /photoState\.edge === "top"/);

@@ -1563,6 +1563,10 @@ function renderPhotoMatchdayGraphic(
   drawMatchdayLogo(context, rightLogo, 995, edgeLogoY, 70, 91, rightIsClubLogo ? undefined : white);
 
   context.font = '400 28px Inter, Arial, Helvetica, sans-serif';
+  context.shadowColor = "rgba(0, 0, 0, 0.75)";
+  context.shadowOffsetX = 0.558;
+  context.shadowOffsetY = 7.981;
+  context.shadowBlur = 17;
   context.textAlign = "left";
   if (form.time) context.fillText(`${form.time} Uhr`, 140, textTop);
 
@@ -1583,6 +1587,10 @@ function renderPhotoMatchdayGraphic(
 
   context.textAlign = "left";
   if (form.venue.trim()) context.fillText(form.venue.trim(), wordmarkLeft, textTop + 301);
+  context.shadowColor = "transparent";
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
+  context.shadowBlur = 0;
   context.restore();
 }
 
@@ -2966,6 +2974,27 @@ export default function Home() {
           initialImage={backgroundEditorImage}
           formatKey={formatKey}
           format={selectedFormat}
+          renderPreview={(canvas, image) => {
+            const renderedPost = document.createElement("canvas");
+            renderGraphic(
+              renderedPost,
+              formatKey,
+              postType,
+              form,
+              { ...assets, backgroundImage: image },
+              teamDesign,
+              matchdayDesign,
+              photoMatchdayState,
+              department,
+              announcementForm,
+              announcementPage,
+              announcementPageCount,
+            );
+            const context = canvas.getContext("2d", { colorSpace: "srgb" });
+            if (!context) return;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(renderedPost, 0, 0, canvas.width, canvas.height);
+          }}
           onApply={applyBackgroundImage}
           onCancel={() => setBackgroundEditorImage(null)}
         />
