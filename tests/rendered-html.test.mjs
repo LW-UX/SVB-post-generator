@@ -13,10 +13,12 @@ test("builds a complete, readable GitHub Pages bundle", async () => {
   assert.match(html, /assets\/index-.+\.css/);
   assert.ok(cssFile, "Der Build muss eine CSS-Datei enthalten.");
   assert.ok(assets.some((file) => /^Inter-Variable-.+\.ttf$/.test(file)));
+  assert.ok(assets.some((file) => /^Gambetta-Variable-.+\.ttf$/.test(file)));
 
   for (const logo of ["blau", "farbe", "weiss"]) {
     await access(new URL(`../pages-dist/assets/svb-logo-${logo}-1906.svg`, import.meta.url));
   }
+  await access(new URL("../pages-dist/assets/matchday-wordmark.svg", import.meta.url));
 
   const builtCss = await readFile(new URL(`../pages-dist/assets/${cssFile}`, import.meta.url), "utf8");
   assert.ok(builtCss.split("\n").length > 500, "Die Build-CSS soll lesbar formatiert bleiben.");
@@ -115,6 +117,23 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /context\.moveTo\(totalWidth, height \* 0\.73\)/);
   assert.match(page, /pageCount === 2[\s\S]*?drawAnnouncementSecondSlide/s);
   assert.match(page, /type DateDisplay = "date-time" \| "day-date"/);
+  assert.match(page, /type MatchdayDesign = "classic" \| "photo"/);
+  assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
+  assert.match(page, /function renderPhotoMatchdayGraphic\(/);
+  assert.match(page, /matchdayDesign === "photo"/);
+  assert.match(page, /const separator = form\.homeAway === "home" \? "vs\." : "@"/);
+  assert.match(page, /photoState\.edge === "top"/);
+  assert.match(page, /textPosition:\s*50/);
+  assert.match(page, /preset: "vignette"/);
+  assert.match(page, />\s*Klassisch\s*</);
+  assert.match(page, />\s*Matchday\s*</);
+  assert.match(page, />\s*Oben\s*</);
+  assert.match(page, />\s*Unten\s*</);
+  assert.match(page, /Höhe des Textblocks/);
+  assert.match(page, /Gambetta Variable/);
+  assert.match(page, /matchday-wordmark\.svg/);
+  assert.match(page, /opponent-name-field/);
+  assert.match(page, /onOpponentNameChange/);
   assert.match(page, /dateDisplay: "date-time"/);
   assert.match(page, /Datum \+ Uhrzeit/);
   assert.match(page, /Tag \+ Datum/);
@@ -186,6 +205,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /homeAway === "home" \? "Heim" : "Auswaerts"/);
   assert.doesNotMatch(page, /className="mobile-download"/);
   assert.match(styles, /--skyblue:\s*#1e73b9/);
+  assert.match(styles, /font-family:\s*"Gambetta Variable"/);
+  assert.match(styles, /font-weight:\s*300 700/);
   assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*var\(--skyblue\)/);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
   assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
@@ -222,4 +243,5 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(viteConfig, /cssMinify:\s*false/);
 
   await access(new URL("../src/assets/Inter-Variable.ttf", import.meta.url));
+  await access(new URL("../src/assets/Gambetta-Variable.ttf", import.meta.url));
 });

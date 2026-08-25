@@ -6,6 +6,14 @@
   src: url("./assets/Inter-Variable.ttf") format("truetype-variations");
 }
 
+@font-face {
+  font-family: "Gambetta Variable";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("./assets/Gambetta-Variable.ttf") format("truetype-variations");
+}
+
 *,
 *::before,
 *::after {
@@ -174,6 +182,15 @@ label:has(input:focus-visible) .upload-box,
   display: flex;
   flex-direction: column;
   gap: 9px;
+}
+
+.nested-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .selector-label {
@@ -698,10 +715,23 @@ textarea:focus {
 
 .opponent-picker-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 7px;
+}
+
+.opponent-name-field {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opponent-name-field input:not([type="file"]):not([type="range"]) {
+  height: 40px;
 }
 
 .selection-status {
@@ -1054,6 +1084,19 @@ textarea:focus {
 .range-grid input {
   width: 100%;
   accent-color: var(--navy);
+}
+
+.range-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.range-label-row output {
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 @media (max-width: 1080px) {

@@ -12,6 +12,8 @@ type PostType = "matchday" | "result";
 type FormatKey = BackgroundFormatKey;
 type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
+type MatchdayDesign = "classic" | "photo";
+type PhotoEdge = "top" | "bottom";
 type DateDisplay = "date-time" | "day-date";
 type ExportAction = "shared" | "downloaded" | "cancelled";
 type Department = "football" | "general";
@@ -48,7 +50,13 @@ type Assets = {
   clubLogo: HTMLImageElement | null;
   colorClubLogo: HTMLImageElement | null;
   opponentLogo: HTMLImageElement | null;
+  matchdayWordmark: HTMLImageElement | null;
   backgroundImage: EditableBackgroundImage | null;
+};
+
+type PhotoMatchdayState = {
+  edge: PhotoEdge;
+  textPosition: number;
 };
 
 const OPPONENT_LOGO_FILES = import.meta.glob<string>(
@@ -173,6 +181,11 @@ const INITIAL_FORM: FormState = {
   halfTime: "1:0",
   footer: "",
   homeAway: "home",
+};
+
+const INITIAL_PHOTO_MATCHDAY_STATE: PhotoMatchdayState = {
+  edge: "top",
+  textPosition: 50,
 };
 
 const INITIAL_ANNOUNCEMENT_FORM: AnnouncementFormState = {
@@ -393,6 +406,21 @@ const FULL_MONTHS = [
   "DEZEMBER",
 ];
 
+const PHOTO_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mär",
+  "Apr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Dez",
+];
+
 const WEEKDAYS = [
   "SONNTAG",
   "MONTAG",
@@ -424,6 +452,12 @@ function formatMatchdayDateParts(value: string) {
     weekday: WEEKDAYS[date.getDay()],
     dayMonth: `${day}. ${FULL_MONTHS[month - 1]}`,
   };
+}
+
+function formatPhotoDateParts(value: string) {
+  const [, month, day] = value.split("-").map(Number);
+  if (!month || !day) return { day: "", month: "" };
+  return { day: String(day).padStart(2, "0"), month: PHOTO_MONTHS[month - 1] ?? "" };
 }
 
 function formatRound(value: string) {
@@ -1473,6 +1507,85 @@ function drawBadge(
   context.restore();
 }
 
+function renderPhotoMatchdayGraphic(
+  context: CanvasRenderingContext2D,
+  form: FormState,
+  assets: Assets,
+  photoState: PhotoMatchdayState,
+) {
+  const { width, height } = RESULT_POST_FORMAT;
+  const white = "#ffffff";
+  const wordmarkLeft = 116;
+  const wordmarkRight = 964;
+  const normalizedPosition = Math.min(100, Math.max(0, photoState.textPosition)) / 100;
+  const textTopRange = photoState.edge === "top"
+    ? { start: 690, end: 955 }
+    : { start: 115, end: 380 };
+  const textTop = textTopRange.start
+    + ((textTopRange.end - textTopRange.start) * normalizedPosition);
+  const edgeLogoY = photoState.edge === "top" ? 73 : 1275;
+  const dateTop = photoState.edge === "top" ? 34 : 1199;
+  const leftLogo = form.homeAway === "home"
+    ? assets.clubLogo
+    : assets.opponentLogo;
+  const rightLogo = form.homeAway === "home"
+    ? assets.opponentLogo
+    : assets.clubLogo;
+  const leftIsClubLogo = form.homeAway === "home";
+  const rightIsClubLogo = form.homeAway === "away";
+  const opponentName = assets.opponentLogo ? form.opponentName.trim() : "";
+  const separator = form.homeAway === "home" ? "vs." : "@";
+  const date = formatPhotoDateParts(form.date);
+
+  context.fillStyle = "#a6a6a6";
+  context.fillRect(0, 0, width, height);
+  if (assets.backgroundImage) {
+    drawEditableBackground(context, assets.backgroundImage, "post", width, height);
+  }
+
+  context.save();
+  context.fillStyle = white;
+  context.textBaseline = "top";
+  context.textAlign = "left";
+  context.fontKerning = "normal";
+  context.letterSpacing = "0px";
+
+  if (date.day) {
+    context.font = '300 78px "Gambetta Variable", "Bodoni 72", serif';
+    context.fillText(date.day, 51, dateTop);
+  }
+  if (date.month) {
+    context.font = '700 27px Inter, Arial, Helvetica, sans-serif';
+    context.fillText(date.month, 58, dateTop + 78);
+  }
+
+  drawMatchdayLogo(context, leftLogo, 898, edgeLogoY, 70, 91, leftIsClubLogo ? undefined : white);
+  drawMatchdayLogo(context, rightLogo, 995, edgeLogoY, 70, 91, rightIsClubLogo ? undefined : white);
+
+  context.font = '400 28px Inter, Arial, Helvetica, sans-serif';
+  context.textAlign = "left";
+  if (form.time) context.fillText(`${form.time} Uhr`, 140, textTop);
+
+  context.textAlign = "right";
+  context.fillText(`${form.clubName}   ${separator}`, wordmarkRight, textTop);
+  if (opponentName) context.fillText(opponentName, wordmarkRight, textTop + 38);
+
+  if (assets.matchdayWordmark) {
+    drawImageContained(
+      context,
+      assets.matchdayWordmark,
+      (wordmarkLeft + wordmarkRight) / 2,
+      textTop + 179,
+      wordmarkRight - wordmarkLeft,
+      202,
+    );
+  }
+
+  context.textAlign = "left";
+  if (form.venue.trim()) context.fillText(form.venue.trim(), wordmarkLeft, textTop + 301);
+  context.restore();
+}
+
 function renderResultGraphic(
   context: CanvasRenderingContext2D,
   formatKey: FormatKey,
@@ -1579,8 +1692,12 @@ function getGraphicFormat(
   department: Department,
   type: PostType,
   formatKey: FormatKey,
+  matchdayDesign: MatchdayDesign,
 ) {
-  return department === "football" && type === "result" && formatKey === "post"
+  const usesPhotoPostFormat = department === "football"
+    && formatKey === "post"
+    && (type === "result" || (type === "matchday" && matchdayDesign === "photo"));
+  return usesPhotoPostFormat
     ? RESULT_POST_FORMAT
     : FORMATS[formatKey];
 }
@@ -1592,6 +1709,8 @@ function renderGraphic(
   form: FormState,
   assets: Assets,
   teamDesign: TeamDesign,
+  matchdayDesign: MatchdayDesign,
+  photoMatchdayState: PhotoMatchdayState,
   department: Department,
   announcementForm: AnnouncementFormState,
   announcementPage: AnnouncementPage,
@@ -1611,7 +1730,7 @@ function renderGraphic(
     return;
   }
 
-  const format = getGraphicFormat(department, type, formatKey);
+  const format = getGraphicFormat(department, type, formatKey, matchdayDesign);
   canvas.width = format.width * scale;
   canvas.height = format.height * scale;
   const context = canvas.getContext("2d");
@@ -1623,6 +1742,11 @@ function renderGraphic(
 
   if (type === "result" && formatKey === "post") {
     renderResultGraphic(context, formatKey, form, assets, teamDesign);
+    return;
+  }
+
+  if (type === "matchday" && matchdayDesign === "photo" && formatKey === "post") {
+    renderPhotoMatchdayGraphic(context, form, assets, photoMatchdayState);
     return;
   }
 
@@ -1759,6 +1883,8 @@ function OpponentLogoPicker({
   entries,
   selectedEntry,
   image,
+  opponentName,
+  onOpponentNameChange,
   onSelect,
   onUpload,
   onClear,
@@ -1766,6 +1892,8 @@ function OpponentLogoPicker({
   entries: OpponentCatalogEntry[];
   selectedEntry: OpponentCatalogEntry | null;
   image: HTMLImageElement | null;
+  opponentName: string;
+  onOpponentNameChange: (value: string) => void;
   onSelect: (entry: OpponentCatalogEntry) => void;
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
@@ -1929,7 +2057,19 @@ function OpponentLogoPicker({
         )}
       </div>
       <div className="opponent-picker-footer">
-        <span className={image ? "selection-status selected" : "selection-status"}>{selectionLabel}</span>
+        {isCustomLogo ? (
+          <label className="opponent-name-field">
+            <span className="field-label">Gegnername</span>
+            <input
+              value={opponentName}
+              maxLength={60}
+              placeholder="Vereinsname eingeben"
+              onChange={(event) => onOpponentNameChange(event.target.value)}
+            />
+          </label>
+        ) : (
+          <span className={image ? "selection-status selected" : "selection-status"}>{selectionLabel}</span>
+        )}
         <label className="opponent-upload-button">
           Eigenes Logo hochladen
           <input
@@ -1987,6 +2127,10 @@ export default function Home() {
   const [department, setDepartment] = useState<Department>("football");
   const [postType, setPostType] = useState<PostType>("matchday");
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
+  const [matchdayDesign, setMatchdayDesign] = useState<MatchdayDesign>("classic");
+  const [photoMatchdayState, setPhotoMatchdayState] = useState<PhotoMatchdayState>(
+    INITIAL_PHOTO_MATCHDAY_STATE,
+  );
   const [formatKey, setFormatKey] = useState<FormatKey>("post");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [announcementForm, setAnnouncementForm] = useState<AnnouncementFormState>(
@@ -1999,6 +2143,7 @@ export default function Home() {
     clubLogo: null,
     colorClubLogo: null,
     opponentLogo: null,
+    matchdayWordmark: null,
     backgroundImage: null,
   });
   const [backgroundEditorImage, setBackgroundEditorImage] =
@@ -2019,6 +2164,7 @@ export default function Home() {
       document.fonts.load('300 30px "Inter"'),
       document.fonts.load('700 76px "Inter"'),
       document.fonts.load('700 100px "Inter"'),
+      document.fonts.load('300 78px "Gambetta Variable"'),
     ]).finally(() => {
       if (isActive) setFontReady(true);
     });
@@ -2038,6 +2184,8 @@ export default function Home() {
         form,
         assets,
         teamDesign,
+        matchdayDesign,
+        photoMatchdayState,
         department,
         announcementForm,
         announcementPage,
@@ -2051,6 +2199,8 @@ export default function Home() {
     form,
     assets,
     teamDesign,
+    matchdayDesign,
+    photoMatchdayState,
     department,
     announcementForm,
     announcementPage,
@@ -2064,6 +2214,8 @@ export default function Home() {
       ? "svb-logo-weiss-1906.svg"
       : postType === "result"
       ? "svb-logo-farbe-1906.svg"
+      : matchdayDesign === "photo"
+        ? "svb-logo-weiss-1906.svg"
       : teamDesign === "first"
         ? "svb-logo-weiss-1906.svg"
         : "svb-logo-blau-1906.svg";
@@ -2080,7 +2232,7 @@ export default function Home() {
       image.onload = null;
       image.onerror = null;
     };
-  }, [department, postType, teamDesign]);
+  }, [department, postType, teamDesign, matchdayDesign]);
 
   useEffect(() => {
     const image = new Image();
@@ -2091,6 +2243,22 @@ export default function Home() {
       setDownloadStatus("Das farbige SVB-Vereinslogo konnte nicht geladen werden.");
     };
     image.src = new URL("./assets/svb-logo-farbe-1906.svg", window.location.href).href;
+
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => {
+      setAssets((current) => ({ ...current, matchdayWordmark: image }));
+    };
+    image.onerror = () => {
+      setDownloadStatus("Der MATCH-DAY-Schriftzug konnte nicht geladen werden.");
+    };
+    image.src = new URL("./assets/matchday-wordmark.svg", window.location.href).href;
 
     return () => {
       image.onload = null;
@@ -2131,8 +2299,10 @@ export default function Home() {
     };
   }, []);
 
-  const selectedFormat = getGraphicFormat(department, postType, formatKey);
-  const availableFormats: FormatKey[] = department === "football" && postType === "result"
+  const selectedFormat = getGraphicFormat(department, postType, formatKey, matchdayDesign);
+  const isPostOnlyFootballDesign = department === "football"
+    && (postType === "result" || (postType === "matchday" && matchdayDesign === "photo"));
+  const availableFormats: FormatKey[] = isPostOnlyFootballDesign
     ? ["post"]
     : Object.keys(FORMATS) as FormatKey[];
   const selectedOpponentEntry = selectedOpponentId
@@ -2174,6 +2344,18 @@ export default function Home() {
     }));
   }
 
+  function chooseMatchdayDesign(design: MatchdayDesign) {
+    setMatchdayDesign(design);
+    if (design === "photo") setFormatKey("post");
+  }
+
+  function updatePhotoMatchdayState<Key extends keyof PhotoMatchdayState>(
+    key: Key,
+    value: PhotoMatchdayState[Key],
+  ) {
+    setPhotoMatchdayState((current) => ({ ...current, [key]: value }));
+  }
+
   function chooseTeamDesign(design: TeamDesign) {
     setTeamDesign(design);
     setForm((current) => ({
@@ -2192,7 +2374,11 @@ export default function Home() {
     setDownloadStatus("Hintergrundbild wird vorbereitet …");
     void loadEditableBackground(file)
       .then((image) => {
-        setBackgroundEditorImage(image);
+        setBackgroundEditorImage(
+          postType === "matchday" && matchdayDesign === "photo"
+            ? { ...image, preset: "vignette" }
+            : image,
+        );
         setDownloadStatus("");
       })
       .catch(() => {
@@ -2246,7 +2432,7 @@ export default function Home() {
     const requestId = ++opponentLoadRequestRef.current;
     const url = URL.createObjectURL(file);
     setSelectedOpponentId(null);
-    setForm((current) => ({ ...current, opponentName: "Gegner" }));
+    setForm((current) => ({ ...current, opponentName: "" }));
     setAssets((current) => ({ ...current, opponentLogo: null }));
     setDownloadStatus(`„${file.name}“ wird verarbeitet …`);
 
@@ -2280,6 +2466,9 @@ export default function Home() {
 
     const team = teamDesign === "first" ? "Erste" : "Zweite";
     const venue = form.homeAway === "home" ? "Heim" : "Auswaerts";
+    if (postType === "matchday" && matchdayDesign === "photo") {
+      return `SVB ${FORMAT_FILE_NAMES[key]} ${team} Matchday ${venue}.png`;
+    }
     return `SVB ${FORMAT_FILE_NAMES[key]} ${team} ${roundFilePart(form.round)} ${venue}.png`;
   }
 
@@ -2346,6 +2535,8 @@ export default function Home() {
         form,
         assets,
         teamDesign,
+        matchdayDesign,
+        photoMatchdayState,
         department,
         announcementForm,
         page,
@@ -2396,6 +2587,7 @@ export default function Home() {
       competitionRegion: TEAM_DESIGNS[teamDesign].competitionRegion,
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
+    setPhotoMatchdayState(INITIAL_PHOTO_MATCHDAY_STATE);
     opponentLoadRequestRef.current += 1;
     setSelectedOpponentId(null);
     setBackgroundEditorImage(null);
@@ -2435,6 +2627,29 @@ export default function Home() {
               <button type="button" className="active" aria-pressed="true">Ankündigung</button>
             )}
           </div>
+          {department === "football" && postType === "matchday" && (
+            <div className="nested-selector">
+              <span className="selector-label">Design</span>
+              <div className="segmented-control" role="group" aria-label="Design auswählen">
+                <button
+                  type="button"
+                  className={matchdayDesign === "classic" ? "active" : ""}
+                  aria-pressed={matchdayDesign === "classic"}
+                  onClick={() => chooseMatchdayDesign("classic")}
+                >
+                  Klassisch
+                </button>
+                <button
+                  type="button"
+                  className={matchdayDesign === "photo" ? "active" : ""}
+                  aria-pressed={matchdayDesign === "photo"}
+                  onClick={() => chooseMatchdayDesign("photo")}
+                >
+                  Matchday
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         {department === "football" && (
           <div className="selector-group">
@@ -2456,7 +2671,7 @@ export default function Home() {
         )}
         <div className="selector-group format-selector">
           <span className="selector-label">Format</span>
-          <div className={`format-options ${department === "football" && postType === "result" ? "single-option" : ""}`}>
+          <div className={`format-options ${isPostOnlyFootballDesign ? "single-option" : ""}`}>
             {availableFormats.map((key) => (
               <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
                 <span>{FORMATS[key].label}</span>
@@ -2504,7 +2719,11 @@ export default function Home() {
               <h2 id="details-title">
                 {department === "general"
                   ? "Ankündigung bearbeiten"
-                  : postType === "result" ? "Ergebnis bearbeiten" : "Spieldaten bearbeiten"}
+                  : postType === "result"
+                    ? "Ergebnis bearbeiten"
+                    : matchdayDesign === "photo"
+                      ? "Matchday bearbeiten"
+                      : "Spieldaten bearbeiten"}
               </h2>
             </div>
             <button className="text-button reset-button" type="button" onClick={resetForm}>Zurücksetzen</button>
@@ -2532,11 +2751,13 @@ export default function Home() {
                   entries={OPPONENT_CATALOG}
                   selectedEntry={selectedOpponentEntry}
                   image={assets.opponentLogo}
+                  opponentName={form.opponentName}
+                  onOpponentNameChange={(value) => updateForm("opponentName", value)}
                   onSelect={(entry) => void chooseOpponent(entry)}
                   onUpload={loadOpponentUpload}
                   onClear={clearOpponentLogo}
                 />
-                {postType === "result" && (
+                {(postType === "result" || (postType === "matchday" && matchdayDesign === "photo")) && (
                   <UploadField
                     id="background-image"
                     label="Hintergrundbild"
@@ -2547,11 +2768,11 @@ export default function Home() {
                   />
                 )}
               </div>
-              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Wird es nicht richtig dargestellt, lasse es von einer KI aufbereiten. {postType === "result" ? "Das Hintergrundbild kannst du lokal zuschneiden und filtern." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
+              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Bei einem eigenen Logo kannst du den Gegnernamen direkt darunter eintragen. {(postType === "result" || (postType === "matchday" && matchdayDesign === "photo")) ? "Das Hintergrundbild kannst du lokal zuschneiden und filtern." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 
-          {department === "football" && postType === "matchday" && (
+          {department === "football" && postType === "matchday" && matchdayDesign === "classic" && (
             <div className="form-section">
               <h3>Spielinformationen</h3>
               <div className="field-grid">
@@ -2593,6 +2814,71 @@ export default function Home() {
                   <input value={form.venueAddress} maxLength={65} onChange={(event) => updateForm("venueAddress", event.target.value)} />
                 </label>
               </div>
+            </div>
+          )}
+
+          {department === "football" && postType === "matchday" && matchdayDesign === "photo" && (
+            <div className="form-section">
+              <h3>Spielinformationen</h3>
+              <div className="field-grid">
+                <label>
+                  <span className="field-label">Datum</span>
+                  <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Anstoß</span>
+                  <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
+                </label>
+                <label>
+                  <span className="field-label">Ort</span>
+                  <input value={form.venue} maxLength={55} onChange={(event) => updateForm("venue", event.target.value)} />
+                </label>
+              </div>
+            </div>
+          )}
+
+          {department === "football" && postType === "matchday" && matchdayDesign === "photo" && (
+            <div className="form-section">
+              <h3>Anordnung</h3>
+              <div>
+                <span className="field-label">Datum und Logos am Rand</span>
+                <div className="segmented-control compact">
+                  <button
+                    type="button"
+                    className={photoMatchdayState.edge === "top" ? "active" : ""}
+                    aria-pressed={photoMatchdayState.edge === "top"}
+                    onClick={() => updatePhotoMatchdayState("edge", "top")}
+                  >
+                    Oben
+                  </button>
+                  <button
+                    type="button"
+                    className={photoMatchdayState.edge === "bottom" ? "active" : ""}
+                    aria-pressed={photoMatchdayState.edge === "bottom"}
+                    onClick={() => updatePhotoMatchdayState("edge", "bottom")}
+                  >
+                    Unten
+                  </button>
+                </div>
+              </div>
+              <div className="range-grid">
+                <label htmlFor="photo-text-position" aria-label="Höhe des Textblocks">
+                  <span className="range-label-row">
+                    <span className="field-label">Höhe des Textblocks</span>
+                    <output htmlFor="photo-text-position">{photoMatchdayState.textPosition} %</output>
+                  </span>
+                  <input
+                    id="photo-text-position"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={photoMatchdayState.textPosition}
+                    onChange={(event) => updatePhotoMatchdayState("textPosition", Number(event.target.value))}
+                  />
+                </label>
+              </div>
+              <p className="helper-text">Der Textblock bleibt vollständig sichtbar und hält automatisch Abstand zu Datum und Logos.</p>
             </div>
           )}
 
