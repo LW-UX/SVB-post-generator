@@ -1,8 +1,15 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import ImageEditorDialog from "./ImageEditorDialog";
+import {
+  cloneEditableBackground,
+  drawEditableBackground,
+  loadEditableBackground,
+} from "./image-editor";
+import type { BackgroundFormatKey, EditableBackgroundImage } from "./image-editor";
 
 type PostType = "matchday" | "result";
-type FormatKey = "post" | "story" | "landscape" | "widescreen";
+type FormatKey = BackgroundFormatKey;
 type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
 type DateDisplay = "date-time" | "day-date";
@@ -41,7 +48,7 @@ type Assets = {
   clubLogo: HTMLImageElement | null;
   colorClubLogo: HTMLImageElement | null;
   opponentLogo: HTMLImageElement | null;
-  backgroundImage: HTMLImageElement | null;
+  backgroundImage: EditableBackgroundImage | null;
 };
 
 const OPPONENT_LOGO_FILES = import.meta.glob<string>(
@@ -763,28 +770,6 @@ async function normalizeOpponentLogo(image: HTMLImageElement) {
   return canvasToImage(output);
 }
 
-function drawImageCover(
-  context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  width: number,
-  height: number,
-) {
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
-  if (sourceWidth <= 0 || sourceHeight <= 0) return;
-
-  const scale = Math.max(width / sourceWidth, height / sourceHeight);
-  const renderedWidth = sourceWidth * scale;
-  const renderedHeight = sourceHeight * scale;
-  context.drawImage(
-    image,
-    (width - renderedWidth) / 2,
-    (height - renderedHeight) / 2,
-    renderedWidth,
-    renderedHeight,
-  );
-}
-
 function setMatchdayFont(
   context: CanvasRenderingContext2D,
   weight: 300 | 700,
@@ -1490,6 +1475,7 @@ function drawBadge(
 
 function renderResultGraphic(
   context: CanvasRenderingContext2D,
+  formatKey: FormatKey,
   form: FormState,
   assets: Assets,
   teamDesign: TeamDesign,
@@ -1507,7 +1493,7 @@ function renderResultGraphic(
   context.fillStyle = "#a6a6a6";
   context.fillRect(0, 0, width, height);
   if (assets.backgroundImage) {
-    drawImageCover(context, assets.backgroundImage, width, height);
+    drawEditableBackground(context, assets.backgroundImage, formatKey, width, height);
   }
 
   context.fillStyle = isFirstTeam ? blue : "#ffffff";
@@ -1636,7 +1622,7 @@ function renderGraphic(
   const height = format.height;
 
   if (type === "result" && formatKey === "post") {
-    renderResultGraphic(context, form, assets, teamDesign);
+    renderResultGraphic(context, formatKey, form, assets, teamDesign);
     return;
   }
 
@@ -1964,28 +1950,31 @@ function OpponentLogoPicker({
 function UploadField({
   id,
   label,
-  image,
+  hasImage,
   onChange,
+  onEdit,
   onRemove,
 }: {
   id: string;
   label: string;
-  image: HTMLImageElement | null;
+  hasImage: boolean;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onEdit: () => void;
   onRemove: () => void;
 }) {
   return (
     <div className="upload-field">
       <span className="field-label">{label}</span>
-      <label className={`upload-box ${image ? "has-file" : ""}`} htmlFor={id}>
-        <span className="upload-mark" aria-hidden="true">{image ? "✓" : "+"}</span>
-        <span>{image ? "Bild ausgewählt" : "Bild auswählen"}</span>
+      <label className={`upload-box ${hasImage ? "has-file" : ""}`} htmlFor={id}>
+        <span className="upload-mark" aria-hidden="true">{hasImage ? "✓" : "+"}</span>
+        <span>{hasImage ? "Bild ersetzen" : "Bild auswählen"}</span>
         <input id={id} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={onChange} />
       </label>
-      {image && (
-        <button className="text-button" type="button" onClick={onRemove}>
-          Bild entfernen
-        </button>
+      {hasImage && (
+        <div className="upload-actions">
+          <button className="text-button" type="button" onClick={onEdit}>Bild bearbeiten</button>
+          <button className="text-button" type="button" onClick={onRemove}>Bild entfernen</button>
+        </div>
       )}
     </div>
   );
@@ -2012,6 +2001,8 @@ export default function Home() {
     opponentLogo: null,
     backgroundImage: null,
   });
+  const [backgroundEditorImage, setBackgroundEditorImage] =
+    useState<EditableBackgroundImage | null>(null);
   const [selectedOpponentId, setSelectedOpponentId] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState("");
   const [fontReady, setFontReady] = useState(false);
@@ -2038,7 +2029,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (canvasRef.current) {
+    const animationFrame = window.requestAnimationFrame(() => {
+      if (!canvasRef.current) return;
       renderGraphic(
         canvasRef.current,
         formatKey,
@@ -2051,7 +2043,8 @@ export default function Home() {
         announcementPage,
         announcementPageCount,
       );
-    }
+    });
+    return () => window.cancelAnimationFrame(animationFrame);
   }, [
     formatKey,
     postType,
@@ -2191,23 +2184,40 @@ export default function Home() {
     }));
   }
 
-  function loadAsset(key: keyof Assets) {
-    return (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      const image = new Image();
-      image.onload = () => {
-        URL.revokeObjectURL(url);
-        setAssets((current) => ({ ...current, [key]: image }));
-      };
-      image.onerror = () => {
-        URL.revokeObjectURL(url);
+  function loadBackgroundUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setDownloadStatus("Hintergrundbild wird vorbereitet …");
+    void loadEditableBackground(file)
+      .then((image) => {
+        setBackgroundEditorImage(image);
+        setDownloadStatus("");
+      })
+      .catch(() => {
         setDownloadStatus("Dieses Bildformat konnte nicht gelesen werden.");
-      };
-      image.src = url;
-      event.target.value = "";
-    };
+      });
+  }
+
+  function editBackgroundImage() {
+    if (!assets.backgroundImage) return;
+    setBackgroundEditorImage(cloneEditableBackground(assets.backgroundImage));
+  }
+
+  function applyBackgroundImage(image: EditableBackgroundImage) {
+    setAssets((current) => ({
+      ...current,
+      backgroundImage: cloneEditableBackground(image),
+    }));
+    setBackgroundEditorImage(null);
+    setDownloadStatus("Hintergrundbild wurde übernommen.");
+  }
+
+  function removeBackgroundImage() {
+    setAssets((current) => ({ ...current, backgroundImage: null }));
+    setBackgroundEditorImage(null);
+    setDownloadStatus("Hintergrundbild wurde entfernt.");
   }
 
   async function chooseOpponent(entry: OpponentCatalogEntry) {
@@ -2388,6 +2398,7 @@ export default function Home() {
     });
     opponentLoadRequestRef.current += 1;
     setSelectedOpponentId(null);
+    setBackgroundEditorImage(null);
     setAssets((current) => ({
       ...current,
       opponentLogo: null,
@@ -2525,9 +2536,18 @@ export default function Home() {
                   onUpload={loadOpponentUpload}
                   onClear={clearOpponentLogo}
                 />
-                {postType === "result" && <UploadField id="background-image" label="Hintergrundbild" image={assets.backgroundImage} onChange={loadAsset("backgroundImage")} onRemove={() => setAssets((current) => ({ ...current, backgroundImage: null }))} />}
+                {postType === "result" && (
+                  <UploadField
+                    id="background-image"
+                    label="Hintergrundbild"
+                    hasImage={Boolean(assets.backgroundImage)}
+                    onChange={loadBackgroundUpload}
+                    onEdit={editBackgroundImage}
+                    onRemove={removeBackgroundImage}
+                  />
+                )}
               </div>
-              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Wird es nicht richtig dargestellt, lasse es von einer KI aufbereiten. {postType === "result" ? "Das Hintergrundbild wird formatfüllend zugeschnitten." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
+              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Wird es nicht richtig dargestellt, lasse es von einer KI aufbereiten. {postType === "result" ? "Das Hintergrundbild kannst du lokal zuschneiden und filtern." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 
@@ -2655,6 +2675,15 @@ export default function Home() {
           )}
         </section>
       </div>
+      {backgroundEditorImage && (
+        <ImageEditorDialog
+          initialImage={backgroundEditorImage}
+          formatKey={formatKey}
+          format={selectedFormat}
+          onApply={applyBackgroundImage}
+          onCancel={() => setBackgroundEditorImage(null)}
+        />
+      )}
     </main>
   );
 }

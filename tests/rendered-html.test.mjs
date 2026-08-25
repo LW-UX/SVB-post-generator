@@ -24,8 +24,10 @@ test("builds a complete, readable GitHub Pages bundle", async () => {
 });
 
 test("keeps uploads local and supports every requested format", async () => {
-  const [page, styles, readme, packageJson, workflow, viteConfig, opponentFiles] = await Promise.all([
+  const [page, editor, editorDialog, styles, readme, packageJson, workflow, viteConfig, opponentFiles] = await Promise.all([
     readFile(new URL("../src/App.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/image-editor.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/ImageEditorDialog.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -45,6 +47,19 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /landscape:\s*\{[^}]*1500[^}]*1000[^}]*exportScale:\s*1/s);
   assert.match(page, /widescreen:\s*\{[^}]*1920[^}]*1080[^}]*exportScale:\s*1/s);
   assert.match(page, /type="file"/);
+  assert.match(page, /loadEditableBackground/);
+  assert.match(page, /Bild bearbeiten/);
+  assert.match(page, /drawEditableBackground/);
+  assert.match(editorDialog, />\s*Zuschneiden\s*</);
+  assert.match(editorDialog, />\s*Filter\s*</);
+  assert.match(editorDialog, /label: "Retro"/);
+  assert.match(editorDialog, /label: "Vignette"/);
+  assert.match(editorDialog, /defaultValue|DEFAULT_FILTER_STRENGTH|85 %/);
+  assert.match(editor, /FILTER_LUT_SIZE = 17/);
+  assert.match(editor, /MAX_BACKGROUND_EDGE = 4096/);
+  assert.match(editor, /return clamp\(strength, 0, 100\) \/ 100 \* 1\.1/);
+  assert.match(editor, /progress \* progress \* \(3 - \(2 \* progress\)\)/);
+  assert.match(editor, /requestAnimationFrame|renderCache/);
   assert.match(page, /type Department = "football" \| "general"/);
   assert.match(page, /type AnnouncementPageCount = 1 \| 2/);
   assert.match(page, /useState<Department>\("football"\)/);
@@ -199,6 +214,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /https:\/\/fussball\.sportverein-bergheim\.de/);
   assert.match(page, /https:\/\/www\.sportverein-bergheim\.de/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(/);
+  assert.doesNotMatch(editor, /localStorage|sessionStorage|fetch\(/);
   assert.match(packageJson, /"build:pages"/);
   assert.doesNotMatch(packageJson, /vinext|wrangler|drizzle|tailwind|cloudflare/i);
   assert.match(workflow, /actions\/deploy-pages@v4/);

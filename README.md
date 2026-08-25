@@ -22,8 +22,11 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - automatisch aus `src/assets/opponents/` erzeugte, durchsuchbare Gegnerlogo-Auswahl
 - alternativer lokaler Upload für eigene Gegnerlogos
 - automatische Freistellung, Beschneidung und einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
+- lokaler Hintergrundbild-Editor für Ergebnismeldungen mit formatabhängigem Verschieben und Zoomen per Maus, Touch oder Tastatur
+- kalibrierte Presets „Retro“ und „Vignette“ mit separat gemerkter Filterstärke; die Standardeinstellung beträgt 85 %
+- identische Bildverarbeitung in Live-Vorschau und PNG-Export, einschließlich lokaler Verkleinerung sehr großer Uploads
 - PNG-Download der Hochformate in 2× und der Querformate in 1× Auflösung
-- keine Datenbank und keine Speicherung von Eingaben oder Uploads
+- keine Datenbank, keine Netzwerkübertragung und keine dauerhafte Speicherung von Eingaben oder Uploads
 
 ## Lokale Entwicklung
 
@@ -45,6 +48,8 @@ pnpm run start
 ## Projektstruktur
 
 - `src/App.tsx`: Oberfläche, Canvas-Renderer und Exportlogik
+- `src/ImageEditorDialog.tsx`: Zuschneiden, Filterauswahl und Editor-Bedienung
+- `src/image-editor.ts`: kalibrierte LUTs, Filter-, Crop- und Hintergrund-Renderinglogik
 - `src/styles.css`: vollständig editierbare Oberflächenstile
 - `src/assets/Inter-Variable.ttf`: lokal verwendete Inter-Schrift
 - `src/assets/opponents/`: automatisch eingelesene blaue PNG-Gegnerlogos
