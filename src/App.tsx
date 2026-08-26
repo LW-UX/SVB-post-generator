@@ -1649,7 +1649,7 @@ function renderPhotoMatchdayGraphic(
       textTop + wordmarkCenterOffset,
       wordmarkRight - wordmarkLeft,
       wordmarkHeight,
-      32,
+      64,
     );
   }
 
