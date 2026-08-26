@@ -235,7 +235,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.preview-page-control\s*\{/);
   assert.match(styles, /\.opponent-picker\s*\{/);
   assert.match(styles, /\.opponent-options\s*\{/);
-  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.preview-column\s*\{[^}]*position:\s*sticky[^}]*height:\s*50dvh/s);
+  assert.doesNotMatch(styles, /\.preview-column\s*\{[^}]*position:\s*sticky/s);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.preview-column\s*\{[^}]*position:\s*static[^}]*padding:\s*14px/s);
   assert.match(styles, /\.opponent-option\.active\s*\{/);
   assert.match(styles, /@container opponent-picker \(min-width: 680px\)[\s\S]*?repeat\(2,/);
   assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);

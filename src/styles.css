@@ -304,8 +304,6 @@ label:has(input:focus-visible) .upload-box,
 }
 
 .preview-column {
-  position: sticky;
-  top: 20px;
   padding: 26px;
 }
 
@@ -1125,58 +1123,20 @@ textarea:focus {
   }
 
   .preview-column {
-    position: sticky;
-    z-index: 20;
-    top: 0;
-    display: grid;
-    height: 50dvh;
+    position: static;
+    padding: 14px;
+  }
+
+  .canvas-stage {
     min-height: 320px;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    padding: 10px 14px;
-    overflow: hidden;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    background: var(--canvas);
-    box-shadow: 0 14px 30px rgba(0, 37, 77, 0.18);
   }
 
-  .preview-column .panel-heading {
-    padding-bottom: 8px;
-  }
-
-  .preview-column .panel-heading h2 {
-    margin-top: 0;
-    font-size: 17px;
-  }
-
-  .preview-column .section-kicker {
-    display: none;
-  }
-
-  .preview-column .canvas-stage {
-    width: 100%;
-    min-height: 0;
-    height: 100%;
-  }
-
-  .preview-column .canvas-stage canvas {
-    width: auto;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-  }
-
-  .preview-column .preview-page-control {
-    margin-top: 6px;
+  .canvas-stage canvas {
+    max-height: 62vh;
   }
 
   .preview-actions {
     grid-template-columns: 1fr;
-    margin-top: 6px;
-  }
-
-  .preview-actions .primary-button {
-    padding: 7px 10px;
-    font-size: 11px;
   }
 
   .form-heading,
