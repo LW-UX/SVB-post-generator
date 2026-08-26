@@ -902,27 +902,6 @@ textarea:focus {
   line-height: 1;
 }
 
-.image-editor-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  flex: 0 0 auto;
-  padding: 0 22px;
-  border-bottom: 1px solid var(--line);
-}
-
-.image-editor-tabs button {
-  padding: 13px 16px 11px;
-  border-bottom: 3px solid transparent;
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.image-editor-tabs button.active {
-  border-bottom-color: var(--orange);
-  color: var(--navy);
-}
-
 .image-editor-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 250px;
@@ -1146,20 +1125,58 @@ textarea:focus {
   }
 
   .preview-column {
-    position: static;
-    padding: 14px;
-  }
-
-  .canvas-stage {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    display: grid;
+    height: 50dvh;
     min-height: 320px;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    padding: 10px 14px;
+    overflow: hidden;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--canvas);
+    box-shadow: 0 14px 30px rgba(0, 37, 77, 0.18);
   }
 
-  .canvas-stage canvas {
-    max-height: 62vh;
+  .preview-column .panel-heading {
+    padding-bottom: 8px;
+  }
+
+  .preview-column .panel-heading h2 {
+    margin-top: 0;
+    font-size: 17px;
+  }
+
+  .preview-column .section-kicker {
+    display: none;
+  }
+
+  .preview-column .canvas-stage {
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .preview-column .canvas-stage canvas {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .preview-column .preview-page-control {
+    margin-top: 6px;
   }
 
   .preview-actions {
     grid-template-columns: 1fr;
+    margin-top: 6px;
+  }
+
+  .preview-actions .primary-button {
+    padding: 7px 10px;
+    font-size: 11px;
   }
 
   .form-heading,
@@ -1229,10 +1246,6 @@ textarea:focus {
   .image-editor-header,
   .image-editor-footer {
     padding: 14px;
-  }
-
-  .image-editor-tabs {
-    padding: 0 14px;
   }
 
   .image-editor-canvas-wrap,

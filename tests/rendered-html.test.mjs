@@ -52,8 +52,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /loadEditableBackground/);
   assert.match(page, /Bild bearbeiten/);
   assert.match(page, /drawEditableBackground/);
-  assert.match(editorDialog, />\s*Zuschneiden\s*</);
-  assert.match(editorDialog, />\s*Filter\s*</);
+  assert.doesNotMatch(editorDialog, /image-editor-tabs|role="tablist"/);
+  assert.match(editorDialog, /htmlFor="background-zoom">Zoom/);
+  assert.match(editorDialog, /role="radiogroup" aria-label="Bildfilter"/);
+  assert.match(editorDialog, /htmlFor="filter-strength">Filterstärke/);
   assert.match(editorDialog, /label: "Retro"/);
   assert.match(editorDialog, /label: "Vignette"/);
   assert.match(editorDialog, /renderPreview\?: \(canvas: HTMLCanvasElement, image: EditableBackgroundImage\) => void/);
@@ -225,6 +227,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.preview-page-control\s*\{/);
   assert.match(styles, /\.opponent-picker\s*\{/);
   assert.match(styles, /\.opponent-options\s*\{/);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.preview-column\s*\{[^}]*position:\s*sticky[^}]*height:\s*50dvh/s);
   assert.match(styles, /\.opponent-option\.active\s*\{/);
   assert.match(styles, /@container opponent-picker \(min-width: 680px\)[\s\S]*?repeat\(2,/);
   assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);

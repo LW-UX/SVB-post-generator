@@ -23,8 +23,6 @@ import type {
   ImageDimensions,
 } from "./image-editor";
 
-type EditorTab = "crop" | "filter";
-
 type PointerPosition = {
   x: number;
   y: number;
@@ -86,7 +84,6 @@ export default function ImageEditorDialog({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointersRef = useRef(new Map<number, PointerPosition>());
   const gestureRef = useRef<GestureSnapshot | null>(null);
-  const [tab, setTab] = useState<EditorTab>("crop");
   const [draft, setDraft] = useState(() => cloneEditableBackground(initialImage));
   const dimensions = useMemo(
     () => previewDimensions(format),
@@ -164,14 +161,13 @@ export default function ImageEditorDialog({
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (tab !== "crop") return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     gestureRef.current = createGestureSnapshot(pointersRef.current);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (tab !== "crop" || !pointersRef.current.has(event.pointerId)) return;
+    if (!pointersRef.current.has(event.pointerId)) return;
     const previous = gestureRef.current;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const next = createGestureSnapshot(pointersRef.current);
@@ -193,14 +189,13 @@ export default function ImageEditorDialog({
   }
 
   function handleWheel(event: WheelEvent<HTMLCanvasElement>) {
-    if (tab !== "crop") return;
     event.preventDefault();
     const zoomFactor = Math.exp(-event.deltaY * 0.0015);
     moveCrop(0, 0, zoomFactor);
   }
 
   function handleCropKeys(event: KeyboardEvent<HTMLCanvasElement>) {
-    if (tab !== "crop" || !event.key.startsWith("Arrow")) return;
+    if (!event.key.startsWith("Arrow")) return;
     event.preventDefault();
     const distance = event.shiftKey ? 30 : 10;
     const deltaX = event.key === "ArrowLeft" ? -distance : event.key === "ArrowRight" ? distance : 0;
@@ -227,7 +222,6 @@ export default function ImageEditorDialog({
       preset: "original",
       crops: { ...current.crops, [formatKey]: createInitialCrop() },
     }));
-    setTab("crop");
   }
 
   return (
@@ -257,35 +251,12 @@ export default function ImageEditorDialog({
           </button>
         </header>
 
-        <div className="image-editor-tabs" role="tablist" aria-label="Bearbeitungsmodus">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "crop"}
-            className={tab === "crop" ? "active" : ""}
-            onClick={() => setTab("crop")}
-          >
-            Zuschneiden
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "filter"}
-            className={tab === "filter" ? "active" : ""}
-            onClick={() => setTab("filter")}
-          >
-            Filter
-          </button>
-        </div>
-
-        <div className={`image-editor-workspace ${tab === "crop" ? "is-cropping" : ""}`}>
+        <div className="image-editor-workspace is-cropping">
           <div className="image-editor-canvas-wrap">
             <canvas
               ref={canvasRef}
               tabIndex={0}
-              aria-label={tab === "crop"
-                ? "Bild mit Maus, Touch oder Pfeiltasten im Ausschnitt bewegen"
-                : `Vorschau des Filters ${draft.preset}`}
+              aria-label="Postvorschau: Hintergrundbild mit Maus, Touch oder Pfeiltasten im Ausschnitt bewegen"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerEnd}
@@ -296,63 +267,58 @@ export default function ImageEditorDialog({
           </div>
 
           <div className="image-editor-controls">
-            {tab === "crop" ? (
-              <div className="editor-control-block">
-                <div className="editor-control-heading">
-                  <label htmlFor="background-zoom">Zoom</label>
-                  <output htmlFor="background-zoom">{Math.round(crop.zoom * 100)} %</output>
-                </div>
-                <input
-                  id="background-zoom"
-                  type="range"
-                  min={MIN_CROP_ZOOM * 100}
-                  max={MAX_CROP_ZOOM * 100}
-                  step="1"
-                  value={Math.round(crop.zoom * 100)}
-                  onChange={(event) => updateCrop((current) => (
-                    setCropZoom(current, Number(event.target.value) / 100)
-                  ))}
-                />
-                <p>Ziehe das Bild in die gewünschte Position. Mausrad oder zwei Finger ändern den Zoom.</p>
+            <div className="editor-control-block">
+              <div className="editor-control-heading">
+                <label htmlFor="background-zoom">Zoom</label>
+                <output htmlFor="background-zoom">{Math.round(crop.zoom * 100)} %</output>
               </div>
-            ) : (
-              <>
-                <div className="filter-options" role="radiogroup" aria-label="Bildfilter">
-                  {FILTERS.map((filter) => (
-                    <button
-                      key={filter.key}
-                      type="button"
-                      role="radio"
-                      aria-checked={draft.preset === filter.key}
-                      className={draft.preset === filter.key ? "active" : ""}
-                      onClick={() => choosePreset(filter.key)}
-                    >
-                      <strong>{filter.label}</strong>
-                      <span>{filter.description}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="editor-control-block">
-                  <div className="editor-control-heading">
-                    <label htmlFor="filter-strength">Filterstärke</label>
-                    <output htmlFor="filter-strength">
-                      {draft.preset === "original" ? "–" : `${activeStrength} %`}
-                    </output>
-                  </div>
-                  <input
-                    id="filter-strength"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={activeStrength}
-                    disabled={draft.preset === "original"}
-                    onChange={(event) => updateStrength(Number(event.target.value))}
-                  />
-                  <p>85 % ist die Standardeinstellung, 100 % verstärkt den Referenzlook leicht.</p>
-                </div>
-              </>
-            )}
+              <input
+                id="background-zoom"
+                type="range"
+                min={MIN_CROP_ZOOM * 100}
+                max={MAX_CROP_ZOOM * 100}
+                step="1"
+                value={Math.round(crop.zoom * 100)}
+                onChange={(event) => updateCrop((current) => (
+                  setCropZoom(current, Number(event.target.value) / 100)
+                ))}
+              />
+              <p>Ziehe das Bild in die gewünschte Position. Mausrad oder zwei Finger ändern den Zoom.</p>
+            </div>
+            <div className="filter-options" role="radiogroup" aria-label="Bildfilter">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={draft.preset === filter.key}
+                  className={draft.preset === filter.key ? "active" : ""}
+                  onClick={() => choosePreset(filter.key)}
+                >
+                  <strong>{filter.label}</strong>
+                  <span>{filter.description}</span>
+                </button>
+              ))}
+            </div>
+            <div className="editor-control-block">
+              <div className="editor-control-heading">
+                <label htmlFor="filter-strength">Filterstärke</label>
+                <output htmlFor="filter-strength">
+                  {draft.preset === "original" ? "–" : `${activeStrength} %`}
+                </output>
+              </div>
+              <input
+                id="filter-strength"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={activeStrength}
+                disabled={draft.preset === "original"}
+                onChange={(event) => updateStrength(Number(event.target.value))}
+              />
+              <p>85 % ist die Standardeinstellung, 100 % verstärkt den Referenzlook leicht.</p>
+            </div>
           </div>
         </div>
 
