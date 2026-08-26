@@ -600,61 +600,6 @@ function drawImageContained(
   return true;
 }
 
-function drawImageContainedWithPadding(
-  context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  centerX: number,
-  centerY: number,
-  maxWidth: number,
-  maxHeight: number,
-  padding: number,
-) {
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
-  if (sourceWidth <= 0 || sourceHeight <= 0) return false;
-
-  const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
-  const width = sourceWidth * scale;
-  const height = sourceHeight * scale;
-  const transform = context.getTransform();
-  const renderScale = Math.max(
-    Math.hypot(transform.a, transform.b),
-    Math.hypot(transform.c, transform.d),
-    1,
-  );
-  const paddedCanvas = document.createElement("canvas");
-  paddedCanvas.width = Math.max(1, Math.ceil((width + (padding * 2)) * renderScale));
-  paddedCanvas.height = Math.max(1, Math.ceil((height + (padding * 2)) * renderScale));
-  const paddedContext = paddedCanvas.getContext("2d");
-  if (!paddedContext) return false;
-
-  paddedContext.shadowColor = context.shadowColor;
-  paddedContext.shadowBlur = context.shadowBlur * renderScale;
-  paddedContext.shadowOffsetX = context.shadowOffsetX * renderScale;
-  paddedContext.shadowOffsetY = context.shadowOffsetY * renderScale;
-  paddedContext.drawImage(
-    image,
-    padding * renderScale,
-    padding * renderScale,
-    width * renderScale,
-    height * renderScale,
-  );
-  context.save();
-  context.shadowColor = "transparent";
-  context.shadowBlur = 0;
-  context.shadowOffsetX = 0;
-  context.shadowOffsetY = 0;
-  context.drawImage(
-    paddedCanvas,
-    centerX - (width / 2) - padding,
-    centerY - (height / 2) - padding,
-    width + (padding * 2),
-    height + (padding * 2),
-  );
-  context.restore();
-  return true;
-}
-
 function loadImageSource(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -1573,7 +1518,10 @@ function renderPhotoMatchdayGraphic(
   const wordmarkLeft = 116;
   const wordmarkRight = 964;
   const wordmarkCenterOffset = 171;
-  const wordmarkHeight = 202;
+  const wordmarkScale = (wordmarkRight - wordmarkLeft) / 847.516;
+  const renderedWordmarkHeight = 198.434 * wordmarkScale;
+  const wordmarkAssetWidth = 975.516 * wordmarkScale;
+  const wordmarkAssetHeight = 326.434 * wordmarkScale;
   const venueOpticalOffset = 30;
   const normalizedPosition = Math.min(100, Math.max(0, photoState.textPosition)) / 100;
   const textTopRange = photoState.edge === "top"
@@ -1632,25 +1580,21 @@ function renderPhotoMatchdayGraphic(
   context.fillText(`${form.clubName}   ${separator}`, wordmarkRight, textTop);
   if (opponentName) context.fillText(opponentName, wordmarkRight, textTop + 32);
 
-  let renderedWordmarkHeight = wordmarkHeight;
   if (assets.matchdayWordmark) {
-    const sourceWidth = assets.matchdayWordmark.naturalWidth || assets.matchdayWordmark.width;
-    const sourceHeight = assets.matchdayWordmark.naturalHeight || assets.matchdayWordmark.height;
-    if (sourceWidth > 0 && sourceHeight > 0) {
-      renderedWordmarkHeight = sourceHeight * Math.min(
-        (wordmarkRight - wordmarkLeft) / sourceWidth,
-        wordmarkHeight / sourceHeight,
-      );
-    }
-    drawImageContainedWithPadding(
+    context.save();
+    context.shadowColor = "transparent";
+    context.shadowBlur = 0;
+    context.shadowOffsetX = 0;
+    context.shadowOffsetY = 0;
+    drawImageContained(
       context,
       assets.matchdayWordmark,
       (wordmarkLeft + wordmarkRight) / 2,
       textTop + wordmarkCenterOffset,
-      wordmarkRight - wordmarkLeft,
-      wordmarkHeight,
-      64,
+      wordmarkAssetWidth,
+      wordmarkAssetHeight,
     );
+    context.restore();
   }
 
   context.textAlign = "left";

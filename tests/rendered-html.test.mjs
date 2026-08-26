@@ -4,6 +4,7 @@ import test from "node:test";
 
 test("builds a complete, readable GitHub Pages bundle", async () => {
   const html = await readFile(new URL("../pages-dist/index.html", import.meta.url), "utf8");
+  const wordmarkSvg = await readFile(new URL("../public/assets/matchday-wordmark.svg", import.meta.url), "utf8");
   const assets = await readdir(new URL("../pages-dist/assets", import.meta.url));
   const cssFile = assets.find((file) => /^index-.+\.css$/.test(file));
 
@@ -19,6 +20,10 @@ test("builds a complete, readable GitHub Pages bundle", async () => {
     await access(new URL(`../pages-dist/assets/svb-logo-${logo}-1906.svg`, import.meta.url));
   }
   await access(new URL("../pages-dist/assets/matchday-wordmark.svg", import.meta.url));
+  assert.match(wordmarkSvg, /id="matchday-shadow"/);
+  assert.match(wordmarkSvg, /stdDeviation="8\.5"/);
+  assert.match(wordmarkSvg, /dy="7\.981"/);
+  assert.match(wordmarkSvg, /flood-opacity="0\.75"/);
 
   const builtCss = await readFile(new URL(`../pages-dist/assets/${cssFile}`, import.meta.url), "utf8");
   assert.ok(builtCss.split("\n").length > 500, "Die Build-CSS soll lesbar formatiert bleiben.");
@@ -180,9 +185,9 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /700 100px/);
   assert.match(page, /300 40px/);
   assert.match(page, /function drawImageContained\(/);
-  assert.match(page, /function drawImageContainedWithPadding\(/);
-  assert.match(page, /drawImageContainedWithPadding\([\s\S]*?wordmarkHeight,[\s\S]*?64,/);
-  assert.match(page, /paddedContext\.shadowBlur = context\.shadowBlur \* renderScale/);
+  assert.doesNotMatch(page, /function drawImageContainedWithPadding\(/);
+  assert.match(page, /const wordmarkAssetWidth = 975\.516 \* wordmarkScale/);
+  assert.match(page, /const wordmarkAssetHeight = 326\.434 \* wordmarkScale/);
   assert.match(page, /context\.shadowColor = "transparent"/);
   assert.match(page, /Math\.min\(maxWidth \/ sourceWidth, maxHeight \/ sourceHeight\)/);
   assert.match(page, /globalCompositeOperation = "source-in"/);
