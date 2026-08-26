@@ -147,6 +147,14 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, />\s*Oben\s*</);
   assert.match(page, />\s*Unten\s*</);
   assert.match(page, /Höhe des Textblocks/);
+  assert.ok(
+    page.indexOf("<h3>Spielort</h3>") < page.indexOf("<h3>Anordnung</h3>"),
+    "Die Matchday-Anordnung soll direkt nach der Spielort-Auswahl stehen.",
+  );
+  assert.ok(
+    page.indexOf("<h3>Anordnung</h3>") < page.indexOf("<h3>Bilder</h3>"),
+    "Die Matchday-Anordnung soll vor der Bilder-Sektion stehen.",
+  );
   assert.match(page, /Gambetta Variable/);
   assert.match(page, /matchday-wordmark\.svg/);
   assert.match(page, /opponent-name-field/);

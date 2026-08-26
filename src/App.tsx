@@ -2771,6 +2771,51 @@ export default function Home() {
             </div>
           )}
 
+          {department === "football" && postType === "matchday" && matchdayDesign === "photo" && (
+            <div className="form-section">
+              <h3>Anordnung</h3>
+              <div>
+                <span className="field-label">Datum und Logos am Rand</span>
+                <div className="segmented-control compact">
+                  <button
+                    type="button"
+                    className={photoMatchdayState.edge === "top" ? "active" : ""}
+                    aria-pressed={photoMatchdayState.edge === "top"}
+                    onClick={() => updatePhotoMatchdayState("edge", "top")}
+                  >
+                    Oben
+                  </button>
+                  <button
+                    type="button"
+                    className={photoMatchdayState.edge === "bottom" ? "active" : ""}
+                    aria-pressed={photoMatchdayState.edge === "bottom"}
+                    onClick={() => updatePhotoMatchdayState("edge", "bottom")}
+                  >
+                    Unten
+                  </button>
+                </div>
+              </div>
+              <div className="range-grid">
+                <label htmlFor="photo-text-position" aria-label="Höhe des Textblocks">
+                  <span className="range-label-row">
+                    <span className="field-label">Höhe des Textblocks</span>
+                    <output htmlFor="photo-text-position">{photoMatchdayState.textPosition} %</output>
+                  </span>
+                  <input
+                    id="photo-text-position"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={photoMatchdayState.textPosition}
+                    onChange={(event) => updatePhotoMatchdayState("textPosition", Number(event.target.value))}
+                  />
+                </label>
+              </div>
+              <p className="helper-text">Der Textblock bleibt vollständig sichtbar, kann bis etwa 60 % der Posthöhe verschoben werden und hält automatisch Abstand zu Datum und Logos.</p>
+            </div>
+          )}
+
           {department === "football" && (
             <div className="form-section">
               <h3>Bilder</h3>
@@ -2863,51 +2908,6 @@ export default function Home() {
                   <input value={form.venue} maxLength={55} onChange={(event) => updateForm("venue", event.target.value)} />
                 </label>
               </div>
-            </div>
-          )}
-
-          {department === "football" && postType === "matchday" && matchdayDesign === "photo" && (
-            <div className="form-section">
-              <h3>Anordnung</h3>
-              <div>
-                <span className="field-label">Datum und Logos am Rand</span>
-                <div className="segmented-control compact">
-                  <button
-                    type="button"
-                    className={photoMatchdayState.edge === "top" ? "active" : ""}
-                    aria-pressed={photoMatchdayState.edge === "top"}
-                    onClick={() => updatePhotoMatchdayState("edge", "top")}
-                  >
-                    Oben
-                  </button>
-                  <button
-                    type="button"
-                    className={photoMatchdayState.edge === "bottom" ? "active" : ""}
-                    aria-pressed={photoMatchdayState.edge === "bottom"}
-                    onClick={() => updatePhotoMatchdayState("edge", "bottom")}
-                  >
-                    Unten
-                  </button>
-                </div>
-              </div>
-              <div className="range-grid">
-                <label htmlFor="photo-text-position" aria-label="Höhe des Textblocks">
-                  <span className="range-label-row">
-                    <span className="field-label">Höhe des Textblocks</span>
-                    <output htmlFor="photo-text-position">{photoMatchdayState.textPosition} %</output>
-                  </span>
-                  <input
-                    id="photo-text-position"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={photoMatchdayState.textPosition}
-                    onChange={(event) => updatePhotoMatchdayState("textPosition", Number(event.target.value))}
-                  />
-                </label>
-              </div>
-              <p className="helper-text">Der Textblock bleibt vollständig sichtbar, kann bis etwa 60 % der Posthöhe verschoben werden und hält automatisch Abstand zu Datum und Logos.</p>
             </div>
           )}
 
