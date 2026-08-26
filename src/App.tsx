@@ -628,6 +628,10 @@ function drawImageContainedWithPadding(
   const paddedContext = paddedCanvas.getContext("2d");
   if (!paddedContext) return false;
 
+  paddedContext.shadowColor = context.shadowColor;
+  paddedContext.shadowBlur = context.shadowBlur * renderScale;
+  paddedContext.shadowOffsetX = context.shadowOffsetX * renderScale;
+  paddedContext.shadowOffsetY = context.shadowOffsetY * renderScale;
   paddedContext.drawImage(
     image,
     padding * renderScale,
@@ -635,6 +639,11 @@ function drawImageContainedWithPadding(
     width * renderScale,
     height * renderScale,
   );
+  context.save();
+  context.shadowColor = "transparent";
+  context.shadowBlur = 0;
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
   context.drawImage(
     paddedCanvas,
     centerX - (width / 2) - padding,
@@ -642,6 +651,7 @@ function drawImageContainedWithPadding(
     width + (padding * 2),
     height + (padding * 2),
   );
+  context.restore();
   return true;
 }
 
