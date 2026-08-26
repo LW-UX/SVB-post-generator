@@ -1129,8 +1129,6 @@ textarea:focus {
 
   .canvas-stage {
     min-height: 320px;
-    margin-bottom: 36px;
-    overflow: visible;
   }
 
   .canvas-stage canvas {

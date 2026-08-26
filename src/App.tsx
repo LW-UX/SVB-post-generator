@@ -600,6 +600,51 @@ function drawImageContained(
   return true;
 }
 
+function drawImageContainedWithPadding(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  centerX: number,
+  centerY: number,
+  maxWidth: number,
+  maxHeight: number,
+  padding: number,
+) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (sourceWidth <= 0 || sourceHeight <= 0) return false;
+
+  const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  const transform = context.getTransform();
+  const renderScale = Math.max(
+    Math.hypot(transform.a, transform.b),
+    Math.hypot(transform.c, transform.d),
+    1,
+  );
+  const paddedCanvas = document.createElement("canvas");
+  paddedCanvas.width = Math.max(1, Math.ceil((width + (padding * 2)) * renderScale));
+  paddedCanvas.height = Math.max(1, Math.ceil((height + (padding * 2)) * renderScale));
+  const paddedContext = paddedCanvas.getContext("2d");
+  if (!paddedContext) return false;
+
+  paddedContext.drawImage(
+    image,
+    padding * renderScale,
+    padding * renderScale,
+    width * renderScale,
+    height * renderScale,
+  );
+  context.drawImage(
+    paddedCanvas,
+    centerX - (width / 2) - padding,
+    centerY - (height / 2) - padding,
+    width + (padding * 2),
+    height + (padding * 2),
+  );
+  return true;
+}
+
 function loadImageSource(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -1587,13 +1632,14 @@ function renderPhotoMatchdayGraphic(
         wordmarkHeight / sourceHeight,
       );
     }
-    drawImageContained(
+    drawImageContainedWithPadding(
       context,
       assets.matchdayWordmark,
       (wordmarkLeft + wordmarkRight) / 2,
       textTop + wordmarkCenterOffset,
       wordmarkRight - wordmarkLeft,
       wordmarkHeight,
+      32,
     );
   }
 

@@ -180,6 +180,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /700 100px/);
   assert.match(page, /300 40px/);
   assert.match(page, /function drawImageContained\(/);
+  assert.match(page, /function drawImageContainedWithPadding\(/);
+  assert.match(page, /drawImageContainedWithPadding\([\s\S]*?wordmarkHeight,[\s\S]*?32,/);
   assert.match(page, /Math\.min\(maxWidth \/ sourceWidth, maxHeight \/ sourceHeight\)/);
   assert.match(page, /globalCompositeOperation = "source-in"/);
   assert.match(page, /import\.meta\.glob<string>\(/);
@@ -246,7 +248,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.opponent-options\s*\{/);
   assert.doesNotMatch(styles, /\.preview-column\s*\{[^}]*position:\s*sticky/s);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.preview-column\s*\{[^}]*position:\s*static[^}]*padding:\s*14px/s);
-  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.canvas-stage\s*\{[^}]*margin-bottom:\s*36px[^}]*overflow:\s*visible/s);
+  assert.doesNotMatch(styles, /margin-bottom:\s*36px/);
   assert.match(styles, /\.opponent-option\.active\s*\{/);
   assert.match(styles, /@container opponent-picker \(min-width: 680px\)[\s\S]*?repeat\(2,/);
   assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);
