@@ -1517,14 +1517,16 @@ function renderPhotoMatchdayGraphic(
   const white = "#ffffff";
   const wordmarkLeft = 116;
   const wordmarkRight = 964;
+  const wordmarkCenterOffset = 171;
+  const wordmarkHeight = 202;
   const normalizedPosition = Math.min(100, Math.max(0, photoState.textPosition)) / 100;
   const textTopRange = photoState.edge === "top"
-    ? { start: 690, end: 955 }
-    : { start: 115, end: 380 };
+    ? { start: 540, end: 955 }
+    : { start: 115, end: 530 };
   const textTop = textTopRange.start
     + ((textTopRange.end - textTopRange.start) * normalizedPosition);
-  const edgeLogoY = photoState.edge === "top" ? 73 : 1275;
   const dateTop = photoState.edge === "top" ? 34 : 1199;
+  const edgeLogoY = dateTop + 52.5;
   const leftLogo = form.homeAway === "home"
     ? assets.clubLogo
     : assets.opponentLogo;
@@ -1559,8 +1561,8 @@ function renderPhotoMatchdayGraphic(
     context.fillText(date.month, 58, dateTop + 78);
   }
 
-  drawMatchdayLogo(context, leftLogo, 898, edgeLogoY, 70, 91, leftIsClubLogo ? undefined : white);
-  drawMatchdayLogo(context, rightLogo, 995, edgeLogoY, 70, 91, rightIsClubLogo ? undefined : white);
+  drawMatchdayLogo(context, leftLogo, 898, edgeLogoY, 81, 105, leftIsClubLogo ? undefined : white);
+  drawMatchdayLogo(context, rightLogo, 995, edgeLogoY, 81, 105, rightIsClubLogo ? undefined : white);
 
   context.font = '400 28px Inter, Arial, Helvetica, sans-serif';
   context.shadowColor = "rgba(0, 0, 0, 0.75)";
@@ -1572,21 +1574,40 @@ function renderPhotoMatchdayGraphic(
 
   context.textAlign = "right";
   context.fillText(`${form.clubName}   ${separator}`, wordmarkRight, textTop);
-  if (opponentName) context.fillText(opponentName, wordmarkRight, textTop + 38);
+  if (opponentName) context.fillText(opponentName, wordmarkRight, textTop + 32);
 
+  let renderedWordmarkHeight = wordmarkHeight;
   if (assets.matchdayWordmark) {
+    const sourceWidth = assets.matchdayWordmark.naturalWidth || assets.matchdayWordmark.width;
+    const sourceHeight = assets.matchdayWordmark.naturalHeight || assets.matchdayWordmark.height;
+    if (sourceWidth > 0 && sourceHeight > 0) {
+      renderedWordmarkHeight = sourceHeight * Math.min(
+        (wordmarkRight - wordmarkLeft) / sourceWidth,
+        wordmarkHeight / sourceHeight,
+      );
+    }
     drawImageContained(
       context,
       assets.matchdayWordmark,
       (wordmarkLeft + wordmarkRight) / 2,
-      textTop + 179,
+      textTop + wordmarkCenterOffset,
       wordmarkRight - wordmarkLeft,
-      202,
+      wordmarkHeight,
     );
   }
 
   context.textAlign = "left";
-  if (form.venue.trim()) context.fillText(form.venue.trim(), wordmarkLeft, textTop + 301);
+  if (form.venue.trim()) {
+    const venue = form.venue.trim();
+    const venueMetrics = context.measureText(venue);
+    const wordmarkBottom = textTop + wordmarkCenterOffset + (renderedWordmarkHeight / 2);
+    context.textBaseline = "alphabetic";
+    context.fillText(
+      venue,
+      wordmarkLeft,
+      wordmarkBottom - venueMetrics.actualBoundingBoxDescent,
+    );
+  }
   context.shadowColor = "transparent";
   context.shadowOffsetX = 0;
   context.shadowOffsetY = 0;
@@ -2886,7 +2907,7 @@ export default function Home() {
                   />
                 </label>
               </div>
-              <p className="helper-text">Der Textblock bleibt vollständig sichtbar und hält automatisch Abstand zu Datum und Logos.</p>
+              <p className="helper-text">Der Textblock bleibt vollständig sichtbar, kann bis etwa 60 % der Posthöhe verschoben werden und hält automatisch Abstand zu Datum und Logos.</p>
             </div>
           )}
 

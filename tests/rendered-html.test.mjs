@@ -132,6 +132,14 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /matchdayDesign === "photo"/);
   assert.match(page, /const separator = form\.homeAway === "home" \? "vs\." : "@"/);
   assert.match(page, /photoState\.edge === "top"/);
+  assert.match(page, /\? \{ start: 540, end: 955 \}/);
+  assert.match(page, /: \{ start: 115, end: 530 \}/);
+  assert.match(page, /const edgeLogoY = dateTop \+ 52\.5/);
+  assert.match(page, /edgeLogoY, 81, 105/);
+  assert.match(page, /textTop \+ 32/);
+  assert.match(page, /const wordmarkCenterOffset = 171/);
+  assert.match(page, /const wordmarkBottom = textTop \+ wordmarkCenterOffset \+ \(renderedWordmarkHeight \/ 2\)/);
+  assert.match(page, /wordmarkBottom - venueMetrics\.actualBoundingBoxDescent/);
   assert.match(page, /textPosition:\s*50/);
   assert.match(page, /preset: "vignette"/);
   assert.match(page, />\s*Klassisch\s*</);
