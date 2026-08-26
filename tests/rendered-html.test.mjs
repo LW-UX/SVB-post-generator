@@ -138,7 +138,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /edgeLogoY, 81, 105/);
   assert.match(page, /textTop \+ 32/);
   assert.match(page, /const wordmarkCenterOffset = 171/);
-  assert.match(page, /const wordmarkBottom = textTop \+ wordmarkCenterOffset \+ \(renderedWordmarkHeight \/ 2\)/);
+  assert.match(page, /const venueOpticalOffset = 30/);
+  assert.match(page, /\+ \(renderedWordmarkHeight \/ 2\)[\s\S]*?\+ venueOpticalOffset/);
   assert.match(page, /wordmarkBottom - venueMetrics\.actualBoundingBoxDescent/);
   assert.match(page, /textPosition:\s*50/);
   assert.match(page, /preset: "vignette"/);
@@ -245,6 +246,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.opponent-options\s*\{/);
   assert.doesNotMatch(styles, /\.preview-column\s*\{[^}]*position:\s*sticky/s);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.preview-column\s*\{[^}]*position:\s*static[^}]*padding:\s*14px/s);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.canvas-stage\s*\{[^}]*margin-bottom:\s*36px[^}]*overflow:\s*visible/s);
   assert.match(styles, /\.opponent-option\.active\s*\{/);
   assert.match(styles, /@container opponent-picker \(min-width: 680px\)[\s\S]*?repeat\(2,/);
   assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);

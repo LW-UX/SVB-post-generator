@@ -1519,6 +1519,7 @@ function renderPhotoMatchdayGraphic(
   const wordmarkRight = 964;
   const wordmarkCenterOffset = 171;
   const wordmarkHeight = 202;
+  const venueOpticalOffset = 30;
   const normalizedPosition = Math.min(100, Math.max(0, photoState.textPosition)) / 100;
   const textTopRange = photoState.edge === "top"
     ? { start: 540, end: 955 }
@@ -1600,7 +1601,10 @@ function renderPhotoMatchdayGraphic(
   if (form.venue.trim()) {
     const venue = form.venue.trim();
     const venueMetrics = context.measureText(venue);
-    const wordmarkBottom = textTop + wordmarkCenterOffset + (renderedWordmarkHeight / 2);
+    const wordmarkBottom = textTop
+      + wordmarkCenterOffset
+      + (renderedWordmarkHeight / 2)
+      + venueOpticalOffset;
     context.textBaseline = "alphabetic";
     context.fillText(
       venue,
