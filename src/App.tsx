@@ -1509,11 +1509,13 @@ function drawBadge(
 
 function renderPhotoMatchdayGraphic(
   context: CanvasRenderingContext2D,
+  formatKey: FormatKey,
   form: FormState,
   assets: Assets,
   photoState: PhotoMatchdayState,
 ) {
-  const { width, height } = RESULT_POST_FORMAT;
+  const { width, height } = FORMATS[formatKey];
+  const isStory = formatKey === "story";
   const white = "#ffffff";
   const wordmarkLeft = 116;
   const wordmarkRight = 964;
@@ -1524,13 +1526,35 @@ function renderPhotoMatchdayGraphic(
   const wordmarkAssetHeight = 326.434 * wordmarkScale;
   const venueOpticalOffset = 30;
   const normalizedPosition = Math.min(100, Math.max(0, photoState.textPosition)) / 100;
-  const textTopRange = photoState.edge === "top"
-    ? { start: 540, end: 955 }
-    : { start: 115, end: 530 };
+  const storySafeInset = height * 0.1;
+  const storyTextTravel = (955 - 540) * (height / RESULT_POST_FORMAT.height);
+  const storyTextBottomOffset = wordmarkCenterOffset
+    + (renderedWordmarkHeight / 2)
+    + venueOpticalOffset
+    + 25;
+  const textTopRange = isStory
+    ? photoState.edge === "top"
+      ? {
+          start: height - storySafeInset - storyTextBottomOffset - storyTextTravel,
+          end: height - storySafeInset - storyTextBottomOffset,
+        }
+      : { start: storySafeInset, end: storySafeInset + storyTextTravel }
+    : photoState.edge === "top"
+      ? { start: 540, end: 955 }
+      : { start: 115, end: 530 };
   const textTop = textTopRange.start
     + ((textTopRange.end - textTopRange.start) * normalizedPosition);
-  const dateTop = photoState.edge === "top" ? 34 : 1199;
+  const edgeBlockHeight = 105;
+  const dateTop = isStory
+    ? photoState.edge === "top"
+      ? storySafeInset
+      : height - storySafeInset - edgeBlockHeight
+    : photoState.edge === "top" ? 34 : 1199;
   const edgeLogoY = dateTop + 52.5;
+  const dateDayX = isStory ? 64 : 51;
+  const dateMonthX = isStory ? 71 : 58;
+  const leftLogoX = isStory ? 882 : 898;
+  const rightLogoX = isStory ? 979 : 995;
   const leftLogo = form.homeAway === "home"
     ? assets.clubLogo
     : assets.opponentLogo;
@@ -1546,7 +1570,7 @@ function renderPhotoMatchdayGraphic(
   context.fillStyle = "#a6a6a6";
   context.fillRect(0, 0, width, height);
   if (assets.backgroundImage) {
-    drawEditableBackground(context, assets.backgroundImage, "post", width, height);
+    drawEditableBackground(context, assets.backgroundImage, formatKey, width, height);
   }
 
   context.save();
@@ -1558,15 +1582,15 @@ function renderPhotoMatchdayGraphic(
 
   if (date.day) {
     context.font = '300 78px "Gambetta Variable", "Bodoni 72", serif';
-    context.fillText(date.day, 51, dateTop);
+    context.fillText(date.day, dateDayX, dateTop);
   }
   if (date.month) {
     context.font = '700 27px Inter, Arial, Helvetica, sans-serif';
-    context.fillText(date.month, 58, dateTop + 78);
+    context.fillText(date.month, dateMonthX, dateTop + 78);
   }
 
-  drawMatchdayLogo(context, leftLogo, 898, edgeLogoY, 81, 105, leftIsClubLogo ? undefined : white);
-  drawMatchdayLogo(context, rightLogo, 995, edgeLogoY, 81, 105, rightIsClubLogo ? undefined : white);
+  drawMatchdayLogo(context, leftLogo, leftLogoX, edgeLogoY, 81, 105, leftIsClubLogo ? undefined : white);
+  drawMatchdayLogo(context, rightLogo, rightLogoX, edgeLogoY, 81, 105, rightIsClubLogo ? undefined : white);
 
   context.font = '400 28px Inter, Arial, Helvetica, sans-serif';
   context.shadowColor = "rgba(0, 0, 0, 0.75)";
@@ -1778,8 +1802,12 @@ function renderGraphic(
     return;
   }
 
-  if (type === "matchday" && matchdayDesign === "photo" && formatKey === "post") {
-    renderPhotoMatchdayGraphic(context, form, assets, photoMatchdayState);
+  if (
+    type === "matchday"
+    && matchdayDesign === "photo"
+    && (formatKey === "post" || formatKey === "story")
+  ) {
+    renderPhotoMatchdayGraphic(context, formatKey, form, assets, photoMatchdayState);
     return;
   }
 
@@ -2333,11 +2361,12 @@ export default function Home() {
   }, []);
 
   const selectedFormat = getGraphicFormat(department, postType, formatKey, matchdayDesign);
-  const isPostOnlyFootballDesign = department === "football"
-    && (postType === "result" || (postType === "matchday" && matchdayDesign === "photo"));
+  const isPostOnlyFootballDesign = department === "football" && postType === "result";
   const availableFormats: FormatKey[] = isPostOnlyFootballDesign
     ? ["post"]
-    : Object.keys(FORMATS) as FormatKey[];
+    : department === "football" && postType === "matchday" && matchdayDesign === "photo"
+      ? ["post", "story"]
+      : Object.keys(FORMATS) as FormatKey[];
   const selectedOpponentEntry = selectedOpponentId
     ? OPPONENT_CATALOG.find((entry) => entry.id === selectedOpponentId) ?? null
     : null;

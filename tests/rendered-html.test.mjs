@@ -129,6 +129,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type MatchdayDesign = "classic" \| "photo"/);
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
   assert.match(page, /function renderPhotoMatchdayGraphic\(/);
+  assert.match(page, /renderPhotoMatchdayGraphic\(context, formatKey, form, assets, photoMatchdayState\)/);
   assert.match(page, /shadowColor = "rgba\(0, 0, 0, 0\.75\)"/);
   assert.match(page, /shadowOffsetX = 0\.558/);
   assert.match(page, /shadowOffsetY = 7\.981/);
@@ -139,8 +140,13 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /photoState\.edge === "top"/);
   assert.match(page, /\? \{ start: 540, end: 955 \}/);
   assert.match(page, /: \{ start: 115, end: 530 \}/);
+  assert.match(page, /const storySafeInset = height \* 0\.1/);
+  assert.match(page, /height - storySafeInset - edgeBlockHeight/);
+  assert.match(page, /drawEditableBackground\(context, assets\.backgroundImage, formatKey, width, height\)/);
   assert.match(page, /const edgeLogoY = dateTop \+ 52\.5/);
-  assert.match(page, /edgeLogoY, 81, 105/);
+  assert.match(page, /const dateDayX = isStory \? 64 : 51/);
+  assert.match(page, /const rightLogoX = isStory \? 979 : 995/);
+  assert.match(page, /rightLogoX, edgeLogoY, 81, 105/);
   assert.match(page, /textTop \+ 32/);
   assert.match(page, /const wordmarkCenterOffset = 171/);
   assert.match(page, /const venueOpticalOffset = 30/);
@@ -150,6 +156,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /preset: "vignette"/);
   assert.match(page, />\s*Klassisch\s*</);
   assert.match(page, />\s*Matchday\s*</);
+  assert.match(page, /\? \["post", "story"\]/);
   assert.match(page, />\s*Oben\s*</);
   assert.match(page, />\s*Unten\s*</);
   assert.match(page, /Höhe des Textblocks/);
