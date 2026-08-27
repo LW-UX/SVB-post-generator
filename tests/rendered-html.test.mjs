@@ -144,8 +144,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /height - storySafeInset - edgeBlockHeight/);
   assert.match(page, /drawEditableBackground\(context, assets\.backgroundImage, formatKey, width, height\)/);
   assert.match(page, /const edgeLogoY = dateTop \+ 52\.5/);
-  assert.match(page, /const dateDayX = isStory \? 64 : 51/);
-  assert.match(page, /const rightLogoX = isStory \? 979 : 995/);
+  assert.match(page, /const dateDayX = isStory \? wordmarkLeft : 51/);
+  assert.match(page, /const rightLogoX = isStory \? wordmarkRight - \(81 \/ 2\) : 995/);
   assert.match(page, /rightLogoX, edgeLogoY, 81, 105/);
   assert.match(page, /textTop \+ 32/);
   assert.match(page, /const wordmarkCenterOffset = 171/);
@@ -192,6 +192,11 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /700 100px/);
   assert.match(page, /300 40px/);
   assert.match(page, /function drawImageContained\(/);
+  assert.match(page, /formatKey === "post" \|\| formatKey === "landscape" \|\| formatKey === "widescreen"/);
+  assert.match(page, /postType === "result"[\s\S]*?\? \["post", "landscape", "widescreen"\]/);
+  assert.match(page, /const footerY = isWidescreen \? 961 : isLandscape \? 890 : 1215/);
+  assert.match(page, /const diagonalTopY = isWidescreen \? 732 : isLandscape \? 680 : 982/);
+  assert.match(page, /const clubX = isWidescreen \? 1705 : isLandscape \? 1305 : 857/);
   assert.doesNotMatch(page, /function drawImageContainedWithPadding\(/);
   assert.match(page, /const wordmarkAssetWidth = 975\.516 \* wordmarkScale/);
   assert.match(page, /const wordmarkAssetHeight = 326\.434 \* wordmarkScale/);

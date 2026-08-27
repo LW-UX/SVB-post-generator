@@ -1551,10 +1551,10 @@ function renderPhotoMatchdayGraphic(
       : height - storySafeInset - edgeBlockHeight
     : photoState.edge === "top" ? 34 : 1199;
   const edgeLogoY = dateTop + 52.5;
-  const dateDayX = isStory ? 64 : 51;
-  const dateMonthX = isStory ? 71 : 58;
-  const leftLogoX = isStory ? 882 : 898;
-  const rightLogoX = isStory ? 979 : 995;
+  const dateDayX = isStory ? wordmarkLeft : 51;
+  const dateMonthX = isStory ? wordmarkLeft + 7 : 58;
+  const rightLogoX = isStory ? wordmarkRight - (81 / 2) : 995;
+  const leftLogoX = isStory ? rightLogoX - 97 : 898;
   const leftLogo = form.homeAway === "home"
     ? assets.clubLogo
     : assets.opponentLogo;
@@ -1650,15 +1650,19 @@ function renderResultGraphic(
   assets: Assets,
   teamDesign: TeamDesign,
 ) {
-  const { width, height } = RESULT_POST_FORMAT;
+  const isWidescreen = formatKey === "widescreen";
+  const isLandscape = formatKey === "landscape";
+  const { width, height } = isWidescreen
+    ? FORMATS.widescreen
+    : isLandscape ? FORMATS.landscape : RESULT_POST_FORMAT;
   const blue = "#00448a";
   const isHomeMatch = form.homeAway === "home";
   const isFirstTeam = teamDesign === "first";
-  const footerY = 1215;
-  const diagonalTopY = 982;
+  const footerY = isWidescreen ? 961 : isLandscape ? 890 : 1215;
+  const diagonalTopY = isWidescreen ? 732 : isLandscape ? 680 : 982;
   const logoDiagonalSlope = (2245.41 - 164.95) / (2040.45 - 411.84);
   const diagonalBottomX = width - (height - diagonalTopY) / logoDiagonalSlope;
-  const contentY = 1281;
+  const contentY = isWidescreen ? 1027 : isLandscape ? 950 : 1281;
 
   context.fillStyle = "#a6a6a6";
   context.fillRect(0, 0, width, height);
@@ -1677,9 +1681,9 @@ function renderResultGraphic(
   context.closePath();
   context.fill();
 
-  const clubX = 857;
-  const clubMaxWidth = 74;
-  const clubMaxHeight = 94;
+  const clubX = isWidescreen ? 1705 : isLandscape ? 1305 : 857;
+  const clubMaxWidth = isWidescreen || isLandscape ? 70 : 74;
+  const clubMaxHeight = isWidescreen || isLandscape ? 88 : 94;
   const clubSourceWidth = 2583.26;
   const clubSourceHeight = 3249.74;
   const clubScale = Math.min(
@@ -1693,8 +1697,16 @@ function renderResultGraphic(
   const logoDividerX = clubX + logoDividerOffsetX;
   const logoDividerY = diagonalTopY + logoDiagonalSlope * (width - logoDividerX);
   const clubY = logoDividerY - logoDividerOffsetY;
-  const opponentX = isHomeMatch ? 1025 : 689;
-  const scoreX = isHomeMatch ? 941 : 773;
+  const opponentX = isWidescreen
+    ? isHomeMatch ? 1860 : 1565
+    : isLandscape
+      ? isHomeMatch ? 1440 : 1170
+    : isHomeMatch ? 1025 : 689;
+  const scoreX = isWidescreen
+    ? isHomeMatch ? 1782 : 1643
+    : isLandscape
+      ? isHomeMatch ? 1375 : 1238
+    : isHomeMatch ? 941 : 773;
   const diagonalXAtContent = width - (contentY - diagonalTopY) / logoDiagonalSlope;
   const opponentIsOnDiagonal = opponentX >= diagonalXAtContent;
   const opponentIsOnBlue = isFirstTeam
@@ -1723,8 +1735,8 @@ function renderResultGraphic(
       assets.opponentLogo,
       opponentX,
       contentY,
-      66,
-      90,
+      isWidescreen || isLandscape ? 62 : 66,
+      isWidescreen || isLandscape ? 84 : 90,
       detailColor,
     );
   }
@@ -1740,7 +1752,11 @@ function renderResultGraphic(
   if (form.footer.trim()) {
     context.textAlign = "left";
     context.fillStyle = isFirstTeam ? "#ffffff" : blue;
-    context.fillText(form.footer.toUpperCase(), 40, contentY);
+    context.fillText(
+      form.footer.toUpperCase(),
+      isWidescreen ? 34 : isLandscape ? 32 : 40,
+      contentY,
+    );
   }
   context.letterSpacing = "0px";
 }
@@ -1797,7 +1813,10 @@ function renderGraphic(
   const width = format.width;
   const height = format.height;
 
-  if (type === "result" && formatKey === "post") {
+  if (
+    type === "result"
+    && (formatKey === "post" || formatKey === "landscape" || formatKey === "widescreen")
+  ) {
     renderResultGraphic(context, formatKey, form, assets, teamDesign);
     return;
   }
@@ -2361,9 +2380,8 @@ export default function Home() {
   }, []);
 
   const selectedFormat = getGraphicFormat(department, postType, formatKey, matchdayDesign);
-  const isPostOnlyFootballDesign = department === "football" && postType === "result";
-  const availableFormats: FormatKey[] = isPostOnlyFootballDesign
-    ? ["post"]
+  const availableFormats: FormatKey[] = department === "football" && postType === "result"
+    ? ["post", "landscape", "widescreen"]
     : department === "football" && postType === "matchday" && matchdayDesign === "photo"
       ? ["post", "story"]
       : Object.keys(FORMATS) as FormatKey[];
@@ -2733,7 +2751,7 @@ export default function Home() {
         )}
         <div className="selector-group format-selector">
           <span className="selector-label">Format</span>
-          <div className={`format-options ${isPostOnlyFootballDesign ? "single-option" : ""}`}>
+          <div className={`format-options ${availableFormats.length === 1 ? "single-option" : ""}`}>
             {availableFormats.map((key) => (
               <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
                 <span>{FORMATS[key].label}</span>
