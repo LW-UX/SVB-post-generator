@@ -130,10 +130,10 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
   assert.match(page, /function renderPhotoMatchdayGraphic\(/);
   assert.match(page, /renderPhotoMatchdayGraphic\(context, formatKey, form, assets, photoMatchdayState\)/);
-  assert.match(page, /shadowColor = "rgba\(0, 0, 0, 0\.75\)"/);
-  assert.match(page, /shadowOffsetX = 0\.558/);
-  assert.match(page, /shadowOffsetY = 7\.981/);
-  assert.match(page, /shadowBlur = 17/);
+  assert.match(page, /shadowColor = "rgba\(0, 0, 0, 0\.9\)"/);
+  assert.match(page, /shadowOffsetX = 0/);
+  assert.match(page, /shadowOffsetY = 3/);
+  assert.match(page, /shadowBlur = 10/);
   assert.match(page, /renderPreview=\{\(canvas, image\) =>/);
   assert.match(page, /matchdayDesign === "photo"/);
   assert.match(page, /const separator = form\.homeAway === "home" \? "vs\." : "@"/);

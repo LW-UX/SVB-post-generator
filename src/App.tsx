@@ -1593,10 +1593,10 @@ function renderPhotoMatchdayGraphic(
   drawMatchdayLogo(context, rightLogo, rightLogoX, edgeLogoY, 81, 105, rightIsClubLogo ? undefined : white);
 
   context.font = '400 28px Inter, Arial, Helvetica, sans-serif';
-  context.shadowColor = "rgba(0, 0, 0, 0.75)";
-  context.shadowOffsetX = 0.558;
-  context.shadowOffsetY = 7.981;
-  context.shadowBlur = 17;
+  context.shadowColor = "rgba(0, 0, 0, 0.9)";
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 3;
+  context.shadowBlur = 10;
   context.textAlign = "left";
   if (form.time) context.fillText(`${form.time} Uhr`, 140, textTop);
 
