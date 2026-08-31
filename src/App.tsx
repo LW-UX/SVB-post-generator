@@ -2858,12 +2858,19 @@ export default function Home() {
         <section className="preview-column" aria-labelledby="preview-title">
           <div className="panel-heading">
             <div>
-              <p className="section-kicker">Live-Vorschau</p>
+              <p className="section-kicker preview-kicker">
+                <span>Live-Vorschau</span>
+                <span className="preview-export-size">
+                  Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
+                </span>
+              </p>
               <h2 id="preview-title">{selectedFormat.label}</h2>
             </div>
-            <span>
-              Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
-            </span>
+            <button className="primary-button preview-download-button" type="button" onClick={downloadSelected}>
+              {department === "general" && formatKey === "post" && announcementPageCount === 2
+                ? supportsFileSharing ? "Beide Seiten speichern / teilen" : "Beide PNGs herunterladen"
+                : supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
+            </button>
           </div>
           <div className={`canvas-stage canvas-${formatKey}`}>
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
@@ -2874,13 +2881,6 @@ export default function Home() {
               <button type="button" className={announcementPage === 2 ? "active" : ""} aria-pressed={announcementPage === 2} onClick={() => setAnnouncementPage(2)}>Seite 2</button>
             </div>
           )}
-          <div className="preview-actions">
-            <button className="primary-button" type="button" onClick={downloadSelected}>
-              {department === "general" && formatKey === "post" && announcementPageCount === 2
-                ? supportsFileSharing ? "Beide Seiten speichern / teilen" : "Beide PNGs herunterladen"
-                : supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
-            </button>
-          </div>
           {downloadStatus && <p className="status-message" aria-live="polite">{downloadStatus}</p>}
         </section>
 

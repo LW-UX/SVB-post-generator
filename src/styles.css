@@ -190,7 +190,7 @@ label:has(input:focus-visible) .upload-box,
 .selector-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 4px;
+  padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--blue-pale);
@@ -211,12 +211,11 @@ label:has(input:focus-visible) .upload-box,
 
 .selector-options button {
   display: flex;
-  min-height: 32px;
   min-width: 0;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  padding: 4px;
   border: 0;
   border-radius: 4px;
   background: transparent;
@@ -224,8 +223,6 @@ label:has(input:focus-visible) .upload-box,
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.025em;
-  text-align: left;
-  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .selector-options button:hover {
@@ -348,14 +345,6 @@ label:has(input:focus-visible) .upload-box,
 .canvas-widescreen canvas {
   width: 100%;
   aspect-ratio: 16 / 9;
-}
-
-.preview-actions {
-  display: grid;
-  grid-template-columns: 0.4fr;
-  gap: 10px;
-  margin-top: 16px;
-  justify-content: center;
 }
 
 .primary-button {
@@ -1098,10 +1087,6 @@ textarea:focus {
 
   .canvas-stage canvas {
     max-height: 62vh;
-  }
-
-  .preview-actions {
-    grid-template-columns: 1fr;
   }
 
   .form-heading,

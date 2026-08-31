@@ -280,7 +280,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card \.selector-options\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
   assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
-  assert.match(styles, /\.selector-options button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
+  assert.match(styles, /\.selector-options button\s*\{[^}]*align-items:\s*center[^}]*padding:\s*4px[^}]*border-radius:\s*4px/s);
+  assert.doesNotMatch(styles, /\.selector-options button\s*\{[^}]*min-height:/s);
   assert.match(styles, /\.selector-card-football\s*\{/);
   assert.match(styles, /\.selector-card-general\s*\{/);
   assert.match(styles, /\.department-card \.selector-group\s*\{/);
@@ -299,7 +300,15 @@ test("keeps uploads local and supports every requested format", async () => {
   );
   assert.match(styles, /textarea\s*\{[^}]*resize:\s*vertical/s);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
-  assert.doesNotMatch(styles, /\.preview-actions \.primary-button[^}]*display:\s*none/s);
+  assert.doesNotMatch(page, /className="preview-actions"/);
+  assert.doesNotMatch(styles, /\.preview-actions\s*\{/);
+  assert.match(page, /className="section-kicker preview-kicker"[\s\S]*?className="preview-export-size"[\s\S]*?Export \{selectedFormat\.width/);
+  assert.match(page, /className="primary-button preview-download-button"/);
+  assert.ok(
+    page.indexOf('className="primary-button preview-download-button"') <
+      page.indexOf('className={`canvas-stage'),
+    "Der Download-Button soll im Kopfbereich vor der Vorschau stehen.",
+  );
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.app-shell\s*\{[^}]*width:\s*100%/);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card\s*\{[^}]*padding:\s*0[^}]*border:\s*0[^}]*box-shadow:\s*none/s);
   assert.match(page, /new ResizeObserver\(reportHeight\)/);
