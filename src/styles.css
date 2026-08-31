@@ -421,6 +421,11 @@ label:has(input:focus-visible) .upload-box,
   margin-top: 0;
 }
 
+.date-time-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 input[type="text"],
 input:not([type]) {
   appearance: none;

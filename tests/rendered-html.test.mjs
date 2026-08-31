@@ -188,7 +188,8 @@ test("keeps uploads local and supports every requested format", async () => {
     "Datum und Anstoß sollen unterhalb der Darstellungs-Auswahl stehen.",
   );
   assert.match(page, /form\.dateDisplay !== "custom" && \([\s\S]*?className="field-grid field-block date-time-fields"[\s\S]*?>Datum<\/span>[\s\S]*?>Anstoß<\/span>/);
-  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.date-time-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(styles, /\.date-time-fields\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*?\.date-time-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(page, /venue: "Mößmann Sportanlage Hauptfeld"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /findFixture/);
