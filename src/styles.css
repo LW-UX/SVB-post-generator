@@ -1144,6 +1144,10 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .date-time-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .canvas-stage {
     min-height: 290px;
   }

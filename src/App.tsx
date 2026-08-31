@@ -2282,6 +2282,16 @@ export default function Home() {
   );
 
   useEffect(() => {
+    if (!downloadStatus) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setDownloadStatus("");
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [downloadStatus]);
+
+  useEffect(() => {
     let isActive = true;
     Promise.all([
       document.fonts.load('300 40px "Inter"'),
@@ -3026,16 +3036,18 @@ export default function Home() {
                   </label>
                 </div>
               )}
-              <div className="field-grid field-block">
-                <label>
-                  <span className="field-label">Datum</span>
-                  <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
-                </label>
-                <label>
-                  <span className="field-label">Anstoß</span>
-                  <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
-                </label>
-              </div>
+              {form.dateDisplay !== "custom" && (
+                <div className="field-grid field-block date-time-fields">
+                  <label>
+                    <span className="field-label">Datum</span>
+                    <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className="field-label">Anstoß</span>
+                    <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
+                  </label>
+                </div>
+              )}
               <div className="field-grid field-block">
                 <label>
                   <span className="field-label">Spielstätte</span>

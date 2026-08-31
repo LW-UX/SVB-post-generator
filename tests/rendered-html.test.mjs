@@ -187,6 +187,8 @@ test("keeps uploads local and supports every requested format", async () => {
     page.indexOf("Darstellung Datum / Uhrzeit") < page.indexOf('<span className="field-label">Datum</span>'),
     "Datum und Anstoß sollen unterhalb der Darstellungs-Auswahl stehen.",
   );
+  assert.match(page, /form\.dateDisplay !== "custom" && \([\s\S]*?className="field-grid field-block date-time-fields"[\s\S]*?>Datum<\/span>[\s\S]*?>Anstoß<\/span>/);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.date-time-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(page, /venue: "Mößmann Sportanlage Hauptfeld"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /findFixture/);
@@ -194,6 +196,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /getFixtureEditableValues/);
   assert.match(page, /useState<FixtureOverrides>\(\{\}\)/);
   assert.match(page, /setFixtureOverrides\(\{\}\)/);
+  assert.match(page, /if \(!downloadStatus\) return;[\s\S]*?window\.setTimeout\([\s\S]*?setDownloadStatus\(""\);[\s\S]*?4000\)[\s\S]*?window\.clearTimeout\(timeoutId\)/);
   assert.match(page, /chooseHomeAway/);
   assert.match(page, /findFixture\(teamDesign, selectedOpponentEntry\.clubId, homeAway\)/);
   assert.match(page, /findFixture\(design, selectedOpponentEntry\.clubId, form\.homeAway\)/);
