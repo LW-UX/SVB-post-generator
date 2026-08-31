@@ -164,7 +164,7 @@ label:has(input:focus-visible) .upload-box,
 .selector-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
+  gap: 8px;
   align-self: start;
   margin-bottom: 0;
 }
@@ -180,7 +180,7 @@ label:has(input:focus-visible) .upload-box,
 .selector-group {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
 }
 
 .selector-label {
@@ -199,12 +199,8 @@ label:has(input:focus-visible) .upload-box,
   grid-template-columns: minmax(0, 1fr);
 }
 
-.selector-options.compact {
-  max-width: 340px;
-}
 
 .selector-options.compact.three-options {
-  max-width: 510px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -1062,6 +1058,7 @@ textarea:focus {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    width: 100%;
   }
 
   .selector-card .selector-options {
