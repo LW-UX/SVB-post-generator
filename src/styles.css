@@ -541,7 +541,7 @@ textarea:focus {
 }
 
 .opponent-search input:not([type="file"]):not([type="range"]) {
-  height: 46px;
+  height: 40px;
   padding: 0 8px;
   border: 0;
   background: transparent;
@@ -1063,6 +1063,10 @@ textarea:focus {
 
   .selector-card .selector-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .selector-card .selector-options:has(> button:only-child) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .studio-grid {

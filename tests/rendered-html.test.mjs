@@ -291,6 +291,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.selector-options\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(styles, /\.selector-card \.selector-options\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card \.selector-options\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card \.selector-options:has\(> button:only-child\)\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
   assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
   assert.match(styles, /\.selector-options button\s*\{[^}]*align-items:\s*center[^}]*padding:\s*4px[^}]*border-radius:\s*4px/s);
