@@ -8,9 +8,10 @@ import {
 } from "./image-editor";
 import type { BackgroundFormatKey, EditableBackgroundImage } from "./image-editor";
 import {
-  findFirstTeamFixture,
+  findFixture,
   getFixtureEditableValues,
 } from "./fixtures";
+import { getClubByLogoId } from "./club-database";
 import type {
   FixtureEditableValues,
   FixtureHomeAway,
@@ -31,6 +32,7 @@ type AnnouncementPage = 1 | 2;
 
 type OpponentCatalogEntry = {
   id: string;
+  clubId?: string;
   name: string;
   searchVariants: string[];
   src: string;
@@ -118,7 +120,18 @@ function createOpponentCatalog(): OpponentCatalogEntry[] {
       const id = germanTransliteration(basicSearchValue(name))
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-      return { id, name, searchVariants: createSearchVariants(name), src };
+      const club = getClubByLogoId(id);
+      const displayName = club?.name ?? name;
+      return {
+        id,
+        clubId: club?.id,
+        name: displayName,
+        searchVariants: Array.from(new Set([
+          ...createSearchVariants(displayName),
+          ...createSearchVariants(name),
+        ])),
+        src,
+      };
     })
     .sort((left, right) => left.name.localeCompare(right.name, "de", { sensitivity: "base" }));
 }
@@ -186,7 +199,7 @@ const TEAM_DESIGNS: Record<
 
 const INITIAL_FORM: FormState = {
   clubName: "SV Bergheim",
-  opponentName: "TSV Schwabmünchen 2",
+  opponentName: "TSV Schwabmünchen II",
   competition: "Kreisklasse",
   competitionRegion: "Augsburg Süd",
   round: "1. Spieltag",
@@ -2157,7 +2170,7 @@ function OpponentLogoPicker({
         )}
       </div>
       <div className="opponent-picker-footer">
-        {isCustomLogo ? (
+        {image ? (
           <label className="opponent-name-field">
             <span className="field-label">Gegnername</span>
             <input
@@ -2168,7 +2181,7 @@ function OpponentLogoPicker({
             />
           </label>
         ) : (
-          <span className={image ? "selection-status selected" : "selection-status"}>{selectionLabel}</span>
+          <span className="selection-status">{selectionLabel}</span>
         )}
         <label className="opponent-upload-button">
           Eigenes Logo hochladen
@@ -2473,8 +2486,8 @@ export default function Home() {
 
   function chooseTeamDesign(design: TeamDesign) {
     setTeamDesign(design);
-    const fixturePreset = design === "first" && selectedOpponentId
-      ? findFirstTeamFixture(selectedOpponentId, form.homeAway)
+    const fixturePreset = selectedOpponentEntry?.clubId
+      ? findFixture(design, selectedOpponentEntry.clubId, form.homeAway)
       : undefined;
     activeFixtureIdRef.current = fixturePreset?.id ?? null;
     setForm((current) => ({
@@ -2489,8 +2502,8 @@ export default function Home() {
   }
 
   function chooseHomeAway(homeAway: FixtureHomeAway) {
-    const fixturePreset = teamDesign === "first" && selectedOpponentId
-      ? findFirstTeamFixture(selectedOpponentId, homeAway)
+    const fixturePreset = selectedOpponentEntry?.clubId
+      ? findFixture(teamDesign, selectedOpponentEntry.clubId, homeAway)
       : undefined;
     activeFixtureIdRef.current = fixturePreset?.id ?? null;
     setForm((current) => ({
@@ -2544,8 +2557,8 @@ export default function Home() {
 
   async function chooseOpponent(entry: OpponentCatalogEntry) {
     const requestId = ++opponentLoadRequestRef.current;
-    const fixturePreset = teamDesign === "first"
-      ? findFirstTeamFixture(entry.id, form.homeAway)
+    const fixturePreset = entry.clubId
+      ? findFixture(teamDesign, entry.clubId, form.homeAway)
       : undefined;
     activeFixtureIdRef.current = fixturePreset?.id ?? null;
     setSelectedOpponentId(entry.id);
@@ -2964,7 +2977,7 @@ export default function Home() {
                   />
                 )}
               </div>
-              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Bei einem eigenen Logo kannst du den Gegnernamen direkt darunter eintragen. {(postType === "result" || (postType === "matchday" && matchdayDesign === "photo")) ? "Das Hintergrundbild kannst du lokal zuschneiden und filtern." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
+              <p className="helper-text">Wähle ein vorhandenes Gegnerlogo oder lade ein eigenes hoch. Den Gegnernamen kannst du direkt darunter anpassen. {(postType === "result" || (postType === "matchday" && matchdayDesign === "photo")) ? "Das Hintergrundbild kannst du lokal zuschneiden und filtern." : ""} Eigene Bilder bleiben nur in dieser Browser-Sitzung.</p>
             </div>
           )}
 

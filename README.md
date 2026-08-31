@@ -20,7 +20,8 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
 - lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
 - automatisch aus `src/assets/opponents/` erzeugte, durchsuchbare Gegnerlogo-Auswahl
-- fest hinterlegter Spielplan der 1. Mannschaft für die Saison 2026/27 mit automatischer Übernahme von Spieltag, Datum, Uhrzeit, Spielstätte und Adresse
+- zentraler, saisonübergreifender Vereinsdatenkatalog mit Logo-Zuordnung, Standardspielstätte und Adresse für 24 Vereine
+- fest hinterlegte Spielpläne der 1. und 2. Mannschaft für die Saison 2026/27 mit automatischer Übernahme von Spieltag, Datum, Uhrzeit, Spielstätte und Adresse
 - sitzungsweise gemerkte Korrekturen an den vorausgefüllten Spieldaten; Zurücksetzen oder Neuladen stellt die hinterlegten Werte wieder her
 - alternativer lokaler Upload für eigene Gegnerlogos
 - automatische Freistellung, Beschneidung und einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
@@ -28,7 +29,7 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - kalibrierte Presets „Retro“ und „Vignette“ mit separat gemerkter Filterstärke; die Standardeinstellung beträgt 85 %
 - identische Bildverarbeitung in Live-Vorschau und PNG-Export, einschließlich lokaler Verkleinerung sehr großer Uploads
 - PNG-Download der Hochformate in 2× und der Querformate in 1× Auflösung
-- keine Datenbank, keine Netzwerkübertragung und keine dauerhafte Speicherung von Eingaben oder Uploads
+- reine lokale JSON-Datendatei statt einer Online-Datenbank; keine Netzwerkübertragung und keine dauerhafte Speicherung von Eingaben oder Uploads
 
 ## Lokale Entwicklung
 
@@ -50,7 +51,9 @@ pnpm run start
 ## Projektstruktur
 
 - `src/App.tsx`: Oberfläche, Canvas-Renderer und Exportlogik
-- `src/fixtures.ts`: Spielplanvorlagen und Spielstätten der 1. Mannschaft
+- `src/data/clubs.json`: saisonübergreifende Vereins-, Logo- und Spielstättenstammdaten
+- `src/club-database.ts`: typisierter Zugriff auf den Vereinsdatenkatalog
+- `src/fixtures.ts`: normalisierte Spielplanvorlagen beider Mannschaften
 - `src/ImageEditorDialog.tsx`: Zuschneiden, Filterauswahl und Editor-Bedienung
 - `src/image-editor.ts`: kalibrierte LUTs, Filter-, Crop- und Hintergrund-Renderinglogik
 - `src/styles.css`: vollständig editierbare Oberflächenstile
@@ -113,8 +116,14 @@ gespeichert.
 
 ### Spielplanvorlagen aktualisieren
 
-Die Partien der 1. Mannschaft sind für die Saison 2026/27 in
-`src/fixtures.ts` hinterlegt. Der offizielle Mannschaftsname ist dabei vom
-Logo getrennt: Beispielsweise verwendet „TSV Haunstetten 2“ weiterhin das
-Vereinslogo `TSV Haunstetten.png`. Änderungen an Spielterminen oder
-Spielstätten werden direkt in der entsprechenden Spielplanvorlage gepflegt.
+Die Partien der 1. und 2. Mannschaft sind für die Saison 2026/27 in
+`src/fixtures.ts` hinterlegt. Eine Partie referenziert den Gegner nur über
+seine stabile Vereins-ID. Termine und Spieltage werden deshalb dort gepflegt;
+Namen, Logo-Zuordnungen, Standardspielstätten und Adressen liegen zentral in
+`src/data/clubs.json` und können in späteren Saisons wiederverwendet werden.
+
+Die Mannschaftsstufe ist vom Vereinslogo getrennt. Beispielsweise wird
+„TSV Haunstetten II“ angezeigt, verwendet aber weiterhin das Vereinslogo
+`TSV Haunstetten.png`. Ebenso verwendet „PSV Augsburg“ die vorhandene Datei
+`Polizei SV.png`. Logos ohne Eintrag im Vereinsdatenkatalog bleiben in der
+manuellen Logoauswahl verfügbar, lösen aber keine Spielplanvorlage aus.

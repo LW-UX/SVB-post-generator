@@ -178,12 +178,14 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /form\.dateDisplay === "day-date"/);
   assert.match(page, /venue: "Mößmann Sportanlage Hauptfeld"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
-  assert.match(page, /findFirstTeamFixture/);
+  assert.match(page, /findFixture/);
+  assert.match(page, /getClubByLogoId/);
   assert.match(page, /getFixtureEditableValues/);
   assert.match(page, /useState<FixtureOverrides>\(\{\}\)/);
   assert.match(page, /setFixtureOverrides\(\{\}\)/);
   assert.match(page, /chooseHomeAway/);
-  assert.match(page, /teamDesign === "first" && selectedOpponentId/);
+  assert.match(page, /findFixture\(teamDesign, selectedOpponentEntry\.clubId, homeAway\)/);
+  assert.match(page, /findFixture\(design, selectedOpponentEntry\.clubId, form\.homeAway\)/);
   assert.doesNotMatch(page, /localStorage|sessionStorage|fetch\(/);
   assert.match(page, /Liga \/ Überschrift/);
   assert.match(page, /formatKey === "widescreen" \? 0\.38 : 0\.72/);
