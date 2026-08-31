@@ -125,6 +125,13 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /formatKey === "post"[\s\S]*?requestedPageCount[\s\S]*?: 1/s);
   assert.match(page, /context\.moveTo\(totalWidth, height \* 0\.73\)/);
   assert.match(page, /pageCount === 2[\s\S]*?drawAnnouncementSecondSlide/s);
+  assert.match(page, /const logoDividerOffsetX = \(2040\.45 \/ 2583\.26 - 0\.5\) \* logoWidth/);
+  assert.match(page, /const logoDividerOffsetY = \(164\.95 \/ 3249\.74 - 0\.5\) \* logoHeight/);
+  assert.match(page, /const logoY = logoDividerY - logoDividerOffsetY/);
+  assert.doesNotMatch(
+    page,
+    /function drawAnnouncementSecondSlide\([\s\S]*?shadowColor = "rgba\(0, 0, 0, 0\.22\)"[\s\S]*?function renderAnnouncementGraphic\(/s,
+  );
   assert.match(page, /type DateDisplay = "date-time" \| "day-date" \| "custom"/);
   assert.match(page, /type MatchdayDesign = "classic" \| "photo"/);
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
@@ -206,6 +213,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /formatKey === "widescreen" \? 0\.38 : 0\.72/);
   assert.match(page, /Spieltag \/ Obere Zeile/);
   assert.match(page, /value=\{form\.round\} maxLength=\{29\}/);
+  assert.match(page, /function formatRound\(value: string\)[\s\S]*?const trimmed = value\.trim\(\);[\s\S]*?return trimmed\.toUpperCase\(\);/);
+  assert.doesNotMatch(page, /trimmed\.toUpperCase\(\) \|\| "SPIELTAG"/);
   assert.match(page, /Region \/ Untere Zeile/);
   assert.doesNotMatch(page, /fallback\.slice\(0, 3\).*drawMatchdayText/s);
   assert.match(page, /competitionRegion/);

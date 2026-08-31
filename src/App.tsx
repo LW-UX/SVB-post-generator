@@ -502,7 +502,7 @@ function formatRound(value: string) {
   const conventional = trimmed.match(/^spieltag\s+(\d+)$/i);
   if (conventional) return `${conventional[1]}. SPIELTAG`;
   if (/^\d+$/.test(trimmed)) return `${trimmed}. SPIELTAG`;
-  return trimmed.toUpperCase() || "SPIELTAG";
+  return trimmed.toUpperCase();
 }
 
 function roundFilePart(value: string) {
@@ -1420,19 +1420,34 @@ function drawAnnouncementSecondSlide(
   }
 
   if (colorLogo) {
-    context.save();
-    context.shadowColor = "rgba(0, 0, 0, 0.22)";
-    context.shadowBlur = 8;
-    context.shadowOffsetY = 3;
+    const logoMaxWidth = width * 0.17;
+    const logoMaxHeight = height * 0.19;
+    const logoSourceWidth = colorLogo.naturalWidth || colorLogo.width;
+    const logoSourceHeight = colorLogo.naturalHeight || colorLogo.height;
+    const logoScale = Math.min(
+      logoMaxWidth / logoSourceWidth,
+      logoMaxHeight / logoSourceHeight,
+    );
+    const logoWidth = logoSourceWidth * logoScale;
+    const logoHeight = logoSourceHeight * logoScale;
+    const logoX = width * 0.87;
+    const logoDividerOffsetX = (2040.45 / 2583.26 - 0.5) * logoWidth;
+    const logoDividerOffsetY = (164.95 / 3249.74 - 0.5) * logoHeight;
+    const logoDividerX = logoX + logoDividerOffsetX;
+    const cornerTopY = height * 0.73;
+    const cornerWidth = width * 0.27;
+    const logoDividerY = cornerTopY
+      + (width - logoDividerX) * ((height - cornerTopY) / cornerWidth);
+    const logoY = logoDividerY - logoDividerOffsetY;
+
     drawImageContained(
       context,
       colorLogo,
-      width * 0.87,
-      height * 0.895,
-      width * 0.17,
-      height * 0.19,
+      logoX,
+      logoY,
+      logoMaxWidth,
+      logoMaxHeight,
     );
-    context.restore();
   }
 
   context.letterSpacing = "0px";

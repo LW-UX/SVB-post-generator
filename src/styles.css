@@ -385,7 +385,7 @@ label:has(input:focus-visible) .upload-box,
 }
 
 .form-section h3 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--navy);
   font-size: 14px;
   font-weight: 700;
@@ -398,7 +398,7 @@ label:has(input:focus-visible) .upload-box,
 .range-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 8px;
 }
 
 .field-grid label,
@@ -409,12 +409,12 @@ label:has(input:focus-visible) .upload-box,
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .field-block,
 .range-grid {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .field-block.no-top-margin {
@@ -460,11 +460,11 @@ textarea {
 }
 
 .textarea-title {
-  min-height: 104px;
+  min-height: 64px;
 }
 
 .textarea-body {
-  min-height: 220px;
+  min-height: 120px;
 }
 
 input:not([type="file"]):not([type="range"]):hover,
