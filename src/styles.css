@@ -190,10 +190,10 @@ label:has(input:focus-visible) .upload-box,
 .selector-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--blue-pale);
+  overflow: hidden;
 }
 
 .selector-card .selector-options {
@@ -217,7 +217,6 @@ label:has(input:focus-visible) .upload-box,
   justify-content: center;
   padding: 4px;
   border: 0;
-  border-radius: 4px;
   background: transparent;
   color: var(--navy);
   font-size: 12px;
