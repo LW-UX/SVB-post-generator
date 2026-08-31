@@ -125,7 +125,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /formatKey === "post"[\s\S]*?requestedPageCount[\s\S]*?: 1/s);
   assert.match(page, /context\.moveTo\(totalWidth, height \* 0\.73\)/);
   assert.match(page, /pageCount === 2[\s\S]*?drawAnnouncementSecondSlide/s);
-  assert.match(page, /type DateDisplay = "date-time" \| "day-date"/);
+  assert.match(page, /type DateDisplay = "date-time" \| "day-date" \| "custom"/);
   assert.match(page, /type MatchdayDesign = "classic" \| "photo"/);
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
   assert.match(page, /function renderPhotoMatchdayGraphic\(/);
@@ -176,7 +176,17 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /dateDisplay: "date-time"/);
   assert.match(page, /Datum \+ Uhrzeit/);
   assert.match(page, /Tag \+ Datum/);
+  assert.match(page, />Eigene<\/button>/);
   assert.match(page, /form\.dateDisplay === "day-date"/);
+  assert.match(page, /form\.dateDisplay === "custom"/);
+  assert.match(page, /customDateUpperLine/);
+  assert.match(page, /customDateLargeLine/);
+  assert.match(page, />Oberzeile<\/span>/);
+  assert.match(page, />Große Zeile<\/span>/);
+  assert.ok(
+    page.indexOf("Darstellung Datum / Uhrzeit") < page.indexOf('<span className="field-label">Datum</span>'),
+    "Datum und Anstoß sollen unterhalb der Darstellungs-Auswahl stehen.",
+  );
   assert.match(page, /venue: "Mößmann Sportanlage Hauptfeld"/);
   assert.match(page, /venueAddress: "Am Langen Berg 5, 86199 Augsburg"/);
   assert.match(page, /findFixture/);

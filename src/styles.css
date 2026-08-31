@@ -204,6 +204,11 @@ label:has(input:focus-visible) .upload-box,
   max-width: 340px;
 }
 
+.selector-options.compact.three-options {
+  max-width: 510px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .selector-options button {
   display: flex;
   min-height: 32px;

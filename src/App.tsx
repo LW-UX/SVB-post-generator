@@ -24,7 +24,7 @@ type HomeAway = "home" | "away";
 type TeamDesign = "first" | "second";
 type MatchdayDesign = "classic" | "photo";
 type PhotoEdge = "top" | "bottom";
-type DateDisplay = "date-time" | "day-date";
+type DateDisplay = "date-time" | "day-date" | "custom";
 type ExportAction = "shared" | "downloaded" | "cancelled";
 type Department = "football" | "general";
 type AnnouncementPageCount = 1 | 2;
@@ -47,6 +47,8 @@ type FormState = {
   date: string;
   time: string;
   dateDisplay: DateDisplay;
+  customDateUpperLine: string;
+  customDateLargeLine: string;
   venue: string;
   venueAddress: string;
   headline: string;
@@ -206,6 +208,8 @@ const INITIAL_FORM: FormState = {
   date: "2026-08-16",
   time: "15:00",
   dateDisplay: "date-time",
+  customDateUpperLine: "",
+  customDateLargeLine: "",
   venue: "Mößmann Sportanlage Hauptfeld",
   venueAddress: "Am Langen Berg 5, 86199 Augsburg",
   headline: "MATCHDAY",
@@ -913,12 +917,16 @@ function renderMatchdayGraphic(
   const largeTextSize = layout.largeTextSize ?? 100;
   const smallTextSize = layout.smallTextSize ?? 40;
   const { weekday, dayMonth } = formatMatchdayDateParts(form.date);
-  const smallDateLine = form.dateDisplay === "day-date"
-    ? weekday
-    : formatMatchdayDate(form.date);
-  const largeDateLine = form.dateDisplay === "day-date"
-    ? dayMonth
-    : `${form.time || "--:--"} UHR`;
+  const smallDateLine = form.dateDisplay === "custom"
+    ? form.customDateUpperLine
+    : form.dateDisplay === "day-date"
+      ? weekday
+      : formatMatchdayDate(form.date);
+  const largeDateLine = form.dateDisplay === "custom"
+    ? form.customDateLargeLine
+    : form.dateDisplay === "day-date"
+      ? dayMonth
+      : `${form.time || "--:--"} UHR`;
 
   const gradient = createAngledGradient(context, width, height, MATCHDAY_ANGLE_DEGREES);
   gradient.addColorStop(0, "#003076");
@@ -2997,6 +3005,28 @@ export default function Home() {
                   <span className="field-label">Spieltag / Obere Zeile</span>
                   <input value={form.round} maxLength={29} onChange={(event) => updateForm("round", event.target.value)} />
                 </label>
+              </div>
+              <div className="field-block">
+                <span className="field-label">Darstellung Datum / Uhrzeit</span>
+                <div className="selector-options compact three-options">
+                  <button type="button" className={form.dateDisplay === "date-time" ? "active" : ""} onClick={() => updateForm("dateDisplay", "date-time")}>Datum + Uhrzeit</button>
+                  <button type="button" className={form.dateDisplay === "day-date" ? "active" : ""} onClick={() => updateForm("dateDisplay", "day-date")}>Tag + Datum</button>
+                  <button type="button" className={form.dateDisplay === "custom" ? "active" : ""} onClick={() => updateForm("dateDisplay", "custom")}>Eigene</button>
+                </div>
+              </div>
+              {form.dateDisplay === "custom" && (
+                <div className="field-grid field-block">
+                  <label>
+                    <span className="field-label">Oberzeile</span>
+                    <input value={form.customDateUpperLine} maxLength={45} placeholder="Eigene Oberzeile" onChange={(event) => updateForm("customDateUpperLine", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className="field-label">Große Zeile</span>
+                    <input value={form.customDateLargeLine} maxLength={32} placeholder="Eigene große Zeile" onChange={(event) => updateForm("customDateLargeLine", event.target.value)} />
+                  </label>
+                </div>
+              )}
+              <div className="field-grid field-block">
                 <label>
                   <span className="field-label">Datum</span>
                   <input type="date" value={form.date} onChange={(event) => updateForm("date", event.target.value)} />
@@ -3005,13 +3035,6 @@ export default function Home() {
                   <span className="field-label">Anstoß</span>
                   <input type="time" value={form.time} onChange={(event) => updateForm("time", event.target.value)} />
                 </label>
-              </div>
-              <div className="field-block">
-                <span className="field-label">Darstellung Datum / Uhrzeit</span>
-                <div className="selector-options compact">
-                  <button type="button" className={form.dateDisplay === "date-time" ? "active" : ""} onClick={() => updateForm("dateDisplay", "date-time")}>Datum + Uhrzeit</button>
-                  <button type="button" className={form.dateDisplay === "day-date" ? "active" : ""} onClick={() => updateForm("dateDisplay", "day-date")}>Tag + Datum</button>
-                </div>
               </div>
               <div className="field-grid field-block">
                 <label>
