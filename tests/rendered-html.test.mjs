@@ -264,11 +264,13 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /--skyblue:\s*#1e73b9/);
   assert.match(styles, /font-family:\s*"Gambetta Variable"/);
   assert.match(styles, /font-weight:\s*300 700/);
-  assert.match(styles, /\.segmented-control button\.active,[\s\S]*?\.format-options button\.active\s*\{[^}]*background:\s*var\(--skyblue\)/);
+  assert.match(styles, /\.selector-options button\.active\s*\{[^}]*background:\s*var\(--skyblue\)/);
+  assert.match(styles, /\.selector-options\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+  assert.match(styles, /\.selector-card \.selector-options\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
+  assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.selector-card \.selector-options\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(styles, /\.primary-button\s*\{[^}]*border:\s*2px solid var\(--orange\)[^}]*background:\s*transparent[^}]*color:\s*var\(--orange\)/s);
   assert.match(styles, /\.primary-button:hover,[\s\S]*?\.primary-button:active\s*\{[^}]*background:\s*var\(--orange\)[^}]*color:\s*white/s);
-  assert.match(styles, /\.segmented-control button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
-  assert.match(styles, /\.format-options button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
+  assert.match(styles, /\.selector-options button\s*\{[^}]*min-height:\s*32px[^}]*border-radius:\s*4px/s);
   assert.match(styles, /\.selector-card-football\s*\{/);
   assert.match(styles, /\.selector-card-general\s*\{/);
   assert.match(styles, /\.department-card \.selector-group\s*\{/);
@@ -283,7 +285,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /const columnCount = pickerWidth >= 680 \? 2 : 1/);
   assert.ok(
     page.indexOf('className={`canvas-stage') <
-      page.indexOf('className="segmented-control compact preview-page-control"'),
+      page.indexOf('className="selector-options compact preview-page-control"'),
   );
   assert.match(styles, /textarea\s*\{[^}]*resize:\s*vertical/s);
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);

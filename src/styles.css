@@ -183,125 +183,71 @@ label:has(input:focus-visible) .upload-box,
   gap: 9px;
 }
 
-.selector-card .segmented-control {
-  grid-template-columns: minmax(0, 1fr);
+.selector-label {
+  padding-left: 4px;
+}
+
+.selector-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   background: var(--blue-pale);
 }
 
-.selector-card .segmented-control button {
+.selector-card .selector-options {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.selector-options.compact {
+  max-width: 340px;
+}
+
+.selector-options button {
   display: flex;
+  min-height: 32px;
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   padding: 6px 12px;
-  text-align: left;
-}
-
-.nested-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-top: 4px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-
-.selector-label {
-  padding-left: 4px;
-}
-
-.segmented-control {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: #f4f6f8;
-}
-
-.segmented-control button,
-.format-options button {
   border: 0;
+  border-radius: 4px;
   background: transparent;
   color: var(--navy);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.025em;
+  text-align: left;
   transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
-.segmented-control button {
-  min-height: 32px;
-  border-radius: 4px;
-}
-
-.format-options button {
-  min-height: 32px;
-  border-radius: 4px;
-}
-
-.segmented-control button:hover,
-.format-options button:hover {
+.selector-options button:hover {
   color: var(--ink);
 }
 
-.segmented-control button.active,
-.format-options button.active {
-  border-radius: 4px;
+.selector-options button.active {
   background: var(--skyblue);
   box-shadow: none;
   color: white;
 }
 
-.segmented-control.compact {
-  max-width: 340px;
-}
-
-.segmented-control.single-segment {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.format-options {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 5px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--blue-pale);
-}
-
-.format-options button {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 6px 12px;
-  text-align: left;
-}
-
-.format-options button span {
+.selector-options button span {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.format-options small {
+.selector-options small {
   color: var(--ink-soft);
   font-size: 10px;
   font-weight: 800;
 }
 
-.format-options button.active small {
+.selector-options button.active small {
   color: rgba(255, 255, 255, 0.8);
-}
-
-.format-options.single-option {
-  grid-template-columns: minmax(0, 1fr);
 }
 
 .studio-grid {
@@ -1121,6 +1067,10 @@ textarea:focus {
     box-shadow: none;
   }
 
+  .selector-card .selector-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .studio-grid {
     display: flex;
     flex-direction: column;
@@ -1184,7 +1134,7 @@ textarea:focus {
     width: 100%;
   }
 
-  .segmented-control:not(.compact) button {
+  .selector-options:not(.compact) button {
     min-height: 32px;
     padding: 4px 8px;
     font-size: 11px;

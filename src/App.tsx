@@ -2768,7 +2768,7 @@ export default function Home() {
       <section className="department-card" aria-label="Abteilung auswählen">
         <div className="selector-group">
           <span className="selector-label">Abteilung</span>
-          <div className="segmented-control">
+          <div className="selector-options">
             <button type="button" className={department === "general" ? "active" : ""} onClick={() => chooseDepartment("general")}>Allgemein</button>
             <button type="button" className={department === "football" ? "active" : ""} onClick={() => chooseDepartment("football")}>Fußball</button>
           </div>
@@ -2780,71 +2780,71 @@ export default function Home() {
           className={`selector-card selector-card-${department}`}
           aria-label="Grafik auswählen"
         >
-        <div className="selector-group">
-          <span className="selector-label">Beitrag</span>
-          <div className={`segmented-control ${department === "general" ? "single-segment" : ""}`}>
-            {department === "football" ? (
+          <div className="selector-group">
+            <span className="selector-label">Beitrag</span>
+            <div className="selector-options">
+              {department === "football" ? (
+                <>
+                  <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
+                  <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
+                </>
+              ) : (
+                <button type="button" className="active" aria-pressed="true">Ankündigung</button>
+              )}
+            </div>
+            {department === "football" && postType === "matchday" && (
               <>
-                <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
-                <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
+                <span className="selector-label">Design</span>
+                <div className="selector-options" role="group" aria-label="Design auswählen">
+                  <button
+                    type="button"
+                    className={matchdayDesign === "classic" ? "active" : ""}
+                    aria-pressed={matchdayDesign === "classic"}
+                    onClick={() => chooseMatchdayDesign("classic")}
+                  >
+                    Klassisch
+                  </button>
+                  <button
+                    type="button"
+                    className={matchdayDesign === "photo" ? "active" : ""}
+                    aria-pressed={matchdayDesign === "photo"}
+                    onClick={() => chooseMatchdayDesign("photo")}
+                  >
+                    Matchday
+                  </button>
+                </div>
               </>
-            ) : (
-              <button type="button" className="active" aria-pressed="true">Ankündigung</button>
             )}
           </div>
-          {department === "football" && postType === "matchday" && (
-            <div className="nested-selector">
-              <span className="selector-label">Design</span>
-              <div className="segmented-control" role="group" aria-label="Design auswählen">
-                <button
-                  type="button"
-                  className={matchdayDesign === "classic" ? "active" : ""}
-                  aria-pressed={matchdayDesign === "classic"}
-                  onClick={() => chooseMatchdayDesign("classic")}
-                >
-                  Klassisch
-                </button>
-                <button
-                  type="button"
-                  className={matchdayDesign === "photo" ? "active" : ""}
-                  aria-pressed={matchdayDesign === "photo"}
-                  onClick={() => chooseMatchdayDesign("photo")}
-                >
-                  Matchday
-                </button>
+          {department === "football" && (
+            <div className="selector-group">
+              <span className="selector-label">Mannschaft</span>
+              <div className="selector-options" role="group" aria-label="Mannschaft auswählen">
+                {(Object.keys(TEAM_DESIGNS) as TeamDesign[]).map((design) => (
+                  <button
+                    key={design}
+                    type="button"
+                    className={teamDesign === design ? "active" : ""}
+                    aria-pressed={teamDesign === design}
+                    onClick={() => chooseTeamDesign(design)}
+                  >
+                    {TEAM_DESIGNS[design].label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
-        </div>
-        {department === "football" && (
-          <div className="selector-group">
-            <span className="selector-label">Mannschaft</span>
-            <div className="segmented-control" role="group" aria-label="Mannschaft auswählen">
-              {(Object.keys(TEAM_DESIGNS) as TeamDesign[]).map((design) => (
-                <button
-                  key={design}
-                  type="button"
-                  className={teamDesign === design ? "active" : ""}
-                  aria-pressed={teamDesign === design}
-                  onClick={() => chooseTeamDesign(design)}
-                >
-                  {TEAM_DESIGNS[design].label}
+          <div className="selector-group format-selector">
+            <span className="selector-label">Format</span>
+            <div className="selector-options">
+              {availableFormats.map((key) => (
+                <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
+                  <span>{FORMATS[key].label}</span>
+                  <small>{FORMATS[key].short}</small>
                 </button>
               ))}
             </div>
           </div>
-        )}
-        <div className="selector-group format-selector">
-          <span className="selector-label">Format</span>
-          <div className={`format-options ${availableFormats.length === 1 ? "single-option" : ""}`}>
-            {availableFormats.map((key) => (
-              <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
-                <span>{FORMATS[key].label}</span>
-                <small>{FORMATS[key].short}</small>
-              </button>
-            ))}
-          </div>
-        </div>
         </section>
 
         <section className="preview-column" aria-labelledby="preview-title">
@@ -2861,7 +2861,7 @@ export default function Home() {
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
           </div>
           {department === "general" && formatKey === "post" && announcementPageCount === 2 && (
-            <div className="segmented-control compact preview-page-control" role="group" aria-label="Vorschauseite auswählen">
+            <div className="selector-options compact preview-page-control" role="group" aria-label="Vorschauseite auswählen">
               <button type="button" className={announcementPage === 1 ? "active" : ""} aria-pressed={announcementPage === 1} onClick={() => setAnnouncementPage(1)}>Seite 1</button>
               <button type="button" className={announcementPage === 2 ? "active" : ""} aria-pressed={announcementPage === 2} onClick={() => setAnnouncementPage(2)}>Seite 2</button>
             </div>
@@ -2898,7 +2898,7 @@ export default function Home() {
               <h3>Spielort</h3>
               <div>
                 <span className="field-label">Heim / Auswärts</span>
-                <div className="segmented-control compact">
+                <div className="selector-options compact">
                   <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => chooseHomeAway("home")}>Heim</button>
                   <button type="button" className={form.homeAway === "away" ? "active" : ""} onClick={() => chooseHomeAway("away")}>Auswärts</button>
                 </div>
@@ -2911,7 +2911,7 @@ export default function Home() {
               <h3>Anordnung</h3>
               <div>
                 <span className="field-label">Datum und Logos am Rand</span>
-                <div className="segmented-control compact">
+                <div className="selector-options compact">
                   <button
                     type="button"
                     className={photoMatchdayState.edge === "top" ? "active" : ""}
@@ -3008,7 +3008,7 @@ export default function Home() {
               </div>
               <div className="field-block">
                 <span className="field-label">Darstellung Datum / Uhrzeit</span>
-                <div className="segmented-control compact">
+                <div className="selector-options compact">
                   <button type="button" className={form.dateDisplay === "date-time" ? "active" : ""} onClick={() => updateForm("dateDisplay", "date-time")}>Datum + Uhrzeit</button>
                   <button type="button" className={form.dateDisplay === "day-date" ? "active" : ""} onClick={() => updateForm("dateDisplay", "day-date")}>Tag + Datum</button>
                 </div>
@@ -3078,7 +3078,7 @@ export default function Home() {
               <h3>Seiten</h3>
               <div>
                 <span className="field-label">Umfang des Posts</span>
-                <div className="segmented-control compact">
+                <div className="selector-options compact">
                   <button type="button" className={announcementPageCount === 1 ? "active" : ""} aria-pressed={announcementPageCount === 1} onClick={() => chooseAnnouncementPageCount(1)}>1 Seite</button>
                   <button type="button" className={announcementPageCount === 2 ? "active" : ""} aria-pressed={announcementPageCount === 2} onClick={() => chooseAnnouncementPageCount(2)}>2 Seiten</button>
                 </div>
