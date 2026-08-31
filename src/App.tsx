@@ -1618,7 +1618,7 @@ function renderPhotoMatchdayGraphic(
     context.fillText(date.day, dateDayX, dateTop);
   }
   if (date.month) {
-    context.font = '700 27px Inter, Arial, Helvetica, sans-serif';
+    context.font = '400 27px Inter, Arial, Helvetica, sans-serif';
     context.fillText(date.month, dateMonthX, dateTop + 78);
   }
 

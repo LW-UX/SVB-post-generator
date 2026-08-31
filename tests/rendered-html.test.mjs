@@ -130,6 +130,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /type PhotoEdge = "top" \| "bottom"/);
   assert.match(page, /function renderPhotoMatchdayGraphic\(/);
   assert.match(page, /renderPhotoMatchdayGraphic\(context, formatKey, form, assets, photoMatchdayState\)/);
+  assert.match(page, /context\.font = '400 27px Inter, Arial, Helvetica, sans-serif'/);
   assert.match(page, /shadowColor = "rgba\(0, 0, 0, 0\.9\)"/);
   assert.match(page, /shadowOffsetX = 0/);
   assert.match(page, /shadowOffsetY = 3/);
