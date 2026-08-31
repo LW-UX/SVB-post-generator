@@ -348,14 +348,14 @@ label:has(input:focus-visible) .upload-box,
 }
 
 .primary-button {
-  padding: 12px;
+  padding: 4px 8px;
   border: 2px solid var(--orange);
   border-radius: 4px;
   background: transparent;
   box-shadow: none;
   color: var(--orange);
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
