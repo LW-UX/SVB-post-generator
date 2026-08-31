@@ -315,7 +315,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(styles, /\.canvas-story canvas\s*\{[^}]*width:\s*auto[^}]*height:\s*auto/s);
   assert.doesNotMatch(page, /className="preview-actions"/);
   assert.doesNotMatch(styles, /\.preview-actions\s*\{/);
-  assert.match(page, /className="section-kicker preview-kicker"[\s\S]*?className="preview-export-size"[\s\S]*?Export \{selectedFormat\.width/);
+  assert.match(page, /className="section-kicker preview-kicker"[\s\S]*?<span>Live-Vorschau<\/span>[\s\S]*?\{" \| "\}[\s\S]*?className="preview-export-size"[\s\S]*?Export \{selectedFormat\.width/);
   assert.match(page, /className="primary-button preview-download-button"/);
   assert.ok(
     page.indexOf('className="primary-button preview-download-button"') <

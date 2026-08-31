@@ -2885,6 +2885,7 @@ export default function Home() {
             <div>
               <p className="section-kicker preview-kicker">
                 <span>Live-Vorschau</span>
+                {" | "}
                 <span className="preview-export-size">
                   Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
                 </span>
