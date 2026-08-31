@@ -163,25 +163,39 @@ label:has(input:focus-visible) .upload-box,
 
 .selector-card {
   display: grid;
-  grid-template-columns: minmax(220px, 0.75fr) minmax(470px, 1.6fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
+  align-self: start;
+  margin-bottom: 0;
 }
 
 .selector-card-football {
-  grid-template-columns:
-    minmax(260px, 1fr)
-    minmax(220px, 0.78fr)
-    minmax(430px, 1.55fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .selector-card-general {
-  grid-template-columns: minmax(220px, 0.75fr) minmax(470px, 1.6fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .selector-group {
   display: flex;
   flex-direction: column;
   gap: 9px;
+}
+
+.selector-card .segmented-control {
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--blue-pale);
+}
+
+.selector-card .segmented-control button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6px 12px;
+  text-align: left;
 }
 
 .nested-selector {
@@ -251,7 +265,7 @@ label:has(input:focus-visible) .upload-box,
 
 .format-options {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 5px;
   padding: 4px;
   border: 1px solid var(--line);
@@ -292,7 +306,7 @@ label:has(input:focus-visible) .upload-box,
 
 .studio-grid {
   display: grid;
-  grid-template-columns: minmax(430px, 0.94fr) minmax(500px, 1.06fr);
+  grid-template-columns: minmax(210px, 1fr) repeat(2, minmax(0, 2.5fr));
   align-items: start;
   gap: 24px;
 }
@@ -1084,7 +1098,7 @@ textarea:focus {
   }
 
   .studio-grid {
-    grid-template-columns: minmax(340px, 0.82fr) minmax(430px, 1.18fr);
+    grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(0, 2.5fr));
   }
 
   .upload-grid {
@@ -1105,10 +1119,6 @@ textarea:focus {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-  }
-
-  .format-options {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .studio-grid {

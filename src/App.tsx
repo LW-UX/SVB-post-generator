@@ -2775,10 +2775,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section
-        className={`selector-card selector-card-${department}`}
-        aria-label="Grafik auswählen"
-      >
+      <div className="studio-grid">
+        <section
+          className={`selector-card selector-card-${department}`}
+          aria-label="Grafik auswählen"
+        >
         <div className="selector-group">
           <span className="selector-label">Beitrag</span>
           <div className={`segmented-control ${department === "general" ? "single-segment" : ""}`}>
@@ -2844,9 +2845,8 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
 
-      <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title">
           <div className="panel-heading">
             <div>
