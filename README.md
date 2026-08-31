@@ -20,6 +20,8 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - automatisches Mannschaftsdesign: diagonaler blau-weißer Verlauf für die Erste, Weiß mit blauen Akzenten für die Zweite
 - lokal eingebundene variable Inter-Schrift für identische Vorschau und PNG-Ausgabe
 - automatisch aus `src/assets/opponents/` erzeugte, durchsuchbare Gegnerlogo-Auswahl
+- fest hinterlegter Spielplan der 1. Mannschaft für die Saison 2026/27 mit automatischer Übernahme von Spieltag, Datum, Uhrzeit, Spielstätte und Adresse
+- sitzungsweise gemerkte Korrekturen an den vorausgefüllten Spieldaten; Zurücksetzen oder Neuladen stellt die hinterlegten Werte wieder her
 - alternativer lokaler Upload für eigene Gegnerlogos
 - automatische Freistellung, Beschneidung und einfarbige Darstellung des Gegnerlogos in Weiß oder SVB-Blau
 - lokaler Hintergrundbild-Editor für Ergebnismeldungen mit formatabhängigem Verschieben und Zoomen per Maus, Touch oder Tastatur
@@ -48,6 +50,7 @@ pnpm run start
 ## Projektstruktur
 
 - `src/App.tsx`: Oberfläche, Canvas-Renderer und Exportlogik
+- `src/fixtures.ts`: Spielplanvorlagen und Spielstätten der 1. Mannschaft
 - `src/ImageEditorDialog.tsx`: Zuschneiden, Filterauswahl und Editor-Bedienung
 - `src/image-editor.ts`: kalibrierte LUTs, Filter-, Crop- und Hintergrund-Renderinglogik
 - `src/styles.css`: vollständig editierbare Oberflächenstile
@@ -107,3 +110,11 @@ ist nicht nötig; die benötigte Farbe wird beim Rendern erzeugt.
 Eigene Logos, die über die Oberfläche gewählt werden, werden im Browser
 freigestellt und beschnitten. Sie werden weder hochgeladen noch dauerhaft
 gespeichert.
+
+### Spielplanvorlagen aktualisieren
+
+Die Partien der 1. Mannschaft sind für die Saison 2026/27 in
+`src/fixtures.ts` hinterlegt. Der offizielle Mannschaftsname ist dabei vom
+Logo getrennt: Beispielsweise verwendet „TSV Haunstetten 2“ weiterhin das
+Vereinslogo `TSV Haunstetten.png`. Änderungen an Spielterminen oder
+Spielstätten werden direkt in der entsprechenden Spielplanvorlage gepflegt.

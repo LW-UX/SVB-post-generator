@@ -11,7 +11,7 @@
     "build:pages": "pnpm run build",
     "start": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm run build && pnpm run typecheck && node --experimental-strip-types --test tests/image-editor.test.ts && node --test tests/rendered-html.test.mjs",
+    "test": "pnpm run build && pnpm run typecheck && node --experimental-strip-types --test tests/image-editor.test.ts tests/fixtures.test.ts && node --test tests/rendered-html.test.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

@@ -7,6 +7,15 @@ import {
   loadEditableBackground,
 } from "./image-editor";
 import type { BackgroundFormatKey, EditableBackgroundImage } from "./image-editor";
+import {
+  findFirstTeamFixture,
+  getFixtureEditableValues,
+} from "./fixtures";
+import type {
+  FixtureEditableValues,
+  FixtureHomeAway,
+  FixtureOverrides,
+} from "./fixtures";
 
 type PostType = "matchday" | "result";
 type FormatKey = BackgroundFormatKey;
@@ -45,6 +54,17 @@ type FormState = {
   footer: string;
   homeAway: HomeAway;
 };
+
+function isFixtureEditableKey(
+  key: keyof FormState,
+): key is keyof FixtureEditableValues {
+  return key === "opponentName" ||
+    key === "round" ||
+    key === "date" ||
+    key === "time" ||
+    key === "venue" ||
+    key === "venueAddress";
+}
 
 type Assets = {
   clubLogo: HTMLImageElement | null;
@@ -166,14 +186,14 @@ const TEAM_DESIGNS: Record<
 
 const INITIAL_FORM: FormState = {
   clubName: "SV Bergheim",
-  opponentName: "TSV Königsbrunn II",
+  opponentName: "TSV Schwabmünchen 2",
   competition: "Kreisklasse",
   competitionRegion: "Augsburg Süd",
   round: "1. Spieltag",
-  date: "2026-08-23",
+  date: "2026-08-16",
   time: "15:00",
   dateDisplay: "date-time",
-  venue: "Mößmann Sportanlage",
+  venue: "Mößmann Sportanlage Hauptfeld",
   venueAddress: "Am Langen Berg 5, 86199 Augsburg",
   headline: "MATCHDAY",
   clubScore: "2",
@@ -2204,6 +2224,8 @@ export default function Home() {
   const appShellRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const opponentLoadRequestRef = useRef(0);
+  const fixtureOverridesRef = useRef<FixtureOverrides>({});
+  const activeFixtureIdRef = useRef<string | null>(null);
   const [department, setDepartment] = useState<Department>("football");
   const [postType, setPostType] = useState<PostType>("matchday");
   const [teamDesign, setTeamDesign] = useState<TeamDesign>("first");
@@ -2229,6 +2251,7 @@ export default function Home() {
   const [backgroundEditorImage, setBackgroundEditorImage] =
     useState<EditableBackgroundImage | null>(null);
   const [selectedOpponentId, setSelectedOpponentId] = useState<string | null>(null);
+  const [, setFixtureOverrides] = useState<FixtureOverrides>({});
   const [downloadStatus, setDownloadStatus] = useState("");
   const [fontReady, setFontReady] = useState(false);
   const supportsFileSharing = useSyncExternalStore(
@@ -2391,6 +2414,18 @@ export default function Home() {
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
+    const activeFixtureId = activeFixtureIdRef.current;
+    if (activeFixtureId && isFixtureEditableKey(key)) {
+      const nextOverrides: FixtureOverrides = {
+        ...fixtureOverridesRef.current,
+        [activeFixtureId]: {
+          ...fixtureOverridesRef.current[activeFixtureId],
+          [key]: value,
+        },
+      };
+      fixtureOverridesRef.current = nextOverrides;
+      setFixtureOverrides(nextOverrides);
+    }
   }
 
   function updateAnnouncementForm<Key extends keyof AnnouncementFormState>(
@@ -2438,11 +2473,32 @@ export default function Home() {
 
   function chooseTeamDesign(design: TeamDesign) {
     setTeamDesign(design);
+    const fixturePreset = design === "first" && selectedOpponentId
+      ? findFirstTeamFixture(selectedOpponentId, form.homeAway)
+      : undefined;
+    activeFixtureIdRef.current = fixturePreset?.id ?? null;
     setForm((current) => ({
       ...current,
       clubName: TEAM_DESIGNS[design].clubName,
       competition: TEAM_DESIGNS[design].competition,
       competitionRegion: TEAM_DESIGNS[design].competitionRegion,
+      ...(fixturePreset
+        ? getFixtureEditableValues(fixturePreset, fixtureOverridesRef.current[fixturePreset.id])
+        : {}),
+    }));
+  }
+
+  function chooseHomeAway(homeAway: FixtureHomeAway) {
+    const fixturePreset = teamDesign === "first" && selectedOpponentId
+      ? findFirstTeamFixture(selectedOpponentId, homeAway)
+      : undefined;
+    activeFixtureIdRef.current = fixturePreset?.id ?? null;
+    setForm((current) => ({
+      ...current,
+      homeAway,
+      ...(fixturePreset
+        ? getFixtureEditableValues(fixturePreset, fixtureOverridesRef.current[fixturePreset.id])
+        : {}),
     }));
   }
 
@@ -2488,8 +2544,18 @@ export default function Home() {
 
   async function chooseOpponent(entry: OpponentCatalogEntry) {
     const requestId = ++opponentLoadRequestRef.current;
+    const fixturePreset = teamDesign === "first"
+      ? findFirstTeamFixture(entry.id, form.homeAway)
+      : undefined;
+    activeFixtureIdRef.current = fixturePreset?.id ?? null;
     setSelectedOpponentId(entry.id);
-    setForm((current) => ({ ...current, opponentName: entry.name }));
+    setForm((current) => ({
+      ...current,
+      opponentName: entry.name,
+      ...(fixturePreset
+        ? getFixtureEditableValues(fixturePreset, fixtureOverridesRef.current[fixturePreset.id])
+        : {}),
+    }));
     setAssets((current) => ({ ...current, opponentLogo: null }));
     setDownloadStatus("");
 
@@ -2511,6 +2577,7 @@ export default function Home() {
     if (!file) return;
     const requestId = ++opponentLoadRequestRef.current;
     const url = URL.createObjectURL(file);
+    activeFixtureIdRef.current = null;
     setSelectedOpponentId(null);
     setForm((current) => ({ ...current, opponentName: "" }));
     setAssets((current) => ({ ...current, opponentLogo: null }));
@@ -2532,6 +2599,7 @@ export default function Home() {
 
   function clearOpponentLogo() {
     opponentLoadRequestRef.current += 1;
+    activeFixtureIdRef.current = null;
     setSelectedOpponentId(null);
     setForm((current) => ({ ...current, opponentName: INITIAL_FORM.opponentName }));
     setAssets((current) => ({ ...current, opponentLogo: null }));
@@ -2668,6 +2736,9 @@ export default function Home() {
       headline: postType === "matchday" ? "MATCHDAY" : "FULL TIME",
     });
     setPhotoMatchdayState(INITIAL_PHOTO_MATCHDAY_STATE);
+    activeFixtureIdRef.current = null;
+    fixtureOverridesRef.current = {};
+    setFixtureOverrides({});
     opponentLoadRequestRef.current += 1;
     setSelectedOpponentId(null);
     setBackgroundEditorImage(null);
@@ -2815,8 +2886,8 @@ export default function Home() {
               <div>
                 <span className="field-label">Heim / Auswärts</span>
                 <div className="segmented-control compact">
-                  <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => updateForm("homeAway", "home")}>Heim</button>
-                  <button type="button" className={form.homeAway === "away" ? "active" : ""} onClick={() => updateForm("homeAway", "away")}>Auswärts</button>
+                  <button type="button" className={form.homeAway === "home" ? "active" : ""} onClick={() => chooseHomeAway("home")}>Heim</button>
+                  <button type="button" className={form.homeAway === "away" ? "active" : ""} onClick={() => chooseHomeAway("away")}>Auswärts</button>
                 </div>
               </div>
             </div>
