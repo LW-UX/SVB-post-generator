@@ -37,6 +37,7 @@ const NAME_SIZE = 36;
 const NAME_MIN_SIZE = 24;
 const NAME_MAX_WIDTH = 325;
 const NUMBER_X = 184.7874;
+const NUMBER_SIZE = 24;
 const NUMBER_TARGET_CENTER_Y = 172.25;
 const BLUE = "#1c4b94";
 
@@ -111,7 +112,7 @@ export function renderCertificateGraphic(
   }
 
   const years = normalizeCertificateYears(form.years);
-  context.font = `${NAME_SIZE * scaleX}px "Cormorant Garamond", serif`;
+  context.font = `${NUMBER_SIZE * scaleX}px "Cormorant Garamond", serif`;
   context.fillStyle = BLUE;
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
@@ -179,12 +180,12 @@ export async function createCertificatePdf(form: CertificateFormState) {
   const numberBounds = fontkitFont.layout(yearsText).bbox;
   const numberCenterOffset = (numberBounds.minY + numberBounds.maxY)
     / 2
-    * NAME_SIZE
+    * NUMBER_SIZE
     / fontkitFont.unitsPerEm;
   page.drawText(yearsText, {
     x: NUMBER_X,
     y: NUMBER_TARGET_CENTER_Y - numberCenterOffset,
-    size: NAME_SIZE,
+    size: NUMBER_SIZE,
     font,
     color,
   });
