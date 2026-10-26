@@ -37,33 +37,28 @@ const NAME_SIZE = 36;
 const NAME_MIN_SIZE = 24;
 const NAME_MAX_WIDTH = 325;
 const NUMBER_X = 184.7874;
-const NUMBER_Y = 165.3736;
-const TWO_DIGIT_NUMBER_Y = 163.2496;
+const NUMBER_TARGET_CENTER_Y = 172.25;
 const BLUE = "#1c4b94";
 
 const TEMPLATE_DETAILS: Record<
   CertificateVariant,
-  { pageIndex: number; previewUrl: string; numberY: number }
+  { pageIndex: number; previewUrl: string }
 > = {
   "long-one-digit": {
     pageIndex: 0,
     previewUrl: longOneDigitPreviewUrl,
-    numberY: NUMBER_Y,
   },
   "long-two-digits": {
     pageIndex: 1,
     previewUrl: longTwoDigitsPreviewUrl,
-    numberY: TWO_DIGIT_NUMBER_Y,
   },
   short: {
     pageIndex: 2,
     previewUrl: shortPreviewUrl,
-    numberY: NUMBER_Y,
   },
   "one-year": {
     pageIndex: 3,
     previewUrl: oneYearPreviewUrl,
-    numberY: NUMBER_Y,
   },
 };
 
@@ -116,12 +111,16 @@ export function renderCertificateGraphic(
   }
 
   const years = normalizeCertificateYears(form.years);
-  const numberY = getTemplateDetails(years).numberY;
   context.font = `${NAME_SIZE * scaleX}px "Cormorant Garamond", serif`;
   context.fillStyle = BLUE;
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
-  context.fillText(String(years), NUMBER_X * scaleX, (PAGE_HEIGHT - numberY) * scaleY);
+  const yearsText = String(years);
+  const numberMetrics = context.measureText(yearsText);
+  const numberCenterY = (PAGE_HEIGHT - NUMBER_TARGET_CENTER_Y) * scaleY;
+  const numberBaselineY = numberCenterY
+    + (numberMetrics.actualBoundingBoxAscent - numberMetrics.actualBoundingBoxDescent) / 2;
+  context.fillText(yearsText, NUMBER_X * scaleX, numberBaselineY);
 }
 
 async function fetchBytes(url: string) {
@@ -159,6 +158,7 @@ export async function createCertificatePdf(form: CertificateFormState) {
 
   const [templatePage] = await document.embedPdf(templateBytes, [details.pageIndex]);
   const font = await document.embedFont(fontBytes, { subset: false });
+  const fontkitFont = fontkit.create(new Uint8Array(fontBytes));
   const page = document.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   page.drawPage(templatePage, {
     x: 0,
@@ -175,9 +175,15 @@ export async function createCertificatePdf(form: CertificateFormState) {
     font,
     color,
   });
-  page.drawText(String(years), {
+  const yearsText = String(years);
+  const numberBounds = fontkitFont.layout(yearsText).bbox;
+  const numberCenterOffset = (numberBounds.minY + numberBounds.maxY)
+    / 2
+    * NAME_SIZE
+    / fontkitFont.unitsPerEm;
+  page.drawText(yearsText, {
     x: NUMBER_X,
-    y: details.numberY,
+    y: NUMBER_TARGET_CENTER_Y - numberCenterOffset,
     size: NAME_SIZE,
     font,
     color,

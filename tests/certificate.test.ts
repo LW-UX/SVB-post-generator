@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
+import fontkit from "@pdf-lib/fontkit";
 import {
   certificateUsesLongStandingWording,
   certificateYearLabel,
@@ -28,4 +30,25 @@ test("keeps the supported year range between one and 99", () => {
   assert.equal(normalizeCertificateYears(0), 1);
   assert.equal(normalizeCertificateYears(4.9), 4);
   assert.equal(normalizeCertificateYears(100), 99);
+});
+
+test("uses full-height lining numerals for certificate years", () => {
+  const fontBytes = readFileSync(
+    new URL("../src/assets/CormorantGaramond-Light.ttf", import.meta.url),
+  );
+  const font = fontkit.create(fontBytes);
+  const glyphNames = font.layout("0123456789").glyphs.map((glyph) => glyph.name);
+
+  assert.deepEqual(glyphNames, [
+    "zero.lf",
+    "one.lf",
+    "two.lf",
+    "three.lf",
+    "four.lf",
+    "five.lf",
+    "six.lf",
+    "seven.lf",
+    "eight.lf",
+    "nine.lf",
+  ]);
 });
