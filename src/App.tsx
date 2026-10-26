@@ -2968,19 +2968,24 @@ export default function Home() {
               </div>
             </div>
           )}
-          {department !== "certificate" && (
-            <div className="selector-group format-selector">
-              <span className="selector-label">Format</span>
-              <div className="selector-options">
-                {availableFormats.map((key) => (
+          <div className="selector-group format-selector">
+            <span className="selector-label">Format</span>
+            <div className="selector-options">
+              {department === "certificate" ? (
+                <button type="button" className="active" aria-pressed="true" disabled>
+                  <span>A4</span>
+                  <small>PDF</small>
+                </button>
+              ) : (
+                availableFormats.map((key) => (
                   <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
                     <span>{FORMATS[key].label}</span>
                     <small>{FORMATS[key].short}</small>
                   </button>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
         </section>
 
         <section className="preview-column" aria-labelledby="preview-title">
