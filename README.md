@@ -7,6 +7,7 @@ Browserbasierter Generator für markenkonforme Fußballgrafiken und allgemeine A
 - Spieltagsankündigung und Ergebnismeldung
 - übergeordnete Auswahl zwischen Fußball und allgemeinen Vereinsbeiträgen
 - allgemeine Ankündigungen mit eigener Titelseite in allen vier Formaten
+- A4-Mitgliedsurkunden als PDF mit Name, Vereinsjahren, Singular/Plural und automatischer Formulierung „langjährige Treue“ ab vier Jahren
 - ein- oder zweiseitige 4:5-Ankündigungen mit nahtlosem Hintergrund, Seitenvorschau und gemeinsamem Export beider PNG-Dateien
 - frei editierbare Titel-, Unterzeilen-, Headline-, Fließtext- und Disclaimer-Felder
 - automatischer Textumbruch und dynamische Verkleinerung langer Fließtexte von 30 px bis 20 px
@@ -56,8 +57,12 @@ pnpm run start
 - `src/fixtures.ts`: normalisierte Spielplanvorlagen beider Mannschaften
 - `src/ImageEditorDialog.tsx`: Zuschneiden, Filterauswahl und Editor-Bedienung
 - `src/image-editor.ts`: kalibrierte LUTs, Filter-, Crop- und Hintergrund-Renderinglogik
+- `src/certificate.ts`: Urkundenvorschau, Vorlagenauswahl und PDF-Export
+- `src/certificate-logic.ts`: Jahresgrenzen, Singular/Plural und Formulierungslogik
 - `src/styles.css`: vollständig editierbare Oberflächenstile
 - `src/assets/Inter-Variable.ttf`: lokal verwendete Inter-Schrift
+- `src/assets/CormorantGaramond-Light.ttf`: eingebettete Schrift für Name und Jahreszahl der Urkunde
+- `src/assets/certificates/`: bereinigte PDF-Vorlage und Vorschaubilder der vier Urkundenvarianten
 - `src/assets/opponents/`: automatisch eingelesene blaue PNG-Gegnerlogos
 - `public/assets/`: die drei benötigten SVB-Logovarianten
 - `pages-dist/`: automatisch erzeugte, nicht in Git gespeicherte Build-Ausgabe

@@ -14,6 +14,14 @@
   src: url("./assets/Gambetta-Variable.ttf") format("truetype-variations");
 }
 
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("./assets/CormorantGaramond-Light.ttf") format("truetype");
+}
+
 *,
 *::before,
 *::after {
@@ -158,7 +166,11 @@ label:has(input:focus-visible) .upload-box,
 
 .department-card .selector-group {
   width: 100%;
-  max-width: 420px;
+  max-width: 630px;
+}
+
+.department-card .selector-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .selector-card {
@@ -339,6 +351,14 @@ label:has(input:focus-visible) .upload-box,
 .canvas-widescreen canvas {
   width: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.canvas-certificate canvas {
+  width: auto;
+  height: auto;
+  max-width: min(100%, 510px);
+  max-height: min(72vh, 760px);
+  aspect-ratio: 210 / 297;
 }
 
 .primary-button {

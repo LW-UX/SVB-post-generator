@@ -15,6 +15,8 @@ test("builds a complete, readable GitHub Pages bundle", async () => {
   assert.ok(cssFile, "Der Build muss eine CSS-Datei enthalten.");
   assert.ok(assets.some((file) => /^Inter-Variable-.+\.ttf$/.test(file)));
   assert.ok(assets.some((file) => /^Gambetta-Variable-.+\.ttf$/.test(file)));
+  assert.ok(assets.some((file) => /^CormorantGaramond-Light-.+\.ttf$/.test(file)));
+  assert.ok(assets.some((file) => /^SVB-Urkunden-2026-blanko-.+\.pdf$/.test(file)));
 
   for (const logo of ["blau", "farbe", "weiss"]) {
     await access(new URL(`../pages-dist/assets/svb-logo-${logo}-1906.svg`, import.meta.url));
@@ -71,7 +73,7 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(editor, /return clamp\(strength, 0, 100\) \/ 100 \* 1\.1/);
   assert.match(editor, /progress \* progress \* \(3 - \(2 \* progress\)\)/);
   assert.match(editor, /requestAnimationFrame|renderCache/);
-  assert.match(page, /type Department = "football" \| "general"/);
+  assert.match(page, /type Department = "football" \| "general" \| "certificate"/);
   assert.match(page, /type AnnouncementPageCount = 1 \| 2/);
   assert.match(page, /useState<Department>\("football"\)/);
   assert.match(page, /useState<AnnouncementPageCount>\(2\)/);
@@ -84,6 +86,8 @@ test("keeps uploads local and supports every requested format", async () => {
   assert.match(page, /if \(form\.disclaimer\.trim\(\)\)/);
   assert.match(page, />Fußball</);
   assert.match(page, />Allgemein</);
+  assert.match(page, />Urkunde</);
+  assert.match(page, /PDF herunterladen/);
   assert.ok(page.indexOf(">Allgemein</") < page.indexOf(">Fußball</"));
   assert.ok(
     page.indexOf('className="department-card"') <

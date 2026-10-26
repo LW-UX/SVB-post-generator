@@ -12,6 +12,20 @@ import {
   getFixtureEditableValues,
 } from "./fixtures";
 import { getClubByLogoId } from "./club-database";
+import {
+  CERTIFICATE_FORMAT,
+  INITIAL_CERTIFICATE_FORM,
+  certificateFileName,
+  createCertificatePdf,
+  getCertificatePreviewUrl,
+  renderCertificateGraphic,
+} from "./certificate";
+import type { CertificateFormState } from "./certificate";
+import {
+  certificateUsesLongStandingWording,
+  certificateYearLabel,
+  normalizeCertificateYears,
+} from "./certificate-logic";
 import type {
   FixtureEditableValues,
   FixtureHomeAway,
@@ -26,7 +40,7 @@ type MatchdayDesign = "classic" | "photo";
 type PhotoEdge = "top" | "bottom";
 type DateDisplay = "date-time" | "day-date" | "custom";
 type ExportAction = "shared" | "downloaded" | "cancelled";
-type Department = "football" | "general";
+type Department = "football" | "general" | "certificate";
 type AnnouncementPageCount = 1 | 2;
 type AnnouncementPage = 1 | 2;
 
@@ -2274,6 +2288,11 @@ export default function Home() {
   const [announcementForm, setAnnouncementForm] = useState<AnnouncementFormState>(
     INITIAL_ANNOUNCEMENT_FORM,
   );
+  const [certificateForm, setCertificateForm] = useState<CertificateFormState>(
+    INITIAL_CERTIFICATE_FORM,
+  );
+  const [certificateTemplateImage, setCertificateTemplateImage] =
+    useState<HTMLImageElement | null>(null);
   const [announcementPageCount, setAnnouncementPageCount] =
     useState<AnnouncementPageCount>(2);
   const [announcementPage, setAnnouncementPage] = useState<AnnouncementPage>(1);
@@ -2314,6 +2333,7 @@ export default function Home() {
       document.fonts.load('700 76px "Inter"'),
       document.fonts.load('700 100px "Inter"'),
       document.fonts.load('300 78px "Gambetta Variable"'),
+      document.fonts.load('300 36px "Cormorant Garamond"'),
     ]).finally(() => {
       if (isActive) setFontReady(true);
     });
@@ -2326,6 +2346,14 @@ export default function Home() {
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
       if (!canvasRef.current) return;
+      if (department === "certificate") {
+        renderCertificateGraphic(
+          canvasRef.current,
+          certificateForm,
+          certificateTemplateImage,
+        );
+        return;
+      }
       renderGraphic(
         canvasRef.current,
         formatKey,
@@ -2354,10 +2382,34 @@ export default function Home() {
     announcementForm,
     announcementPage,
     announcementPageCount,
+    certificateForm,
+    certificateTemplateImage,
     fontReady,
   ]);
 
   useEffect(() => {
+    if (department !== "certificate") return;
+
+    let isActive = true;
+    const image = new Image();
+    image.onload = () => {
+      if (isActive) setCertificateTemplateImage(image);
+    };
+    image.onerror = () => {
+      if (isActive) setDownloadStatus("Die Urkundenvorlage konnte nicht geladen werden.");
+    };
+    image.src = getCertificatePreviewUrl(certificateForm.years);
+
+    return () => {
+      isActive = false;
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [department, certificateForm.years]);
+
+  useEffect(() => {
+    if (department === "certificate") return;
+
     const image = new Image();
     const fileName = department === "general"
       ? "svb-logo-weiss-1906.svg"
@@ -2448,7 +2500,9 @@ export default function Home() {
     };
   }, []);
 
-  const selectedFormat = getGraphicFormat(department, postType, formatKey, matchdayDesign);
+  const selectedFormat = department === "certificate"
+    ? CERTIFICATE_FORMAT
+    : getGraphicFormat(department, postType, formatKey, matchdayDesign);
   const availableFormats: FormatKey[] = department === "football" && postType === "result"
     ? ["post", "landscape", "widescreen"]
     : department === "football" && postType === "matchday" && matchdayDesign === "photo"
@@ -2479,6 +2533,13 @@ export default function Home() {
     value: AnnouncementFormState[Key],
   ) {
     setAnnouncementForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateCertificateForm<Key extends keyof CertificateFormState>(
+    key: Key,
+    value: CertificateFormState[Key],
+  ) {
+    setCertificateForm((current) => ({ ...current, [key]: value }));
   }
 
   function chooseDepartment(nextDepartment: Department) {
@@ -2677,7 +2738,9 @@ export default function Home() {
       try {
         await navigator.share({
           files,
-          title: "SVB Social Media Grafik",
+          title: files.some((file) => file.type === "application/pdf")
+            ? "SVB Mitgliedsurkunde"
+            : "SVB Social Media Grafik",
         });
         return "shared";
       } catch (error) {
@@ -2708,6 +2771,35 @@ export default function Home() {
   }
 
   async function downloadSelected() {
+    if (department === "certificate") {
+      const name = certificateForm.name.trim();
+      if (!name) {
+        setDownloadStatus("Bitte zuerst den Namen des Mitglieds eingeben.");
+        return;
+      }
+
+      setDownloadStatus("Die Urkunde wird als PDF erstellt …");
+      try {
+        const pdfBytes = await createCertificatePdf(certificateForm);
+        const file = new File(
+          [new Uint8Array(pdfBytes)],
+          certificateFileName(name),
+          { type: "application/pdf" },
+        );
+        const action = await saveFiles([file]);
+        if (action === "shared") {
+          setDownloadStatus("Die PDF-Urkunde wurde gespeichert oder geteilt.");
+        } else if (action === "downloaded") {
+          setDownloadStatus(`„${file.name}“ wurde heruntergeladen.`);
+        } else {
+          setDownloadStatus("Speichern wurde abgebrochen.");
+        }
+      } catch {
+        setDownloadStatus("Die PDF-Urkunde konnte nicht erstellt werden.");
+      }
+      return;
+    }
+
     const exportScale = selectedFormat.exportScale;
     const exportWidth = selectedFormat.width * exportScale;
     const exportHeight = selectedFormat.height * exportScale;
@@ -2766,6 +2858,12 @@ export default function Home() {
   }
 
   function resetForm() {
+    if (department === "certificate") {
+      setCertificateForm(INITIAL_CERTIFICATE_FORM);
+      setDownloadStatus("Urkunde wurde zurückgesetzt.");
+      return;
+    }
+
     if (department === "general") {
       setAnnouncementForm(INITIAL_ANNOUNCEMENT_FORM);
       setAnnouncementPageCount(2);
@@ -2804,6 +2902,7 @@ export default function Home() {
           <div className="selector-options">
             <button type="button" className={department === "general" ? "active" : ""} onClick={() => chooseDepartment("general")}>Allgemein</button>
             <button type="button" className={department === "football" ? "active" : ""} onClick={() => chooseDepartment("football")}>Fußball</button>
+            <button type="button" className={department === "certificate" ? "active" : ""} onClick={() => chooseDepartment("certificate")}>Urkunde</button>
           </div>
         </div>
       </section>
@@ -2821,8 +2920,10 @@ export default function Home() {
                   <button type="button" className={postType === "matchday" ? "active" : ""} onClick={() => chooseType("matchday")}>Spieltagsankündigung</button>
                   <button type="button" className={postType === "result" ? "active" : ""} onClick={() => chooseType("result")}>Ergebnismeldung</button>
                 </>
-              ) : (
+              ) : department === "general" ? (
                 <button type="button" className="active" aria-pressed="true">Ankündigung</button>
+              ) : (
+                <button type="button" className="active" aria-pressed="true">Mitgliedsurkunde</button>
               )}
             </div>
             {department === "football" && postType === "matchday" && (
@@ -2867,17 +2968,19 @@ export default function Home() {
               </div>
             </div>
           )}
-          <div className="selector-group format-selector">
-            <span className="selector-label">Format</span>
-            <div className="selector-options">
-              {availableFormats.map((key) => (
-                <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
-                  <span>{FORMATS[key].label}</span>
-                  <small>{FORMATS[key].short}</small>
-                </button>
-              ))}
+          {department !== "certificate" && (
+            <div className="selector-group format-selector">
+              <span className="selector-label">Format</span>
+              <div className="selector-options">
+                {availableFormats.map((key) => (
+                  <button key={key} type="button" className={formatKey === key ? "active" : ""} onClick={() => chooseFormat(key)}>
+                    <span>{FORMATS[key].label}</span>
+                    <small>{FORMATS[key].short}</small>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         <section className="preview-column" aria-labelledby="preview-title">
@@ -2887,18 +2990,22 @@ export default function Home() {
                 <span>Live-Vorschau</span>
                 {" | "}
                 <span className="preview-export-size">
-                  Export {selectedFormat.width * selectedFormat.exportScale} × {selectedFormat.height * selectedFormat.exportScale} px
+                  {department === "certificate"
+                    ? "Export A4-PDF"
+                    : `Export ${selectedFormat.width * selectedFormat.exportScale} × ${selectedFormat.height * selectedFormat.exportScale} px`}
                 </span>
               </p>
               <h2 id="preview-title">{selectedFormat.label}</h2>
             </div>
             <button className="primary-button preview-download-button" type="button" onClick={downloadSelected}>
-              {department === "general" && formatKey === "post" && announcementPageCount === 2
+              {department === "certificate"
+                ? supportsFileSharing ? "PDF speichern / teilen" : "PDF herunterladen"
+                : department === "general" && formatKey === "post" && announcementPageCount === 2
                 ? supportsFileSharing ? "Beide Seiten speichern / teilen" : "Beide PNGs herunterladen"
                 : supportsFileSharing ? "Bild speichern / teilen" : "PNG herunterladen"}
             </button>
           </div>
-          <div className={`canvas-stage canvas-${formatKey}`}>
+          <div className={`canvas-stage ${department === "certificate" ? "canvas-certificate" : `canvas-${formatKey}`}`}>
             <canvas ref={canvasRef} aria-label={`Vorschau für ${selectedFormat.label}${department === "general" && announcementPageCount === 2 ? `, Seite ${announcementPage}` : ""}`} />
           </div>
           {department === "general" && formatKey === "post" && announcementPageCount === 2 && (
@@ -2915,7 +3022,9 @@ export default function Home() {
             <div>
               <p className="section-kicker">Inhalte</p>
               <h2 id="details-title">
-                {department === "general"
+                {department === "certificate"
+                  ? "Urkunde erstellen"
+                  : department === "general"
                   ? "Ankündigung bearbeiten"
                   : postType === "result"
                     ? "Ergebnis bearbeiten"
@@ -2926,6 +3035,44 @@ export default function Home() {
             </div>
             <button className="text-button reset-button" type="button" onClick={resetForm}>Zurücksetzen</button>
           </div>
+
+          {department === "certificate" && (
+            <div className="form-section">
+              <h3>Mitglied</h3>
+              <div className="field-grid">
+                <label>
+                  <span className="field-label">Vor- und Nachname</span>
+                  <input
+                    value={certificateForm.name}
+                    maxLength={45}
+                    placeholder="Vorname Nachname"
+                    onChange={(event) => updateCertificateForm("name", event.target.value)}
+                  />
+                </label>
+                <label>
+                  <span className="field-label">Jahre im Verein</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    max="99"
+                    step="1"
+                    value={certificateForm.years}
+                    onChange={(event) => updateCertificateForm(
+                      "years",
+                      normalizeCertificateYears(Number(event.target.value)),
+                    )}
+                  />
+                </label>
+              </div>
+              <p className="helper-text">
+                Die Urkunde verwendet automatisch „{certificateYearLabel(certificateForm.years)}“
+                {certificateUsesLongStandingWording(certificateForm.years)
+                  ? " und ab vier Jahren die Formulierung „langjährige Treue“."
+                  : " und bis drei Jahre die Formulierung „Treue“."}
+              </p>
+            </div>
+          )}
 
           {department === "football" && (
             <div className="form-section">
