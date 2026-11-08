@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   FILTER_LUT_SIZE,
+  DRAMATIC_COOL_LUT,
   RETRO_LUT,
   VIGNETTE_CENTER_LUT,
   VIGNETTE_EDGE_LUT,
@@ -34,6 +35,7 @@ test("contains stable 17 cubed calibrated LUT checkpoints", () => {
   assert.equal(RETRO_LUT.length, expectedLength);
   assert.equal(VIGNETTE_CENTER_LUT.length, expectedLength);
   assert.equal(VIGNETTE_EDGE_LUT.length, expectedLength);
+  assert.equal(DRAMATIC_COOL_LUT.length, expectedLength);
 
   assert.deepEqual(roundedSample(RETRO_LUT, [0, 0, 0]), [21, 28, 23]);
   assert.deepEqual(roundedSample(RETRO_LUT, [128, 128, 128]), [129, 135, 124]);
@@ -43,6 +45,22 @@ test("contains stable 17 cubed calibrated LUT checkpoints", () => {
 
   assert.deepEqual(roundedSample(VIGNETTE_CENTER_LUT, [128, 128, 128]), [94, 100, 92]);
   assert.deepEqual(roundedSample(VIGNETTE_EDGE_LUT, [128, 128, 128]), [43, 51, 50]);
+
+  assert.deepEqual(roundedSample(DRAMATIC_COOL_LUT, [0, 0, 0]), [0, 0, 0]);
+  assert.deepEqual(roundedSample(DRAMATIC_COOL_LUT, [128, 128, 128]), [132, 116, 108]);
+  assert.deepEqual(roundedSample(DRAMATIC_COOL_LUT, [255, 255, 255]), [255, 255, 255]);
+  assert.deepEqual(roundedSample(DRAMATIC_COOL_LUT, [32, 160, 32]), [32, 93, 14]);
+  assert.deepEqual(roundedSample(DRAMATIC_COOL_LUT, [32, 64, 200]), [16, 68, 155]);
+});
+
+test("applies the dramatic cool preset while preserving alpha", () => {
+  const imageData = {
+    width: 1,
+    height: 1,
+    data: new Uint8ClampedArray([128, 128, 128, 123]),
+  } as ImageData;
+  applyFilterToImageData(imageData, "dramatic-cool", 100);
+  assert.deepEqual(Array.from(imageData.data), [132, 114, 106, 123]);
 });
 
 test("blends the reference preset linearly at 0, 85 and 100 percent", () => {
@@ -108,6 +126,7 @@ test("keeps independent crop and strength state without duplicating the source",
   image.crops.story = { zoom: 1.8, positionX: -0.6, positionY: 0.7 };
   image.strengths.retro = 42;
   image.strengths.vignette = 91;
+  image.strengths["dramatic-cool"] = 73;
 
   const clone = cloneEditableBackground(image);
   clone.crops.post!.positionX = -1;
@@ -116,7 +135,7 @@ test("keeps independent crop and strength state without duplicating the source",
   assert.equal(clone.source, source);
   assert.deepEqual(image.crops.post, { zoom: 1.2, positionX: 0.4, positionY: -0.2 });
   assert.deepEqual(image.crops.story, { zoom: 1.8, positionX: -0.6, positionY: 0.7 });
-  assert.deepEqual(image.strengths, { retro: 42, vignette: 91 });
+  assert.deepEqual(image.strengths, { retro: 42, vignette: 91, "dramatic-cool": 73 });
 });
 
 test("reduces oversized images locally to a 4096 pixel maximum edge", () => {

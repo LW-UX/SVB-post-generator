@@ -1,5 +1,5 @@
 export type BackgroundFormatKey = "post" | "story" | "landscape" | "widescreen";
-export type FilterPreset = "original" | "retro" | "vignette";
+export type FilterPreset = "original" | "retro" | "vignette" | "dramatic-cool";
 
 export type CropState = {
   zoom: number;
@@ -81,6 +81,21 @@ const VIGNETTE_COEFFICIENTS = [
   [-0.349771158, -0.675374101, -0.187322616], [0.021413792, 0.090727546, -0.276936297],
 ] as const;
 
+const DRAMATIC_COOL_EXPONENTS = RETRO_EXPONENTS.slice(0, 20);
+
+const DRAMATIC_COOL_COEFFICIENTS = [
+  [-0.017221939, -0.063455730, -0.071382272], [0.130167063, -0.011823331, 0.744491953],
+  [-0.104517126, 0.656067639, -0.139599731], [0.613481906, -0.127267303, -0.083843143],
+  [0.007541263, 0.218089237, 0.138706454], [0.506859002, 0.435025952, 0.309432875],
+  [0.202735464, 0.080264618, 0.245437628], [0.145729662, 0.289166218, 0.182189179],
+  [0.031771823, 0.046510679, 0.145109363], [0.300959114, 0.318278971, 0.216022763],
+  [-0.464776643, -0.162477595, -0.093248866], [0.131775318, 0.123415430, 0.043224496],
+  [0.200788817, 0.101452907, 0.058259114], [-0.058084478, -0.157070887, -0.012089996],
+  [-0.178296757, -0.085838613, -0.116711643], [0.005489168, -0.030152708, -0.060945411],
+  [-0.172595269, -0.223671050, -0.108331144], [0.028346942, -0.019649472, -0.092340502],
+  [-0.195388455, -0.239066341, -0.164870892], [0.012260815, -0.030281498, -0.079761004],
+] as const;
+
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -103,7 +118,9 @@ function evaluatePolynomial(
   return result;
 }
 
-function createCalibratedLut(kind: "retro" | "vignette-center" | "vignette-edge") {
+function createCalibratedLut(
+  kind: "retro" | "vignette-center" | "vignette-edge" | "dramatic-cool",
+) {
   const lut = new Uint8Array(FILTER_LUT_SIZE ** 3 * 3);
   let outputIndex = 0;
   for (let redIndex = 0; redIndex < FILTER_LUT_SIZE; redIndex += 1) {
@@ -114,7 +131,15 @@ function createCalibratedLut(kind: "retro" | "vignette-center" | "vignette-edge"
         const blue = blueIndex / (FILTER_LUT_SIZE - 1);
         const transformed = kind === "retro"
           ? evaluatePolynomial(red, green, blue, RETRO_EXPONENTS, RETRO_COEFFICIENTS)
-          : evaluatePolynomial(
+          : kind === "dramatic-cool"
+            ? evaluatePolynomial(
+                red,
+                green,
+                blue,
+                DRAMATIC_COOL_EXPONENTS,
+                DRAMATIC_COOL_COEFFICIENTS,
+              )
+            : evaluatePolynomial(
               red,
               green,
               blue,
@@ -147,11 +172,12 @@ function createCalibratedLut(kind: "retro" | "vignette-center" | "vignette-edge"
   return lut;
 }
 
-// Die Polynome wurden offline aus drei gleich gewichteten Vorher-/Nachher-Reihen
-// kalibriert. Zur Laufzeit entstehen daraus kleine, deterministische 17³-LUTs.
+// Die Polynome wurden offline aus Vorher-/Nachher-Referenzen kalibriert.
+// Zur Laufzeit entstehen daraus kleine, deterministische 17³-LUTs.
 export const RETRO_LUT = createCalibratedLut("retro");
 export const VIGNETTE_CENTER_LUT = createCalibratedLut("vignette-center");
 export const VIGNETTE_EDGE_LUT = createCalibratedLut("vignette-edge");
+export const DRAMATIC_COOL_LUT = createCalibratedLut("dramatic-cool");
 
 const LUT_LOW = new Uint8Array(256);
 const LUT_HIGH = new Uint8Array(256);
@@ -237,8 +263,8 @@ export function applyFilterToImageData(
     let referenceGreen: number;
     let referenceBlue: number;
 
-    if (preset === "retro") {
-      sampleLut(RETRO_LUT, red, green, blue, centerColor);
+    if (preset === "retro" || preset === "dramatic-cool") {
+      sampleLut(preset === "retro" ? RETRO_LUT : DRAMATIC_COOL_LUT, red, green, blue, centerColor);
       referenceRed = centerColor[0];
       referenceGreen = centerColor[1];
       referenceBlue = centerColor[2];
@@ -290,7 +316,11 @@ export function createEditableBackground(
     source,
     fileName,
     preset: "original",
-    strengths: { retro: DEFAULT_FILTER_STRENGTH, vignette: DEFAULT_FILTER_STRENGTH },
+    strengths: {
+      retro: DEFAULT_FILTER_STRENGTH,
+      vignette: DEFAULT_FILTER_STRENGTH,
+      "dramatic-cool": DEFAULT_FILTER_STRENGTH,
+    },
     crops: {},
   };
 }

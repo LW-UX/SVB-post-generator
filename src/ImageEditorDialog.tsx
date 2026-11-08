@@ -47,6 +47,11 @@ const FILTERS: { key: FilterPreset; label: string; description: string }[] = [
   { key: "original", label: "Original", description: "Ohne Filter" },
   { key: "retro", label: "Retro", description: "Matt und leicht grünlich" },
   { key: "vignette", label: "Vignette", description: "Dunkel mit kräftigem Rand" },
+  {
+    key: "dramatic-cool",
+    label: "Dramatisch Kalt",
+    description: "Tiefe Schatten, kühles Blau und gedämpfte Naturtöne",
+  },
 ];
 
 function createGestureSnapshot(pointers: Map<number, PointerPosition>) {
